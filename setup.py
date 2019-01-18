@@ -9,11 +9,11 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-atlassian',
-    version='0.1',
+    version='0.1.0',
     packages=find_packages(),
     include_package_data=True,
-    license='BSD License',  # example license
-    description='A simple Django app to connect to atlassian apis.',
+    license='MIT License',
+    description='Django app for interact with atlassian libraries such as JIRA and Confluence.',
     long_description=README,
     url='https://www.fluendo.com/',
     author='Fluendo',
@@ -21,9 +21,8 @@ setup(
     classifiers=[
             'Environment :: Web Environment',
             'Framework :: Django',
-            'Framework :: Django :: 1.11',  # replace "X.Y" as appropriate
             'Intended Audience :: Developers',
-            'License :: OSI Approved :: BSD License',  # example license
+            'License :: OSI Approved :: MIT License',
             'Operating System :: OS Independent',
             'Programming Language :: Python',
             'Programming Language :: Python :: 3.5',
