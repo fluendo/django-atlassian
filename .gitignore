@@ -4,3 +4,4 @@
 *.egg-info
 django_atlassian.egg-info/
 dist
+Pipfile
