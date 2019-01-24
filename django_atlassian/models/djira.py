@@ -9,18 +9,26 @@ import requests
 import re
 import collections
 import os
+import copy
 
 from django.db import models, router, connections
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models.signals import class_prepared
-from django.db.models.manager import Manager
+from django.db.models.manager import Manager, EmptyManager
 
+from django_atlassian.models.connect import SecurityContext
 from django_atlassian.backends.jira.base import DatabaseConvertion
 from django_atlassian.models.fields import ArrayField
+
+from jira import JIRA
+from jira.resources import Issue as JiraIssue
+from jira.resilientsession import ResilientSession
 
 logger = logging.getLogger('django_atlassian')
 
 class IssueManager(Manager):
+
     def create_from_json(self, json):
         """
         Some modules notify with an Issue. In order to manage it in a django way
@@ -39,6 +47,40 @@ class IssueManager(Manager):
             else:
                 args[x[8]] = value
         return self.model(**args)
+
+
+class JiraManagerMixin(JIRA):
+    def __init__(self, *args, **kwargs):
+        try:
+            db_alias = router.db_for_read(self.model)
+            db_settings = connections.databases[db_alias]
+            if db_settings['USER'] and db_settings['PASSWORD']:
+                super(JiraManagerMixin, self).__init__(
+                        server=db_settings['NAME'],
+                        basic_auth=(db_settings['USER'], 
+                        db_settings['PASSWORD']))
+            elif db_settings['SECURITY']:
+                jwt = {
+                    'secret': db_settings['SECURITY'].shared_secret,
+                    'payload': db_settings['SECURITY'].key
+                }
+                super(JiraManagerMixin, self).__init__(
+                    server=db_settings['NAME'],
+                    jwt=jwt)
+        except Exception as err:
+            logger.error(err)
+
+
+class JiraManager(EmptyManager, JiraManagerMixin):
+
+    def __init__(self, *args, **kwargs):
+        super(JiraManager, self).__init__(None)
+
+    def __setattr__(self, attrname, val):
+        if attrname == 'model':
+            if val:
+                super(JiraManager, self).__init__(None)
+        super(JiraManager, self).__setattr__(attrname, val)
 
 
 class IssueLinkList(collections.MutableSequence):
@@ -207,9 +249,18 @@ class Attachment(object):
             return response.status_code
         except Exception as e:
             raise e
- 
 
-class Issue(models.base.Model):
+class JiraIssueModel(JiraIssue):
+    def __init__(self, *args, **kwargs):
+        db = self.get_db().connection
+        options = copy.copy(JIRA.DEFAULT_OPTIONS)
+        options['server'] = db.uri
+        session = ResilientSession()
+        session.auth = (db.user, db.password)
+        super(JiraIssueModel, self).__init__(options, session)
+
+
+class Issue(models.base.Model, JiraIssueModel):
     """
     Base class for all JIRA Issue models.
     """
@@ -218,14 +269,18 @@ class Issue(models.base.Model):
     # it is required to have a primary key otherwise django will create one for
     # us.
     key = models.CharField(max_length=255, primary_key=True, unique=True)
-
     objects = IssueManager()
+    jira = JiraManager()
+
+    def __init__(self, *args, **kwargs):
+        super(Issue, self).__init__(*args, **kwargs)
+        self.find(args[0])
 
     def __getattr__(self, name):
         if name == 'links':
             self.links = IssueLinks(self)
             return self.links
-        raise AttributeError("'Isssue' has no attribute %s" % name)
+        raise AttributeError("'Issue' has no attribute %s" % name)
 
     def get_db(self):
         db_alias = router.db_for_read(self._meta.model)

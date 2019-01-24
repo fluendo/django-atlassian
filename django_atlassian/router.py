@@ -2,7 +2,7 @@
 
 from django.conf import settings
 from django.db import connections
-from django_atlassian.models.jira import Issue
+from django_atlassian.models.djira import Issue
 from django_atlassian.models.confluence import Content
 
 class Router(object):

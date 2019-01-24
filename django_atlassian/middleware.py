@@ -11,7 +11,7 @@ from django.db import models, connections
 from django.db.utils import ConnectionDoesNotExist 
 
 from django_atlassian.models.connect import SecurityContext
-from django_atlassian.models.jira import create_model, populate_model
+from django_atlassian.models.djira import create_model, populate_model
 
 logger = logging.getLogger('django_atlassian')
 lock = threading.Lock()
