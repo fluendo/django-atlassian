@@ -44,7 +44,19 @@ class Router(object):
 
     def db_for_write(self, model, **hints):
         if issubclass(model, Issue):
-            return self.db_jira_alias
+            # Check if the model has the AtlassianMeta class
+            atlassian_meta = getattr(model, 'AtlassianMeta', False)
+            if not atlassian_meta:
+                return self.db_jira_alias
+            atlassian_db = getattr(atlassian_meta, 'db', False)
+            if not atlassian_db:
+                return self.db_jira_alias
+            for alias, settings_dict in connections.databases.items():
+                if settings_dict['ENGINE'] == 'django_atlassian.backends.jira' and \
+                    alias == atlassian_db:
+                    return alias
+
         if issubclass(model, Content):
             return self.db_confluence_alias
+
         return None
