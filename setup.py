@@ -9,7 +9,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-atlassian',
-    version='0.1.2',
+    version='0.1.3',
     packages=find_packages(),
     include_package_data=True,
     license='MIT License',
@@ -18,8 +18,13 @@ setup(
     url='https://www.fluendo.com/',
     author='Fluendo',
     author_email='web-dev@fluendo.com',
-    install_requires=["Django >= 1.11", "PyJWT >= 1.6.4",
-                      "atlassian-jwt >= 1.8.1", "requests >= 2.18.4"],
+    install_requires=[
+        "Django >= 1.11",
+        "PyJWT >= 1.6.4",
+        "atlassian-jwt >= 1.8.1",
+        "requests >= 2.18.4",
+        "requests-jwt==0.5.3",
+        "jira==2.0.0"],
     classifiers=[
             'Environment :: Web Environment',
             'Framework :: Django',
