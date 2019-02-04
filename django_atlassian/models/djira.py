@@ -57,16 +57,20 @@ class JiraManagerMixin(JIRA):
             if db_settings['USER'] and db_settings['PASSWORD']:
                 super(JiraManagerMixin, self).__init__(
                         server=db_settings['NAME'],
-                        basic_auth=(db_settings['USER'], 
-                        db_settings['PASSWORD']))
+                        basic_auth=(
+                            db_settings['USER'],
+                            db_settings['PASSWORD']
+                        )
+                )
             elif db_settings['SECURITY']:
                 jwt = {
                     'secret': db_settings['SECURITY'].shared_secret,
-                    'payload': db_settings['SECURITY'].key
+                    'payload': {'iss': db_settings['SECURITY'].key},
                 }
                 super(JiraManagerMixin, self).__init__(
                     server=db_settings['NAME'],
-                    jwt=jwt)
+                    jwt=jwt
+                )
         except Exception as err:
             logger.error(err)
 
@@ -252,12 +256,30 @@ class Attachment(object):
 
 class JiraIssueModel(JiraIssue):
     def __init__(self, *args, **kwargs):
-        db = self.get_db().connection
         options = copy.copy(JIRA.DEFAULT_OPTIONS)
-        options['server'] = db.uri
         session = ResilientSession()
-        session.auth = (db.user, db.password)
+        jwt = None
+        if self.AtlassianMeta.db:
+            # dynamic models via jira-addon
+            db = connections.databases[self.AtlassianMeta.db]
+            options['server'] = db['NAME']
+            sc = db['SECURITY']
+            jwt = {
+                'secret': sc.shared_secret,
+                'payload': {'iss': sc.key},
+            }
+        else:
+            # static models 
+            db = self.get_db().connection
+            options['server'] = db.uri
+            session.auth = (db.user, db.password)
+
+        # Jira model init self.key = None, keep a copy & restore
+        self.jira_key = self.key
         super(JiraIssueModel, self).__init__(options, session)
+        self.key = self.jira_key
+        if jwt:
+            self._session = self.__class__.jira._session
 
 
 class Issue(models.base.Model, JiraIssueModel):
@@ -274,7 +296,7 @@ class Issue(models.base.Model, JiraIssueModel):
 
     def __init__(self, *args, **kwargs):
         super(Issue, self).__init__(*args, **kwargs)
-        self.find(args[0])
+        self.find(self.jira_key)
 
     def __getattr__(self, name):
         if name == 'links':
