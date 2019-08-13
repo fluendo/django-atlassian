@@ -69,40 +69,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'jira_addon.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': DB_NAME,
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWD,
-        'HOST': DB_HOST,
-        'PORT': '5432',
-    },
-    'ldap': {
-        'ENGINE': 'ldapdb.backends.ldap',
-        'NAME': LDAP_NAME,
-        'USER': LDAP_USER,
-        'PASSWORD': LDAP_PASSWD,
-    },
-    'jira': {
-        'ENGINE': 'django_atlassian.backends.jira',
-        'NAME': JIRA_SERVER,
-        'USER': JIRA_USER,
-        'PASSWORD': JIRA_TOKEN,
-        'SECURITY': '',
-    },
-    'confluence': {
-        'ENGINE': 'django_atlassian.backends.confluence',
-        'NAME': JIRA_SERVER,
-        'USER': JIRA_USER,
-        'PASSWORD': JIRA_TOKEN,
-        'SECURITY': '',
-    },
-}
-
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
 
