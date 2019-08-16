@@ -47,3 +47,11 @@ DATABASES = {
         'SECURITY': '',
     },
 }
+
+STATIC_ROOT= os.path.join('/home/ubuntu/static_media')
+ALLOWED_HOSTS = ['*']
+
+INSTALLED_APPS += [
+    'django_atlassian',
+    'atlassian',
+]
