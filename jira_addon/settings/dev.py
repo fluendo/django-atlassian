@@ -14,6 +14,9 @@ JIRA_SERVER = os.environ.get('JIRA_SERVER')
 JIRA_USER = os.environ.get('JIRA_USER')
 JIRA_TOKEN = os.environ.get('JIRA_TOKEN')
 
+# Customers Server Token Auth
+WEB_FLUENDO_API_SERVER = 'https://fluendo.com/en/api/'
+WEB_FLUENDO_TOKEN = '9fb26753efa9659b595ae65fdfcae563c71811c9'
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
@@ -48,10 +51,33 @@ DATABASES = {
     },
 }
 
+DATABASE_ROUTERS = ['django_atlassian.router.Router']
+
+AUTHENTICATION_BACKENDS = [
+    #'django_auth_ldap.backend.LDAPBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 STATIC_ROOT= os.path.join('/home/ubuntu/static_media')
 ALLOWED_HOSTS = ['*']
 
+URL_BASE = 'http://jira-addon.fluendo.com/'
+
 INSTALLED_APPS += [
-    'django_atlassian',
-    'atlassian',
+    'django_atlassian.apps.DjangoAtlassianConfig',
+    'atlassian.apps.AtlassianConfig',
 ]
+
+MIDDLEWARE += [
+    'django_atlassian.middleware.JWTAuthenticationMiddleware',
+    'jira_addon.middleware.multihost.MultiHostMiddleware',
+]
+
+HOST_MIDDLEWARE_URLCONF_MAP = {
+    # The atlassian connect based app
+    "jira-addon.fluendo.com": "jira_addon.atlassian_urls",
+}
+
+# Celery related configuration
+CELERY_BROKER_URL = 'redis://redis:6379'
+CELERY_RESULT_BACKEND = 'django-db'
