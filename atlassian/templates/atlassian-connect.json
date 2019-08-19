@@ -162,6 +162,22 @@
                     "url": "{% url 'atlassian-postfunction-decrement-triggered' %}"
                 }
             }
+        ],
+        "jiraProjectPages": [
+            {
+                "key": "sales-customers",
+                "name": {
+                    "value": "Customers"
+                },
+                "url": "{% url 'sales-customers-view' %}?projectKey=${project.key}",
+                "iconUrl": "/static/atlassian/img/contacts.png",
+                "weight": 1,
+                "conditions": [
+                    {
+                        "condition": "user_is_logged_in"
+                    }
+                ]
+            }
         ]
     }
 }

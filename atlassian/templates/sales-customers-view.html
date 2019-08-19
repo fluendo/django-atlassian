@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+  <head>
+    <link rel="stylesheet" type="text/css" href="/static/atlassian/css/style.css" >
+  </head>
+
+  <section>
+    </br><img src='{% static "atlassian/img/logo-fluendo.png" %}'></br>
+    <h2><strong>Contacts</strong></h2>
+  </section>
+
+  <section>
+    <table class="aui aui-table-sortable" id="customer-list">
+      <thead>
+          <tr>
+              <th id="basic-number">#</th>
+              <th id="basic-fname">Customer</th>
+          </tr>
+      </thead>
+      <tbody>
+        {% for customer in customers %}
+          <tr>
+            <td>{{customer.id}}</td>
+            <td>{{customer.company_name}}</td>
+          </tr>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+{% endblock %}

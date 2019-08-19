@@ -10,7 +10,8 @@ from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.clickjacking import xframe_options_exempt
-from django.views.generic.base import TemplateView
+from django.utils.decorators import method_decorator
+from django.views.generic.base import TemplateView, View
 from django.shortcuts import render
 from django.conf import settings
 from django.views.decorators.cache import cache_page
@@ -308,3 +309,16 @@ class AppDescriptor(TemplateView):
         base_url = self.request.build_absolute_uri('/')
         context['base_url'] = getattr(settings, 'URL_BASE', base_url)
         return context
+
+
+class SalesCustomersView(View):
+    template_name = 'sales-customers-view.html'
+
+    @method_decorator(xframe_options_exempt)
+    def get(self, request, *args, **kwargs):
+        customers = customers_proxy_cache(request, *args, **kwargs)
+        return render(
+            request,
+            self.template_name,
+            {'customers': json.loads(customers.content)}
+        )
