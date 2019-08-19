@@ -25,7 +25,12 @@
                 "location": "system.top.navigation.bar",
                 "name": {
                     "value": "Fluendo"
-                }
+                },
+                "conditions": [
+                    {
+                        "condition": "user_is_logged_in"
+                    }
+                ]
             }
         ],
         "webhooks": [
@@ -91,7 +96,12 @@
                         "type" : "number"
                     }
                 ]
-            }]
+            }],
+            "conditions": [
+                {
+                    "condition": "user_is_logged_in"
+                }
+            ]
         }],
         "webPanels": [
             {
@@ -101,7 +111,12 @@
                 "name": {
                   "value": "Fluendo"
                 },
-                "key": "fluendo-issue-customer"
+                "key": "fluendo-issue-customer",
+                "conditions": [
+                    {
+                        "condition": "user_is_logged_in"
+                    }
+                ]
             }
         ],
         "jiraWorkflowPostFunctions": [
