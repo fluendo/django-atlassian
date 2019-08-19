@@ -18,6 +18,9 @@ JIRA_TOKEN = os.environ.get('JIRA_TOKEN')
 WEB_FLUENDO_API_SERVER = 'https://fluendo.com/en/api/'
 WEB_FLUENDO_TOKEN = '9fb26753efa9659b595ae65fdfcae563c71811c9'
 
+DEBUG = os.environ.get('DJANGO_DEBUG', False)
+
+
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 DATABASES = {
