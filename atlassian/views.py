@@ -15,7 +15,7 @@ from django.views.generic.base import TemplateView, View
 from django.shortcuts import render
 from django.conf import settings
 from django.views.decorators.cache import cache_page
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 
 from django_atlassian.decorators import jwt_required
 
@@ -295,6 +295,13 @@ def customers_proxy_cache(request):
 def customers_proxy_view(request):
     return customers_proxy_cache(request)
 
+def customer_by_id_proxy(request, pk):
+    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/customers/' + pk
+    r = requests.get(api_url, headers=web_auth)
+    data = r.json()
+    return JsonResponse(data, safe=False)
+
 @xframe_options_exempt
 def helloworld(request):
     return render(request, 'helloworld.html')
@@ -322,3 +329,20 @@ class SalesCustomersView(View):
             self.template_name,
             {'customers': json.loads(customers.content)}
         )
+
+
+class SalesCustomersDetailView(View):
+    template_name = 'sales-customers-detail.html'
+
+    @method_decorator(xframe_options_exempt)
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.get('pk', None)
+        if pk:
+            customer = customer_by_id_proxy(request, *args, **kwargs)
+            return render(
+                request,
+                self.template_name,
+                {'customer': json.loads(customer.content)}
+            )
+        else:
+            return Http404()

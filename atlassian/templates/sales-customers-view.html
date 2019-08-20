@@ -4,7 +4,7 @@
 {% block content %}
 
   <head>
-    <link rel="stylesheet" type="text/css" href="/static/atlassian/css/style.css" >
+    <link rel="stylesheet" type="text/css" href='{% static "atlassian/css/style.css" %}' >
   </head>
 
   <header class="aui-page-header">
@@ -18,19 +18,13 @@
           </div>
           <div class="aui-page-header-main">
               <ol class="aui-nav aui-nav-breadcrumbs">
-                  <li><a href="#">Flluendo</a></li>
+                  <li><a href="#">Fluendo</a></li>
                   <li><a href="#" class="custom">Customers</a></li>
                   <li class="aui-nav-selected">List View</li>
               </ol>
-              <h1>Fluendo Customers List View</h1>
           </div>
           <div class="aui-page-header-actions">
               <div class="aui-buttons">
-                <!--
-                  <button class="aui-button aui-button-subtle">Subtle button</button>
-                  <button class="aui-button aui-button-subtle">Subtle button</button>
-                  <button class="aui-button aui-button-subtle">Subtle button</button>
-                -->
               </div>
           </div>
       </div>
@@ -50,7 +44,11 @@
         {% for customer in customers %}
           <tr>
             <td>{{customer.id}}</td>
-            <td>{{customer.company_name}}</td>
+            <td>
+              <a href="{% url 'sales-customers-detail-view' pk=customer.id %}">
+                {{customer.company_name}}
+              </a>
+            </td>
             <td>{{customer.city}}</td>
             <td>{{customer.street}}</td>
           </tr>
