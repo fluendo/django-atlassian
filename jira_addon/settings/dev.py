@@ -17,8 +17,8 @@ JIRA_TOKEN = os.environ.get('JIRA_TOKEN')
 URL_BASE = os.environ.get('URL_BASE')
 
 # Customers Server Token Auth
-WEB_FLUENDO_API_SERVER = 'https://fluendo.com/en/api/'
-WEB_FLUENDO_TOKEN = '9fb26753efa9659b595ae65fdfcae563c71811c9'
+WEB_FLUENDO_API_SERVER = os.environ.get('WEB_FLUENDO_API_SERVER')
+WEB_FLUENDO_TOKEN = os.environ.get('WEB_FLUENDO_TOKEN')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', False)
 
