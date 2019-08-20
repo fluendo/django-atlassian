@@ -17,7 +17,9 @@
       <thead>
           <tr>
               <th id="basic-number">#</th>
-              <th id="basic-fname">Customer</th>
+              <th id="customer-basic-fname">Customer</th>
+              <th id="city-basic-fname">City</th>
+              <th id="street-basic-fname">Street</th>
           </tr>
       </thead>
       <tbody>
@@ -25,6 +27,8 @@
           <tr>
             <td>{{customer.id}}</td>
             <td>{{customer.company_name}}</td>
+            <td>{{customer.city}}</td>
+            <td>{{customer.street}}</td>
           </tr>
           </tr>
         {% endfor %}
