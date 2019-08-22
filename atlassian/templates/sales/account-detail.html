@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+    <style>
+        tr{cursor: pointer;}
+    </style>
+
+    <header class="aui-page-header">
+        <div class="aui-page-header-inner">
+          <div class="aui-page-header-image">
+              <span class="aui-avatar aui-avatar-large aui-avatar-project">
+                  <span class="aui-avatar-inner">
+                      <img alt="Fluendo" src='{% static "atlassian/img/fluendo.jpg" %}''>
+                  </span>
+              </span>
+          </div>
+          <div class="aui-page-header-main">
+              <ol class="aui-nav aui-nav-breadcrumbs">
+                  <li><a href="#">Fluendo</a></li>
+                  <li><a href="#" class="custom">Customers</a></li>
+                  <li class="aui-nav-selected">Detail View</li>
+              </ol>
+              <h1>{{account.company_name}}</h1>
+          </div>
+          <div class="aui-page-header-actions">
+              <div class="aui-buttons">
+                  <button class="aui-button">Reload</button>
+              </div>
+          </div>
+        </div>
+    </header>
+
+    <div class="aui-group">
+        <div class="aui-item">
+            {% include "sales/account-detail-info.html" %}
+        </div>
+        <div class="aui-item">
+            {% include "sales/account-contacts-info.html" %}
+        </div>
+    </div>
+
+    <section>
+    <form class="aui" method="POST">
+        {% csrf_token %}
+        <div class="field-group">
+
+            <label for="company-name">Company Name</label>
+            <input class="text medium-long-field"
+                type="text"
+                id="company-name"
+                name="company-name"
+                placeholder="company name"
+                value="{{account.company_name}}"/>
+            <div class="description"></div>
+
+            <label for="company-name">Street</label>
+            <input class="text medium-long-field"
+                type="text"
+                id="street"
+                name="street"
+                placeholder="street"
+                value="{{account.street}}"/>
+            <div class="description"></div>
+
+            <label for="company-name">City</label>
+            <input class="text medium-long-field"
+                type="text"
+                id="city"
+                name="city"
+                placeholder="city"
+                value="{{account.city}}"/>
+                <div class="description"></div>
+
+            <label for="company-name">Postal Code</label>
+            <input class="text short-field"
+                type="text"
+                id="pcode"
+                name="pcode"
+                placeholder="postal code"
+                value="{{account.postal_code}}"/>
+                <div class="description"></div>
+
+        </div>
+
+        <div class="buttons-container">
+            <div class="buttons">
+                <input class="button submit"
+                    type="submit"
+                    value="Update"
+                    id="comment-save-button">
+                <a class="cancel" href="#">Cancel</a>
+            </div>
+        </div>
+
+    </form>
+    </section>
+
+    <section style="padding: 2em 0em 0em 2em">
+    {% if agreements %}
+        <h4>Agreements</h4>
+        <table class="aui" id="reseller-agreement-list" style="width: 50%">
+            <thead>
+                <tr>
+                    <th id="basic-number">#</th>
+                    <th id="customer-basic-fname">Start Date</th>
+                    <th id="customer-basic-fname">Support Start Date</th>
+                    <th id="customer-basic-fname">Support End Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for agreement in agreements %}
+                <tr id="a-{{agreement.id}}" data-agreement-id="{{agreement.id}}">
+                    <td>{{agreement.id}}</td>
+                    <td>{{agreement.start_date}}</td>
+                    <td>{{agreement.support_period_from}}</td>
+                    <td>{{agreement.support_period_to}}</td>
+                </tr>
+                <tr id="a-{{agreement.id}}-detail">
+                    <td colspan="4">
+                        <pre>
+                            #{{agreement.id}} - detailt - ToDo
+                        </pre>
+                    </td>
+                </tr>
+                <script>
+                    $("#a-{{agreement.id}}").bind("click", function() {
+                        $("#a-{{agreement.id}}-detail").toggle();
+                    });
+                    $("#a-{{agreement.id}}-detail").hide();
+                </script>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="aui-group">
+            <div class="aui-item">
+                <div class="aui-message aui-message-warning">
+                    <p class="title">
+                        <strong>Warning!</strong>
+                    </p>
+                    <p>No Agreements</p>
+                </div>
+            </div>
+            <div class="aui-item"></div>
+        </div>
+    {% endif %}
+    </section>
+
+    <section style="padding: 2em 0em 0em 2em">
+        {% if contacts %}
+            <h4>Contacts</h4>
+            <form class="aui" method="POST">
+            <table class="aui" id="contacts-list" style="width: 70%">
+                <thead>
+                    <tr>
+                        <th id="basic-number">#</th>
+                        <th id="customer-basic-fname">full-name</th>
+                        <th id="customer-basic-fname">type</th>
+                        <th id="customer-basic-fname">position</th>
+                        <th id="customer-basic-fname">email</th>
+                        <th id="customer-basic-fname">phone</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contact in contacts %}
+                    <tr id="a-{{contact.id}}">
+                        <td>{{contact.id}}</td>
+                        <td>
+                            <input 
+                                class="text medium-long-field"
+                                type="text"
+                                id="full-name"
+                                name="full-name"
+                                placeholder="full name"
+                                value="{{contact.full_name}}"
+                            />
+                        </td>
+                        <td>{{contact.type}}</td>
+                        <td>
+                            <input 
+                                class="text medium-long-field"
+                                type="text"
+                                id="position"
+                                name="position"
+                                placeholder="position"
+                                value="{{contact.position}}"/>
+                        </td>
+                        <td>
+                            <input 
+                                class="text medium-long-field"
+                                type="text"
+                                id="email"
+                                name="email"
+                                placeholder="email"
+                                value="{{contact.email}}"/>
+                        </td>
+                        <td>
+                            <input 
+                                class="text medium-field"
+                                type="text"
+                                id="phone"
+                                name="phone"
+                                placeholder="phone"
+                                value="{{contact.phone}}"/>
+                        </td>
+                        <td>
+                            <i class="fas fa-save"></i>
+                            <i class="fas fa-trash-alt"></i>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    <tr id="a-{{contact.id}}">
+                        <td>#</td>
+                        <td>
+                            <input 
+                                class="text medium-long-field"
+                                type="text"
+                                id="full-name"
+                                name="full-name"
+                                placeholder="full name"/>
+                        </td>
+                        <td></td>
+                        <td>
+                            <input 
+                                class="text medium-long-field"
+                                type="text"
+                                id="position"
+                                name="position"
+                                placeholder="position"/>
+                        </td>
+                        <td>
+                            <input
+                                class="text medium-long-field"
+                                type="text"
+                                id="position"
+                                name="position"
+                                placeholder="position"/>
+                        </td>
+                        <td>
+                            <input
+                                class="text medium-field"
+                                type="text"
+                                id="phone"
+                                name="phone"
+                                placeholder="phone"/>
+                        </td>
+                        <td>
+                            <i class="fas fa-save"></i>
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
+            </form>
+        {% else %}
+            <div class="aui-group">
+                <div class="aui-item">
+                    <div class="aui-message aui-message-warning">
+                        <p class="title">
+                            <strong>Warning!</strong>
+                        </p>
+                        <p>No Contacts</p>
+                    </div>
+                </div>
+                <div class="aui-item"></div>
+            </div>
+        {% endif %}
+    </section>
+
+
+{% endblock %}

@@ -3,9 +3,12 @@
 
 {% block content %}
 
-  <head>
-    <link rel="stylesheet" type="text/css" href='{% static "atlassian/css/style.css" %}' >
-  </head>
+  <link rel="stylesheet" type="text/css" href='{% static "atlassian/css/style.css" %}' >
+  <style>
+    tr {
+      cursor: pointer;
+    }
+  </style>
 
   <header class="aui-page-header">
       <div class="aui-page-header-inner">
@@ -23,11 +26,17 @@
                   <li class="aui-nav-selected">List View</li>
               </ol>
           </div>
-          <div class="aui-page-header-actions">
-              <div class="aui-buttons">
+          <div class="aui-toolbar2" role="toolbar">
+              <div class="aui-toolbar2-inner">
+                  <div class="aui-toolbar2-secondary">
+                    <div class="aui-buttons">
+                      <button class="aui-button">New Contact</button>
+                    </div>
+                  </div>
               </div>
           </div>
       </div>
+
   </header>
 
   <section>
@@ -36,23 +45,35 @@
           <tr>
               <th id="basic-number">#</th>
               <th id="customer-basic-fname">Customer</th>
+              <th># Agreements</th>
+              <th># Contacts</th>
               <th id="city-basic-fname">City</th>
               <th id="street-basic-fname">Street</th>
-              <th id="street-basic-fname">Country</th>
+              <th id="country-basic-fname">Country</th>
           </tr>
       </thead>
       <tbody>
-        {% for customer in customers %}
+        {% for account in accounts %}
           <tr>
-            <td>{{customer.id}}</td>
+            <td>{{account.id}}</td>
             <td>
-              <a href="{% url 'sales-customers-detail-view' pk=customer.id %}">
-                {{customer.company_name}}
+              <a href="{% url 'sales-account-detail-view' pk=account.id %}">
+                {{account.company_name}}
               </a>
             </td>
-            <td>{{customer.city}}</td>
-            <td>{{customer.street}}</td>
-            <td>{{customer.country}}</td>
+            <td>
+                <aui-badge>
+                    #{{account.agreements | length}}
+                </aui-badge>
+            </td>
+            <td>
+                <aui-badge>
+                    #{{account.contacts | length}}
+                </aui-badge>
+            </td>
+            <td>{{account.city}}</td>
+            <td>{{account.street}}</td>
+            <td>{{account.country}}</td>
           </tr>
           </tr>
         {% endfor %}

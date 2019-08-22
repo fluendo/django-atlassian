@@ -54,13 +54,12 @@ urlpatterns = [
         views.customers_proxy_view,
         name='customers-proxy'),
 
-    # sales customers CRUD
+    # sales customers views
     url(r'sales/customers/$',
-        views.SalesCustomersView.as_view(),
-        name='sales-customers-view'),
-
+        views.SalesAccountsListView.as_view(),
+        name='sales-accounts-list-view'),
     url(r'sales/customers/(?P<pk>[0-9]+)/$',
-        views.SalesCustomersDetailView.as_view(),
-        name='sales-customers-detail-view'),
+        views.SalesAccountDetailView.as_view(),
+        name='sales-account-detail-view'),
 
 ]

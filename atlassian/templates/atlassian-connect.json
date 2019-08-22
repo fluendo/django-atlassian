@@ -169,7 +169,7 @@
                 "name": {
                     "value": "Customers"
                 },
-                "url": "{% url 'sales-customers-view' %}?projectKey=${project.key}",
+                "url": "{% url 'sales-accounts-list-view' %}?projectKey=${project.key}",
                 "iconUrl": "/static/atlassian/img/contacts.png",
                 "weight": 1,
                 "conditions": [
