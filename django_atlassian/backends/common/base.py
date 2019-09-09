@@ -182,15 +182,21 @@ class AtlassianDatabaseConvertion(object):
         raise NotImplementedError('missing insert implementation')
 
     def from_native(self, data, field):
-        if field[1] == 'datetime' and data is not None:
-            return parse_datetime(data)
-        elif field[1] == 'number' and data is not None:
-            return float(data)
-        elif field[1] in ['user', 'issuetype'] and data is not None:
-            return data['name']
-        else:
-            if field[12] and data.has_key('value'):
-                return data['value']
+        try:
+            if field[1] == 'datetime' and data is not None:
+                return parse_datetime(data)
+            elif field[1] == 'number' and data is not None:
+                return float(data)
+            elif field[1] in ['user', 'issuetype'] and data is not None:
+                return data['name']
+            else:
+                if field[12] and data.has_key('value'):
+                    return data['value']
+                return data
+        except Exception as err:
+            logger.error(data)
+            logger.error(field)
+            logger.error(err)
             return data
 
     def to_native(self, data, field):
