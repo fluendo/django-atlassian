@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+  <link rel="stylesheet" type="text/css" href='{% static "atlassian/css/style.css" %}' >
+  <style>
+    tr {
+      cursor: pointer;
+    }
+  </style>
+
+  <header class="aui-page-header">
+      <div class="aui-page-header-inner">
+          <div class="aui-page-header-image">
+              <span class="aui-avatar aui-avatar-large aui-avatar-project">
+                  <span class="aui-avatar-inner">
+                      <img alt="Fluendo" src='{% static "atlassian/img/fluendo.jpg" %}''>
+                  </span>
+              </span>
+          </div>
+          <div class="aui-page-header-main">
+              <ol class="aui-nav aui-nav-breadcrumbs">
+                  <li><a href="#">Fluendo</a></li>
+                  <li><a href="#" class="custom">Customers</a></li>
+                  <li class="aui-nav-selected">List View</li>
+              </ol>
+          </div>
+          <div class="aui-toolbar2" role="toolbar">
+              <div class="aui-toolbar2-inner">
+                  <div class="aui-toolbar2-secondary">
+                    <div class="aui-buttons">
+                      <button class="aui-button">New Contact</button>
+                    </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+  </header>
+
+  <section>
+    <table class="aui aui-table-sortable" id="customer-list">
+      <thead>
+          <tr>
+              <th id="basic-number">#</th>
+              <th id="customer-basic-fname">Customer</th>
+              <th># Agreements</th>
+              <th># Contacts</th>
+              <th id="city-basic-fname">City</th>
+              <th id="street-basic-fname">Street</th>
+              <th id="country-basic-fname">Country</th>
+          </tr>
+      </thead>
+      <tbody>
+        {% for account in accounts %}
+          <tr>
+            <td>{{account.id}}</td>
+            <td>
+              <a href="{% url 'sales-account-detail-view' pk=account.id %}">
+                {{account.company_name}}
+              </a>
+            </td>
+            <td>
+                <aui-badge>
+                    #{{account.agreements | length}}
+                </aui-badge>
+            </td>
+            <td>
+                <aui-badge>
+                    #{{account.contacts | length}}
+                </aui-badge>
+            </td>
+            <td>{{account.city}}</td>
+            <td>{{account.street}}</td>
+            <td>{{account.country}}</td>
+          </tr>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+{% endblock %}
