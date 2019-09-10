@@ -13,7 +13,7 @@ from django.views.decorators.cache import cache_page
 # Cache time to live is 5 minutes.
 CACHE_TTL = 60 * 5
 @cache_page(CACHE_TTL)
-def customers_proxy_cache(request):
+def customers_proxy_cache():
     web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
     api_url = settings.WEB_FLUENDO_API_SERVER + '/customers/'
     r = requests.get(api_url, headers=web_auth)
@@ -21,7 +21,7 @@ def customers_proxy_cache(request):
     return JsonResponse(data, safe=False)
 
 @xframe_options_exempt
-def customer_by_id_proxy(request, pk):
+def customer_by_id_proxy(pk):
     web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
     api_url = settings.WEB_FLUENDO_API_SERVER + '/customers/' + pk
     r = requests.get(api_url, headers=web_auth)
@@ -29,7 +29,7 @@ def customer_by_id_proxy(request, pk):
     return JsonResponse(data, safe=False)
 
 @xframe_options_exempt
-def agreements_by_account_id(request, agreement_pk, account_pk=None):
+def agreements_by_account_id(agreement_pk, account_pk=None):
     web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
     api_url = settings.WEB_FLUENDO_API_SERVER + '/agreements/' + str(agreement_pk)
     if account_pk:
@@ -39,7 +39,7 @@ def agreements_by_account_id(request, agreement_pk, account_pk=None):
     return JsonResponse(data, safe=False)
 
 @xframe_options_exempt
-def account_contacts_by_pk(request, contact_pk):
+def account_contacts_by_pk(contact_pk):
     web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
     api_url = settings.WEB_FLUENDO_API_SERVER + '/customers/contacts/'
     if contact_pk:
@@ -47,3 +47,14 @@ def account_contacts_by_pk(request, contact_pk):
     r = requests.get(api_url, headers=web_auth)
     data = r.json()
     return JsonResponse(data, safe=False)
+
+@xframe_options_exempt
+def patch_customer(account_pk, json_data):
+    if account_pk:
+        web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
+        api_url_str = settings.WEB_FLUENDO_API_SERVER + '/customers/{pk}/'
+        api_url = api_url_str.format(pk=account_pk)
+        r = requests.patch(api_url, headers=web_auth, json=json_data)
+        return r
+    else:
+        return False
