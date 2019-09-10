@@ -41,9 +41,9 @@ def agreements_by_account_id(request, agreement_pk, account_pk=None):
 @xframe_options_exempt
 def account_contacts_by_pk(request, contact_pk):
     web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
-    api_url = settings.WEB_FLUENDO_API_SERVER + '/customer-contacts/'
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/customers/contacts/'
     if contact_pk:
         api_url += "{pk}/".format(pk=contact_pk)
     r = requests.get(api_url, headers=web_auth)
     data = r.json()
-    return JsonResponse(data, safe=False) 
+    return JsonResponse(data, safe=False)
