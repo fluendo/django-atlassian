@@ -16,6 +16,7 @@ from django.shortcuts import render
 from django.conf import settings
 from django.views.decorators.cache import cache_page
 from django.http import JsonResponse, Http404
+from django.contrib import messages
 
 from django_atlassian.decorators import jwt_required
 
@@ -26,6 +27,10 @@ from proxy_api import (
     customer_by_id_proxy,
     customers_proxy_cache,
     account_contacts_by_pk,
+)
+
+from proxy_api import (
+    patch_customer
 )
 
 # For initiative to epic relationships create a linkedtype of "Belongs to" or something similar. Store it as a global configuration.
@@ -233,7 +238,7 @@ def customers_view(request):
     if key:
         issue = Issue.objects.get(key=key)
     
-    customers = customers_proxy_cache(request)
+    customers = customers_proxy_cache()
     if customers:
         customers_json = json.loads(customers.content)
 
@@ -265,7 +270,7 @@ def customers_view(request):
 
 @xframe_options_exempt
 def customers_proxy_view(request):
-    return customers_proxy_cache(request)
+    return customers_proxy_cache()
 
 
 @csrf_protect
@@ -317,7 +322,7 @@ class SalesAccountsListView(View):
 
     @method_decorator(xframe_options_exempt, jwt_required)
     def get(self, request, *args, **kwargs):
-        accounts = customers_proxy_cache(request, *args, **kwargs)
+        accounts = customers_proxy_cache(None, *args, **kwargs)
         return render(
             request,
             self.template_name,
@@ -332,17 +337,17 @@ class SalesAccountDetailView(View):
     def get(self, request, *args, **kwargs):
         account_pk = kwargs.get('pk', None)
         if account_pk:
-            account_json = customer_by_id_proxy(request, account_pk)
+            account_json = customer_by_id_proxy(account_pk)
             account = json.loads(account_json.content)
             
             agreements = []
             for agreement_pk in account['agreements']:
-                agreements_json = agreements_by_account_id(request, agreement_pk)
+                agreements_json = agreements_by_account_id(agreement_pk)
                 agreements += [json.loads(agreements_json.content)]
 
             contacts = []
             for contact_pk in account['contacts']:
-                contacts_json = account_contacts_by_pk(request, contact_pk)
+                contacts_json = account_contacts_by_pk(contact_pk)
                 contacts += [json.loads(contacts_json.content)]
 
             return render(
@@ -357,7 +362,17 @@ class SalesAccountDetailView(View):
         else:
             return Http404()
     
-    @method_decorator(xframe_options_exempt)
+    @method_decorator(xframe_options_exempt, csrf_protect)
     def post(self, request, *args, **kwargs):
-        pk = kwargs.get('pk', None)
-        return redirect('sales-account-detail-view', pk=pk)
+        account_pk = kwargs.get('pk', None)
+        if account_pk:
+            #import ipdb; ipdb.set_trace()
+            json_data = request.POST.dict()
+            response = patch_customer(account_pk, json_data)
+            if response.status_code == 200:
+                    messages.info(request, response.status_code)
+            else:
+                messages.warning(request, response.status_code)
+        else:
+            return Http404()
+        return redirect('sales-account-detail-view', pk=account_pk)
