@@ -49,7 +49,8 @@ def account_contacts_by_pk(contact_pk):
     return JsonResponse(data, safe=False)
 
 @xframe_options_exempt
-def patch_customer(account_pk, json_data):
+def patch_account(account_pk, json_data):
+    #import ipdb; ipdb.set_trace()
     if account_pk:
         web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
         api_url_str = settings.WEB_FLUENDO_API_SERVER + '/customers/{pk}/'

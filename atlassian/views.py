@@ -30,7 +30,7 @@ from proxy_api import (
 )
 
 from proxy_api import (
-    patch_customer
+    patch_account
 )
 
 from atlassian.forms import AccountForm
@@ -372,12 +372,22 @@ class SalesAccountDetailView(View):
         account_pk = kwargs.get('pk', None)
         if account_pk:
             #import ipdb; ipdb.set_trace()
-            json_data = request.POST.dict()
-            response = patch_customer(account_pk, json_data)
+            form = AccountForm(request.POST)
+            if not form.is_valid():
+                messages.error('form data error')
+                return redirect('sales-account-detail-view', pk=account_pk)
+            json_data = form.data.dict()
+            response = patch_account(account_pk, json_data)
             if response.status_code == 200:
-                    messages.info(request, response.status_code)
+                    messages.success(
+                        request,
+                        str(response.status_code) + ': OK' #+ response.text
+                    )
             else:
-                messages.warning(request, response.status_code)
+                messages.warning(
+                    request,
+                    str(response.status_code) + ': ' + response.text
+                )
         else:
             return Http404()
         return redirect('sales-account-detail-view', pk=account_pk)
