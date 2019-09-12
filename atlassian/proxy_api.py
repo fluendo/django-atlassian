@@ -47,3 +47,30 @@ def account_contacts_by_pk(request, contact_pk):
     r = requests.get(api_url, headers=web_auth)
     data = r.json()
     return JsonResponse(data, safe=False) 
+
+
+@cache_page(CACHE_TTL)
+def contacts_proxy_cache(request):
+    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/contacts/'
+    r = requests.get(api_url, headers=web_auth)
+    data = sorted(r.json(), key=operator.itemgetter('created_at'))
+    return JsonResponse(data, safe=False)
+
+@xframe_options_exempt
+def contact_by_id_proxy(request, pk):
+    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/contacts/' + pk
+    r = requests.get(api_url, headers=web_auth)
+    data = r.json()
+    return JsonResponse(data, safe=False)
+
+@xframe_options_exempt
+def contact_proxy_patch(contact_pk, data):
+    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN,
+                'Content-Type': 'application/json'}
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/contacts/{}/'
+    api_url = api_url.format(contact_pk)
+    r = requests.patch(api_url, data=data, headers=web_auth)
+    data = r.json()
+    return JsonResponse(data, safe=False)

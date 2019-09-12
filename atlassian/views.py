@@ -25,8 +25,13 @@ from proxy_api import (
     agreements_by_account_id,
     customer_by_id_proxy,
     customers_proxy_cache,
+    contact_by_id_proxy,
+    contacts_proxy_cache,
+    contact_proxy_patch,
     account_contacts_by_pk,
 )
+
+from .forms import ContactForm
 
 # For initiative to epic relationships create a linkedtype of "Belongs to" or something similar. Store it as a global configuration.
 # Create a entitytype property searchable for that, then on JQL we can say parentStatus = 'Done' o better parentResolved
@@ -355,9 +360,58 @@ class SalesAccountDetailView(View):
                 }
             )
         else:
-            return Http404()
+            raise Http404()
     
     @method_decorator(xframe_options_exempt)
     def post(self, request, *args, **kwargs):
         pk = kwargs.get('pk', None)
         return redirect('sales-account-detail-view', pk=pk)
+
+
+class SalesContactsListView(View):
+    template_name = 'sales/contact-list-view.html'
+
+    @method_decorator(xframe_options_exempt, jwt_required)
+    def get(self, request, *args, **kwargs):
+        contacts = contacts_proxy_cache(request, *args, **kwargs)
+        return render(
+            request,
+            self.template_name,
+            {'contacts': json.loads(contacts.content)}
+        )
+
+
+class SalesContactsDetailView(View):
+    template_name = "sales/contact-detail-view.html"
+    form_class = ContactForm
+
+    @method_decorator(xframe_options_exempt, jwt_required)
+    def get(self, request, *args, **kwargs):
+        contact_pk = kwargs.get('pk', None)
+
+        if contact_pk:
+            contact_json = contact_by_id_proxy(request, contact_pk)
+            contact = json.loads(contact_json.content) 
+            return render(
+                request,
+                self.template_name,
+                {
+                    'form': self.form_class(initial=contact),
+                }
+            )
+        else:
+            raise Http404()
+            
+    @method_decorator(xframe_options_exempt, jwt_required)
+    def post(self, request, *args, **kwargs):
+        contact_pk = kwargs.get('pk', None) 
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            contact_json = json.dumps(form.cleaned_data)
+            response = contact_proxy_patch(contact_pk, contact_json)
+            if response.status_code == 200:
+                pass
+
+        else:
+            raise Http404()
+        return redirect('sales-contacts-detail-view', pk=contact_pk)
