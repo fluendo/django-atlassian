@@ -19,7 +19,11 @@
           <div class="aui-page-header-main">
               <ol class="aui-nav aui-nav-breadcrumbs">
                   <li><a href="#">Fluendo</a></li>
-                  <li><a href="#" class="custom">Customers</a></li>
+                  <li>
+                      <a href="{% url 'sales-accounts-list-view' %}" class="custom">
+                      Accounts
+                      </a>
+                  </li>
                   <li class="aui-nav-selected">Detail View</li>
               </ol>
               <h1>{{account.company_name}}</h1>

@@ -62,18 +62,19 @@ AUTHENTICATION_BACKENDS = [
     #'django_auth_ldap.backend.LDAPBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
-
-STATIC_ROOT= os.path.join('/home/ubuntu/static_media')
+STATIC_ROOT= os.path.join(os.path.dirname(BASE_DIR), 'static_media')
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS += [
     'django_atlassian.apps.DjangoAtlassianConfig',
     'atlassian.apps.AtlassianConfig',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE += [
     'django_atlassian.middleware.JWTAuthenticationMiddleware',
     'jira_addon.middleware.multihost.MultiHostMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 HOST_MIDDLEWARE_URLCONF_MAP = {
@@ -81,6 +82,8 @@ HOST_MIDDLEWARE_URLCONF_MAP = {
     "jira-addon.fluendo.com": "jira_addon.atlassian_urls",
     "localhost": "jira_addon.atlassian_urls",
 }
+
+INTERNAL_IPS = ['127.0.0.1', 'localhost']
 
 # Celery related configuration
 CELERY_BROKER_URL = 'redis://redis:6379'

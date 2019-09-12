@@ -22,7 +22,7 @@
           <div class="aui-page-header-main">
               <ol class="aui-nav aui-nav-breadcrumbs">
                   <li><a href="#">Fluendo</a></li>
-                  <li><a href="{% url 'sales-accounts-list-view' %}" class="custom">Accounts</a></li>
+                  <li><a href="#" class="custom">Contact</a></li>
                   <li class="aui-nav-selected">List View</li>
               </ol>
           </div>
@@ -44,36 +44,30 @@
       <thead>
           <tr>
               <th id="basic-number">#</th>
-              <th id="customer-basic-fname">Customer</th>
-              <th># Agreements</th>
-              <th># Contacts</th>
-              <th id="city-basic-fname">City</th>
-              <th id="street-basic-fname">Street</th>
-              <th id="country-basic-fname">Country</th>
+              <th id="customer-basic-fname">Full Name</th>
+              <th>Email</th>
+              <th>User</th>
+              <th>Create At</th>
           </tr>
       </thead>
       <tbody>
-        {% for account in accounts %}
+        {% for contact in contacts %}
           <tr>
-            <td>{{account.id}}</td>
+            <td>{{contact.id}}</td>
             <td>
-              <a href="{% url 'sales-account-detail-view' pk=account.id %}">
-                {{account.company_name}}
+              <a href="{% url 'sales-contacts-detail-view' pk=contact.id %}">
+                {{contact.first_name}} {{contact.last_name}} 
               </a>
             </td>
             <td>
-                <aui-badge>
-                    #{{account.agreements | length}}
-                </aui-badge>
+              {{contact.email}}
             </td>
             <td>
-                <aui-badge>
-                    #{{account.contacts | length}}
-                </aui-badge>
+              {{contact.user}} 
             </td>
-            <td>{{account.city}}</td>
-            <td>{{account.street}}</td>
-            <td>{{account.country}}</td>
+            <td>
+              {{contact.created_at}}
+            </td>
           </tr>
           </tr>
         {% endfor %}

@@ -1,0 +1,5 @@
+venv/
+static_media/
+*.pyc
+.vscode/
+jira-addon-venv

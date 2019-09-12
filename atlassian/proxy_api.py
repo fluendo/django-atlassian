@@ -55,7 +55,34 @@ def patch_account(account_pk, json_data):
         web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
         api_url_str = settings.WEB_FLUENDO_API_SERVER + '/customers/{pk}/'
         api_url = api_url_str.format(pk=account_pk)
-        r = requests.patch(api_url, headers=web_auth, json=json_data)
-        return r
+        data = requests.patch(api_url, headers=web_auth, json=json_data)
     else:
         return False
+    return JsonResponse(data.json(), safe=False)
+
+
+@cache_page(CACHE_TTL)
+def contacts_proxy_cache(request):
+    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/contacts/'
+    r = requests.get(api_url, headers=web_auth)
+    data = sorted(r.json(), key=operator.itemgetter('created_at'))
+    return JsonResponse(data, safe=False)
+
+@xframe_options_exempt
+def contact_by_id_proxy(request, pk):
+    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/contacts/' + pk
+    r = requests.get(api_url, headers=web_auth)
+    data = r.json()
+    return JsonResponse(data, safe=False)
+
+@xframe_options_exempt
+def contact_proxy_patch(contact_pk, data):
+    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN,
+                'Content-Type': 'application/json'}
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/contacts/{}/'
+    api_url = api_url.format(contact_pk)
+    r = requests.patch(api_url, data=data, headers=web_auth)
+    data = r.json()
+    return JsonResponse(data, safe=False)
