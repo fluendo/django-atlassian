@@ -13,7 +13,7 @@ from django.views.decorators.cache import cache_page
 # Cache time to live is 5 minutes.
 CACHE_TTL = 60 * 5
 @cache_page(CACHE_TTL)
-def customers_proxy_cache():
+def customers_proxy_cache(request):
     web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
     api_url = settings.WEB_FLUENDO_API_SERVER + '/customers/'
     r = requests.get(api_url, headers=web_auth)
