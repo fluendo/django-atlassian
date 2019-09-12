@@ -50,16 +50,14 @@ def account_contacts_by_pk(contact_pk):
 
 @xframe_options_exempt
 def patch_account(account_pk, json_data):
-    #import ipdb; ipdb.set_trace()
     if account_pk:
         web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
         api_url_str = settings.WEB_FLUENDO_API_SERVER + '/customers/{pk}/'
         api_url = api_url_str.format(pk=account_pk)
         data = requests.patch(api_url, headers=web_auth, json=json_data)
+        return data
     else:
         return False
-    return JsonResponse(data.json(), safe=False)
-
 
 @cache_page(CACHE_TTL)
 def contacts_proxy_cache(request):

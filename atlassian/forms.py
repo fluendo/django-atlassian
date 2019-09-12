@@ -4,7 +4,6 @@ from django import forms
 class AutoForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
         super(forms.Form, self).__init__(*args, **kwargs)
         initial = kwargs.get('initial')
         if initial:

@@ -378,7 +378,6 @@ class SalesAccountDetailView(View):
     def post(self, request, *args, **kwargs):
         account_pk = kwargs.get('pk', None)
         if account_pk:
-            #import ipdb; ipdb.set_trace()
             form = AccountForm(request.POST)
             if not form.is_valid():
                 messages.error('form data error')
