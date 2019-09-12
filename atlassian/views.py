@@ -33,6 +33,8 @@ from proxy_api import (
     patch_customer
 )
 
+from atlassian.forms import AccountForm
+
 # For initiative to epic relationships create a linkedtype of "Belongs to" or something similar. Store it as a global configuration.
 # Create a entitytype property searchable for that, then on JQL we can say parentStatus = 'Done' o better parentResolved
 # For dates, we can use start date and due date, start date is part of a plugin so we might let the user choose what fields
@@ -350,10 +352,13 @@ class SalesAccountDetailView(View):
                 contacts_json = account_contacts_by_pk(contact_pk)
                 contacts += [json.loads(contacts_json.content)]
 
+            account_form = AccountForm(initial=account)
+
             return render(
                 request,
                 self.template_name,
                 {
+                    'account_form': account_form,
                     'account': account,
                     'agreements': agreements,
                     'contacts': contacts,
