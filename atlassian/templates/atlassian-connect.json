@@ -165,9 +165,9 @@
         ],
         "jiraProjectPages": [
             {
-                "key": "sales-customers",
+                "key": "sales-accounts",
                 "name": {
-                    "value": "Customers"
+                    "value": "Accounts"
                 },
                 "url": "{% url 'sales-accounts-list-view' %}?projectKey=${project.key}",
                 "iconUrl": "/static/atlassian/img/contacts.png",

@@ -19,7 +19,11 @@
           <div class="aui-page-header-main">
               <ol class="aui-nav aui-nav-breadcrumbs">
                   <li><a href="#">Fluendo</a></li>
-                  <li><a href="#" class="custom">Customers</a></li>
+                  <li>
+                      <a href="{% url 'sales-accounts-list-view' %}" class="custom">
+                      Accounts
+                      </a>
+                  </li>
                   <li class="aui-nav-selected">Detail View</li>
               </ol>
               <h1>{{account.company_name}}</h1>
@@ -41,46 +45,31 @@
         </div>
     </div>
 
+    {% if messages %}
+    {% for message in messages %}
+    <div class="aui-message aui-message-{{ message.tags }}" style="width: 20%; margin-left: 2%;">
+        <p>{{message}}</p>
+    </div>
+    {% endfor %}
+    {% endif %}
+
     <section>
     <form class="aui" method="POST">
         {% csrf_token %}
         <div class="field-group">
 
-            <label for="company-name">Company Name</label>
+            {% for field in account_form %}
+            <label for="{{field.name}}">{{field.label}}</label>
             <input class="text medium-long-field"
                 type="text"
-                id="company-name"
-                name="company-name"
-                placeholder="company name"
-                value="{{account.company_name}}"/>
-            <div class="description"></div>
-
-            <label for="company-name">Street</label>
-            <input class="text medium-long-field"
-                type="text"
-                id="street"
-                name="street"
-                placeholder="street"
-                value="{{account.street}}"/>
-            <div class="description"></div>
-
-            <label for="company-name">City</label>
-            <input class="text medium-long-field"
-                type="text"
-                id="city"
-                name="city"
-                placeholder="city"
-                value="{{account.city}}"/>
-                <div class="description"></div>
-
-            <label for="company-name">Postal Code</label>
-            <input class="text short-field"
-                type="text"
-                id="pcode"
-                name="pcode"
-                placeholder="postal code"
-                value="{{account.postal_code}}"/>
-                <div class="description"></div>
+                id="{{field.name}}"
+                name="{{field.name}}"
+                placeholder="{{field.label}}"
+                value="{{field.value | default_if_none:''}}"/>
+            <div class="description">
+                <span></span>
+            </div>
+            {% endfor %}
 
         </div>
 
@@ -90,7 +79,7 @@
                     type="submit"
                     value="Update"
                     id="comment-save-button">
-                <a class="cancel" href="#">Cancel</a>
+                <a class="cancel" href="">Cancel</a>
             </div>
         </div>
 
@@ -152,6 +141,7 @@
         {% if contacts %}
             <h4>Contacts</h4>
             <form class="aui" method="POST">
+            {% csrf_token %}
             <table class="aui" id="contacts-list" style="width: 70%">
                 <thead>
                     <tr>
