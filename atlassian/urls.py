@@ -1,4 +1,5 @@
-from django.conf.urls import url
+from django.conf import settings
+from django.conf.urls import url, include
 
 import views
 
@@ -54,12 +55,24 @@ urlpatterns = [
         views.customers_proxy_view,
         name='customers-proxy'),
 
-    # sales customers views
+    # sales customers, contacts views
     url(r'sales/customers/$',
         views.SalesAccountsListView.as_view(),
         name='sales-accounts-list-view'),
     url(r'sales/customers/(?P<pk>[0-9]+)/$',
         views.SalesAccountDetailView.as_view(),
         name='sales-account-detail-view'),
+    url(r'sales/contacts/$',
+        views.SalesContactsListView.as_view(),
+        name='sales-contacts-list-view'),
+    url(r'sales/contacts/(?P<pk>[0-9]+)/$',
+        views.SalesContactsDetailView.as_view(),
+        name='sales-contacts-detail-view'),
 
 ]
+
+if settings.DEBUG and 'debug_toolbar' in settings.INSTALLED_APPS:
+    import debug_toolbar
+    urlpatterns += [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ]
