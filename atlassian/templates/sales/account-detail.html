@@ -47,7 +47,8 @@
 
     {% if messages %}
     {% for message in messages %}
-    <div class="aui-message aui-message-{{ message.tags }}" style="width: 20%; margin-left: 2%;">
+    <div class="aui-message aui-message-{{ message.tags }}"
+        style="width: 40%; margin-left: 2%;">
         <p>{{message}}</p>
     </div>
     {% endfor %}
@@ -60,7 +61,7 @@
             {% for group, group_fields in account_form.groups.items %}
             <div class="aui-item">
                 <div class="field-group">
-                    <h4>{{ group | upper }}</h4><hr/>
+                    <h4>{{ group | upper }}</h4>
                     {% for field in account_form %}
                     {% if field.name in group_fields %}
                     <label for="{{field.name}}">{{field.label}}</label>
