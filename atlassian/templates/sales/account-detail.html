@@ -56,7 +56,7 @@
     <section>
     <form class="aui" method="POST">
         {% csrf_token %}
-        <div class="aui-group">
+        <div class="aui-group" style="padding-right: 2em;">
             {% for group, group_fields in account_form.groups.items %}
             <div class="aui-item">
                 <div class="field-group">

@@ -10,18 +10,22 @@ class AutoForm(forms.Form):
             for k,v in initial.items():
                 if k not in self.exclude:
                     if type(v) == int:
-                        self.fields[k] = forms.IntegerField()
+                        self.fields[k] = forms.IntegerField(
+                            required=False)
                         self.fields[k].widget.attrs['class'] = 'text'
                     elif type(v) in (type(True), type(False)):
-                        self.fields[k] = forms.BooleanField()
+                        self.fields[k] = forms.BooleanField(
+                            initial=True, required=False)
                         self.fields[k].widget.attrs['class'] = ''
                     else:
-                        self.fields[k] = forms.CharField()
+                        self.fields[k] = forms.CharField(
+                            required=False)
                         self.fields[k].widget.attrs['class'] = 'text medium-long-field'
 
 
 class AccountForm(AutoForm):
     exclude = ['id', 'contact', 'contacts', 'agreements']
+    boolean_fields = ['show_welcome', 'enable_send_mails']
     groups = {
         'info':[
             'street',
@@ -48,6 +52,14 @@ class AccountForm(AutoForm):
             'user',
         ],
     }
+
+    def fix_boolean_fields(self):
+        for k in self.boolean_fields:
+            field = self.cleaned_data.get(k)
+            if field:
+                self.cleaned_data[k] = True
+            else:
+                self.cleaned_data[k] = False
 
 
 class ContactForm(forms.Form):
