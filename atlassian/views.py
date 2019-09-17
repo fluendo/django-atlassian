@@ -350,12 +350,12 @@ class SalesAccountDetailView(View):
             account = json.loads(account_json.content)
             
             agreements = []
-            for agreement_pk in account['agreements']:
+            for agreement_pk in account['reselleragreement_set']:
                 agreements_json = agreements_by_account_id(agreement_pk)
                 agreements += [json.loads(agreements_json.content)]
 
             contacts = []
-            for contact_pk in account['contacts']:
+            for contact_pk in account['customercontact_set']:
                 contacts_json = account_contacts_by_pk(contact_pk)
                 contacts += [json.loads(contacts_json.content)]
 
@@ -378,23 +378,26 @@ class SalesAccountDetailView(View):
     def post(self, request, *args, **kwargs):
         account_pk = kwargs.get('pk', None)
         if account_pk:
-            #import ipdb; ipdb.set_trace()
-            form = AccountForm(request.POST)
-            if not form.is_valid():
-                messages.error('form data error')
-                return redirect('sales-account-detail-view', pk=account_pk)
-            json_data = form.data.dict()
-            response = patch_account(account_pk, json_data)
-            if response.status_code == 200:
-                    messages.success(
+            form = AccountForm(
+                data=request.POST,
+                initial=request.POST)
+            if form.is_valid():
+                form.fix_boolean_fields()
+                json_data = form.cleaned_data
+                response = patch_account(account_pk, json_data)
+                if response.status_code == 200:
+                        messages.success(
+                            request,
+                            str(response.status_code) + ': OK' #+ response.text
+                        )
+                else:
+                    messages.warning(
                         request,
-                        str(response.status_code) + ': OK' #+ response.text
+                        str(response.status_code) + ': ' + response.text
                     )
             else:
-                messages.warning(
-                    request,
-                    str(response.status_code) + ': ' + response.text
-                )
+                messages.error('form data error')
+                return redirect('sales-account-detail-view', pk=account_pk)
         else:
             return Http404()
         return redirect('sales-account-detail-view', pk=account_pk)

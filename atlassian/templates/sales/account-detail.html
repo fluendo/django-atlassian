@@ -47,7 +47,8 @@
 
     {% if messages %}
     {% for message in messages %}
-    <div class="aui-message aui-message-{{ message.tags }}" style="width: 20%; margin-left: 2%;">
+    <div class="aui-message aui-message-{{ message.tags }}"
+        style="width: 40%; margin-left: 2%;">
         <p>{{message}}</p>
     </div>
     {% endfor %}
@@ -56,21 +57,21 @@
     <section>
     <form class="aui" method="POST">
         {% csrf_token %}
-        <div class="field-group">
-
-            {% for field in account_form %}
-            <label for="{{field.name}}">{{field.label}}</label>
-            <input class="text medium-long-field"
-                type="text"
-                id="{{field.name}}"
-                name="{{field.name}}"
-                placeholder="{{field.label}}"
-                value="{{field.value | default_if_none:''}}"/>
-            <div class="description">
-                <span></span>
+        <div class="aui-group" style="padding-right: 2em;">
+            {% for group, group_fields in account_form.groups.items %}
+            <div class="aui-item">
+                <div class="field-group">
+                    <h4>{{ group | upper }}</h4>
+                    {% for field in account_form %}
+                    {% if field.name in group_fields %}
+                    <label for="{{field.name}}">{{field.label}}</label>
+                    {{ field }}
+                    <div class="description"></div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
             </div>
-            {% endfor %}
-
+            {% endfor%}
         </div>
 
         <div class="buttons-container">
