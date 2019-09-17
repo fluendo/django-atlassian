@@ -350,12 +350,12 @@ class SalesAccountDetailView(View):
             account = json.loads(account_json.content)
             
             agreements = []
-            for agreement_pk in account['agreements']:
+            for agreement_pk in account['reselleragreement_set']:
                 agreements_json = agreements_by_account_id(agreement_pk)
                 agreements += [json.loads(agreements_json.content)]
 
             contacts = []
-            for contact_pk in account['contacts']:
+            for contact_pk in account['customercontact_set']:
                 contacts_json = account_contacts_by_pk(contact_pk)
                 contacts += [json.loads(contacts_json.content)]
 
