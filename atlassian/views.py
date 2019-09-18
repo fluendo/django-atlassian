@@ -247,7 +247,7 @@ def customers_view(request):
     if key:
         issue = Issue.objects.get(key=key)
     
-    customers = customers_proxy_cache()
+    customers = customers_proxy_cache(request)
     if customers:
         customers_json = json.loads(customers.content)
 
