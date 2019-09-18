@@ -446,7 +446,6 @@ class SalesContactsDetailView(View):
             if form.is_valid():
                 contact_json = json.dumps(form.cleaned_data)
                 response = contact_proxy_patch(contact_pk, contact_json)
-                import ipdb; ipdb.set_trace()
                 if response.status_code == 200:
                     messages.success(
                         request,

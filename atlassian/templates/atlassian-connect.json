@@ -18,23 +18,18 @@
     ],
     "apiVersion": 1,
     "modules": {
-        "generalPages": [
-            {
-                "url": "{% url 'atlassian-hello-world' %}",
-                "key": "hello-world",
-                "location": "system.top.navigation.bar",
-                "name": {
-                    "value": "Fluendo"
-                },
-                "conditions": [
-                    {
-                        "condition": "user_is_logged_in"
-                    }
-                ]
-            }
-        ],
-        "webhooks": [
-            {
+        "generalPages": [{
+            "url": "{% url 'atlassian-hello-world' %}",
+            "key": "hello-world",
+            "location": "system.top.navigation.bar",
+            "name": {
+                "value": "Fluendo"
+            },
+            "conditions": [{
+                "condition": "user_is_logged_in"
+            }]
+        }],
+        "webhooks": [{
                 "name": "Jira Issue Updated",
                 "key": "jira-issue-updated",
                 "event": "jira:issue_updated",
@@ -55,8 +50,7 @@
                 ]
             }
         ],
-        "jiraIssueFields": [
-            {
+        "jiraIssueFields": [{
                 "key": "accumulated-progress",
                 "description": {
                     "value": "Total amount in hours of an issue in progress state"
@@ -85,42 +79,34 @@
             },
             "entityType": "issue",
             "keyConfigurations": [{
-                "propertyKey" : "customers",
-                "extractions" : [
-                    {
-                        "objectName" : "customer",
-                        "type" : "text"
+                "propertyKey": "customers",
+                "extractions": [{
+                        "objectName": "customer",
+                        "type": "text"
                     },
                     {
-                        "objectName" : "customer_id",
-                        "type" : "number"
+                        "objectName": "customer_id",
+                        "type": "number"
                     }
                 ]
             }],
-            "conditions": [
-                {
-                    "condition": "user_is_logged_in"
-                }
-            ]
+            "conditions": [{
+                "condition": "user_is_logged_in"
+            }]
         }],
-        "webPanels": [
-            {
-                "url": "/atlassian/customers-view?key={issue.key}",
-                "location": "atl.jira.view.issue.right.context",
-                "weight": 50,
-                "name": {
-                  "value": "Fluendo"
-                },
-                "key": "fluendo-issue-customer",
-                "conditions": [
-                    {
-                        "condition": "user_is_logged_in"
-                    }
-                ]
-            }
-        ],
-        "jiraWorkflowPostFunctions": [
-            {
+        "webPanels": [{
+            "url": "/atlassian/customers-view?key={issue.key}",
+            "location": "atl.jira.view.issue.right.context",
+            "weight": 50,
+            "name": {
+                "value": "Fluendo"
+            },
+            "key": "fluendo-issue-customer",
+            "conditions": [{
+                "condition": "user_is_logged_in"
+            }]
+        }],
+        "jiraWorkflowPostFunctions": [{
                 "key": "postfunction-increment-field",
                 "description": {
                     "value": "Increments an issue field by one"
@@ -163,8 +149,7 @@
                 }
             }
         ],
-        "jiraProjectPages": [
-            {
+        "jiraProjectPages": [{
                 "key": "sales-accounts",
                 "name": {
                     "value": "Accounts"
@@ -172,11 +157,21 @@
                 "url": "{% url 'sales-accounts-list-view' %}?projectKey=${project.key}",
                 "iconUrl": "/static/atlassian/img/contacts.png",
                 "weight": 1,
-                "conditions": [
-                    {
-                        "condition": "user_is_logged_in"
-                    }
-                ]
+                "conditions": [{
+                    "condition": "user_is_logged_in"
+                }]
+            },
+            {
+                "key": "sales-contacts",
+                "name": {
+                    "value": "Contacts"
+                },
+                "url": "{% url 'sales-contacts-list-view' %}?projectKey=${project.key}",
+                "iconUrl": "/static/atlassian/img/contacts.png",
+                "weight": 1,
+                "conditions": [{
+                    "condition": "user_is_logged_in"
+                }]
             }
         ]
     }
