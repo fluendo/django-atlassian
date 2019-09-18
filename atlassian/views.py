@@ -279,7 +279,7 @@ def customers_view(request):
 
 @xframe_options_exempt
 def customers_proxy_view(request):
-    return customers_proxy_cache()
+    return customers_proxy_cache(request)
 
 
 @csrf_protect
