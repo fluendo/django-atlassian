@@ -30,6 +30,7 @@ from proxy_api import (
     contacts_proxy_cache,
     contact_proxy_patch,
     account_contacts_by_pk,
+    user_proxy,
 )
 
 from proxy_api import (
@@ -247,7 +248,7 @@ def customers_view(request):
     if key:
         issue = Issue.objects.get(key=key)
     
-    customers = customers_proxy_cache()
+    customers = customers_proxy_cache(request)
     if customers:
         customers_json = json.loads(customers.content)
 
@@ -279,7 +280,7 @@ def customers_view(request):
 
 @xframe_options_exempt
 def customers_proxy_view(request):
-    return customers_proxy_cache()
+    return customers_proxy_cache(request)
 
 
 @csrf_protect
@@ -441,12 +442,31 @@ class SalesContactsDetailView(View):
     def post(self, request, *args, **kwargs):
         contact_pk = kwargs.get('pk', None) 
         form = self.form_class(request.POST)
-        if form.is_valid():
-            contact_json = json.dumps(form.cleaned_data)
-            response = contact_proxy_patch(contact_pk, contact_json)
-            if response.status_code == 200:
-                pass
-
+        if contact_pk:
+            if form.is_valid():
+                contact_json = json.dumps(form.cleaned_data)
+                response = contact_proxy_patch(contact_pk, contact_json)
+                import ipdb; ipdb.set_trace()
+                if response.status_code == 200:
+                    messages.success(
+                        request,
+                        str(response.status_code) + ': OK' #+ response.text
+                    )
+                else:
+                    messages.warning(
+                        request,
+                        str(response.status_code) + ': ' + response.content
+                    )
+            else:
+                messages.error(request, str(form.errors))
         else:
             raise Http404()
         return redirect('sales-contacts-detail-view', pk=contact_pk)
+
+class SalesUsersSearch(View):
+
+    @method_decorator(xframe_options_exempt, jwt_required)
+    def get(self, request, *args, **kwargs):
+        search = request.GET.get('q', '')
+        return user_proxy(search)
+
