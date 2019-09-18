@@ -21,7 +21,7 @@ def customers_proxy_cache(request):
     return JsonResponse(data, safe=False)
 
 @xframe_options_exempt
-def customer_by_id_proxy(pk):
+def customer_by_id_proxy(request, pk):
     web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
     api_url = settings.WEB_FLUENDO_API_SERVER + '/customers/' + pk
     r = requests.get(api_url, headers=web_auth)
@@ -29,7 +29,7 @@ def customer_by_id_proxy(pk):
     return JsonResponse(data, safe=False)
 
 @xframe_options_exempt
-def agreements_by_account_id(agreement_pk, account_pk=None):
+def agreements_by_account_id(request, agreement_pk, account_pk=None):
     web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
     api_url = settings.WEB_FLUENDO_API_SERVER + '/agreements/' + str(agreement_pk)
     if account_pk:
@@ -39,14 +39,14 @@ def agreements_by_account_id(agreement_pk, account_pk=None):
     return JsonResponse(data, safe=False)
 
 @xframe_options_exempt
-def account_contacts_by_pk(contact_pk):
+def account_contacts_by_pk(request, contact_pk):
     web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
     api_url = settings.WEB_FLUENDO_API_SERVER + '/customers/contacts/'
     if contact_pk:
         api_url += "{pk}/".format(pk=contact_pk)
     r = requests.get(api_url, headers=web_auth)
     data = r.json()
-    return JsonResponse(data, safe=False)
+    return JsonResponse(data, safe=False) 
 
 @xframe_options_exempt
 def patch_account(account_pk, json_data):
@@ -82,5 +82,15 @@ def contact_proxy_patch(contact_pk, data):
     api_url = settings.WEB_FLUENDO_API_SERVER + '/contacts/{}/'
     api_url = api_url.format(contact_pk)
     r = requests.patch(api_url, data=data, headers=web_auth)
+    data = r.json()
+    return JsonResponse(data, status=r.status_code, reason=r.reason, safe=False)
+
+@xframe_options_exempt
+def user_proxy(search):
+    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN,
+                'Content-Type': 'application/json'}
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/users/?q={}'
+    api_url = api_url.format(search)
+    r = requests.get(api_url, headers=web_auth)
     data = r.json()
     return JsonResponse(data, safe=False)
