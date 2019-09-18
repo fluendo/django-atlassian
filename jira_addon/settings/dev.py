@@ -20,7 +20,7 @@ URL_BASE = os.environ.get('URL_BASE')
 WEB_FLUENDO_API_SERVER = os.environ.get('WEB_FLUENDO_API_SERVER')
 WEB_FLUENDO_TOKEN = os.environ.get('WEB_FLUENDO_TOKEN')
 
-DEBUG = os.environ.get('DJANGO_DEBUG', False)
+DEBUG = os.environ.get('DJANGO_DEBUG', True)
 
 
 # Database

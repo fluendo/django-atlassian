@@ -13,6 +13,14 @@ JIRA_SERVER = os.environ.get('JIRA_SERVER')
 JIRA_USER = os.environ.get('JIRA_USER')
 JIRA_TOKEN = os.environ.get('JIRA_TOKEN')
 
+URL_BASE = os.environ.get('URL_BASE')
+
+# Customers Server Token Auth
+WEB_FLUENDO_API_SERVER = os.environ.get('WEB_FLUENDO_API_SERVER')
+WEB_FLUENDO_TOKEN = os.environ.get('WEB_FLUENDO_TOKEN')
+
+DEBUG = os.environ.get('DJANGO_DEBUG', False)
+
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 DATABASES = {
