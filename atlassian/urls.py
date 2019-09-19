@@ -68,6 +68,7 @@ urlpatterns = [
     url(r'sales/contacts/(?P<pk>[0-9]+)/$',
         views.SalesContactsDetailView.as_view(),
         name='sales-contacts-detail-view'),
+    url(r'sales/users/$', views.SalesUsersSearch.as_view(), ),
 
 ]
 

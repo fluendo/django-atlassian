@@ -2,6 +2,34 @@
 {% load static %}
 
 {% block content %}
+<script>
+    $(document).ready(function(){
+        $( "#user" ).autocomplete({
+          source: function(request, response) {
+              $.ajax({
+                    url:'/atlassian/sales/users',
+                    dataType: "json",
+                    data: {
+                            q: request.term
+                    },
+                    success: function(data) {
+                        response($.map(data.results, function(item) {
+                            var fullname = [item.username, item.email].join(" ");
+                            return {
+                                label: fullname,
+                                value: item.id
+                                };
+                        }));
+                    }
+              });
+          },
+          minlength: 3,
+          select: function(e, ui) {
+              // actually nothing
+          }
+        });
+    });
+</script>
 
     <style>
         tr{cursor: pointer;}
@@ -38,6 +66,7 @@
         </div>
         {% endfor %}
     {% endif %}
+
     <section>
     <form class="aui" method="POST">
         {% csrf_token %}
@@ -62,7 +91,7 @@
                 <input class="button submit"
                     type="submit"
                     value="Update"
-                    id="comment-save-button">
+                    id="save-button">
                 <a class="cancel" href="#">Cancel</a>
             </div>
         </div>
