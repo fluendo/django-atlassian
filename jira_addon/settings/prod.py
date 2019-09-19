@@ -78,6 +78,7 @@ MIDDLEWARE += [
 HOST_MIDDLEWARE_URLCONF_MAP = {
     # The atlassian connect based app
     "atlassian.fluendo.com": "jira_addon.atlassian_urls",
+    "atlassian-addon-prod.fluendo.com": "jira_addon.atlassian_urls",
     "localhost": "jira_addon.atlassian_urls",
 }
 
