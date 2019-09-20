@@ -347,7 +347,7 @@ class SalesAccountDetailView(View):
     def get(self, request, *args, **kwargs):
         account_pk = kwargs.get('pk', None)
         if account_pk:
-            account_json = customer_by_id_proxy(account_pk)
+            account_json = customer_by_id_proxy(request, account_pk)
             account = json.loads(account_json.content)
             
             agreements = []
