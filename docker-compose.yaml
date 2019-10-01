@@ -1,0 +1,46 @@
+version: "3"
+services:
+  web:
+    restart: always
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    ports: 
+     - "8002:8000"
+     - "3002:3002"
+    volumes: 
+     - .:/app
+    env_file: web.env
+    depends_on: 
+     - db
+     - redis
+    tty: true
+    stdin_open: true
+  
+  redis:
+    restart: always
+    image: redis:latest
+    ports:
+      - "6379:6379" 
+    volumes: 
+      - jiraddon_redis:/data
+    tty: true
+    stdin_open: true
+
+  db:
+    restart: always
+    image: postgres:11-alpine
+    environment: 
+      POSTGRES_DB: ${DB_NAME} 
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWD}
+    ports:
+      - "5234:5234"
+    volumes: 
+      - jiradb:/var/lib/postgresql/data
+    tty: true
+    stdin_open: true
+
+volumes: 
+  jiraddon_redis:
+  jiradb:
+
