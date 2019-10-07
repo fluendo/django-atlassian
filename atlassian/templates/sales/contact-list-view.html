@@ -30,7 +30,7 @@
               <div class="aui-toolbar2-inner">
                   <div class="aui-toolbar2-secondary">
                     <div class="aui-buttons">
-                      <button class="aui-button">New Contact</button>
+                      <a href="{% url 'sales-contacts-add-view' %}"><button class="aui-button"> New Contact</button></a>
                     </div>
                   </div>
               </div>
@@ -38,6 +38,14 @@
       </div>
 
   </header>
+    {% if messages %}
+        {% for message in messages %}
+        <div class="aui-message aui-message-{{ message.tags }}" style="width: 20%; margin-left: 2%;">
+            <p>{{message}}</p>
+        </div>
+        {% endfor %}
+    {% endif %}
+
 
   <section>
     <table class="aui aui-table-sortable" id="customer-list">

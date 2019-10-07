@@ -59,13 +59,20 @@ def patch_account(account_pk, json_data):
     else:
         return False
 
-@cache_page(CACHE_TTL)
-def contacts_proxy_cache(request):
+def contacts_proxy(request):
     web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
     api_url = settings.WEB_FLUENDO_API_SERVER + '/contacts/'
     r = requests.get(api_url, headers=web_auth)
     data = sorted(r.json(), key=operator.itemgetter('created_at'))
     return JsonResponse(data, safe=False)
+
+def contacts_proxy_post(data):
+    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN,
+    'Content-type': 'application/json'}
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/contacts/'
+    r = requests.post(api_url, data=json.dumps(data), headers=web_auth)
+    return JsonResponse(r.status_code, safe=False)
+
 
 @xframe_options_exempt
 def contact_by_id_proxy(request, pk):

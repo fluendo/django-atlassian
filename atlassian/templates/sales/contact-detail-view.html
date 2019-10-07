@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load atlassian_extras %}
 {% load static %}
 
 {% block content %}
@@ -81,8 +82,8 @@
                 type="text"
                 id="{{field.name}}"
                 name="{{field.name}}"
-                placeholder="contact first name"
-                value="{{field.value}}"/>
+                placeholder="{{field.label}}"
+                value="{{field.value| none_to_empty_str }}"/>
             <div class="description"></div>
         {% endfor %}
         </div>
@@ -92,7 +93,7 @@
                     type="submit"
                     value="Update"
                     id="save-button">
-                <a class="cancel" href="#">Cancel</a>
+                <a class="cancel" href="{% url 'sales-contacts-list-view' %}">Cancel</a>
             </div>
         </div>
 
