@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView, View
+from django.views.generic import CreateView
 from django.shortcuts import render
 from django.conf import settings
 from django.views.decorators.cache import cache_page
@@ -27,10 +28,11 @@ from proxy_api import (
     customer_by_id_proxy,
     customers_proxy_cache,
     contact_by_id_proxy,
-    contacts_proxy_cache,
+    contacts_proxy,
     contact_proxy_patch,
     account_contacts_by_pk,
     user_proxy,
+    contacts_proxy_post
 )
 
 from proxy_api import (
@@ -409,7 +411,7 @@ class SalesContactsListView(View):
 
     @method_decorator(xframe_options_exempt, jwt_required)
     def get(self, request, *args, **kwargs):
-        contacts = contacts_proxy_cache(request, *args, **kwargs)
+        contacts = contacts_proxy(request, *args, **kwargs)
         return render(
             request,
             self.template_name,
@@ -461,6 +463,54 @@ class SalesContactsDetailView(View):
         else:
             raise Http404()
         return redirect('sales-contacts-detail-view', pk=contact_pk)
+
+
+class SalesContactsAddView(CreateView):
+    template_name = "sales/contact-add-view.html"
+    form_class = ContactForm
+
+
+    @method_decorator(xframe_options_exempt, jwt_required)
+    def get(self, request, *args, **kwargs):
+        return render(
+            request,
+            self.template_name,
+            {
+                'form': self.form_class()
+            }
+
+        )
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            contact_data = {
+                'first_name': form.cleaned_data['first_name'],
+                'last_name': form.cleaned_data['last_name'],
+                'email': form.cleaned_data['email'],
+            }
+            response = contacts_proxy_post(contact_data)
+            if response.status_code == 204:
+               messages.success(
+                   request,
+                   str(response.status_code) + ': Created' #+ response.text
+               )
+            else:
+               messages.warning(
+                   request,
+                   str(response.status_code) + ': ' + response.reason_phrase
+               )
+        else:
+            messages.error(request, str(form.errors))
+            return render(
+                        request,
+                        self.template_name,
+                        {
+                            'form': self.form_class()
+                        }
+            )
+        return redirect('sales-contacts-list-view')
+
 
 class SalesUsersSearch(View):
 

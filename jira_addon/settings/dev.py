@@ -6,6 +6,8 @@ DB_USER = os.environ.get('DB_USER')
 DB_PASSWD = os.environ.get('DB_PASSWD')
 DB_HOST = os.environ.get('DB_HOST')
 
+REDIS_HOST = os.environ.get('REDIS_HOST')
+
 LDAP_NAME = os.environ.get('LDAP_NAME')
 LDAP_USER = os.environ.get('LDAP_USER')
 LDAP_PASSWD = os.environ.get('LDAP_PASSWD')
@@ -87,5 +89,5 @@ HOST_MIDDLEWARE_URLCONF_MAP = {
 INTERNAL_IPS = ['127.0.0.1', 'localhost']
 
 # Celery related configuration
-CELERY_BROKER_URL = 'redis://redis:6379'
+CELERY_BROKER_URL = 'redis://'+REDIS_HOST+':6379'
 CELERY_RESULT_BACKEND = 'django-db'
