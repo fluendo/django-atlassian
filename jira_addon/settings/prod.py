@@ -66,7 +66,6 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS += [
     'django_atlassian.apps.DjangoAtlassianConfig',
     'atlassian.apps.AtlassianConfig',
-    'debug_toolbar',
 ]
 
 MIDDLEWARE += [
