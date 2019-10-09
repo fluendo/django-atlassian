@@ -20,7 +20,7 @@ urlpatterns = [
     url(r'^users/$', 
         views.SalesUsersSearch.as_view(),
         name="sales-users-view"),
-    url(r'^customers-view/$',
-            views.customers_view,
+    url(r'^sales/contacts/add/$',
+            views.SalesContactsAddView.as_view(),
             name='sales-contacts-add-view'),
 ]

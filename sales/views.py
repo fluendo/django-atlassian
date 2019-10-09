@@ -1,6 +1,7 @@
 import json
 
 from django.views.generic.base import TemplateView, View
+from django.views.generic import CreateView
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
@@ -26,6 +27,116 @@ from atlassian.forms import (
     AccountForm,
     ContactForm
 )
+
+
+class SalesAccountsListView(View):
+    template_name = 'sales/accounts-list-view.html'
+
+    @method_decorator(xframe_options_exempt, jwt_required)
+    def get(self, request, *args, **kwargs):
+        accounts = customers_proxy_cache(request, *args, **kwargs)
+        return render(
+            request,
+            self.template_name,
+            {'accounts': json.loads(accounts.content)}
+        )
+
+
+class SalesAccountDetailView(View):
+    template_name = 'sales/account-detail.html'
+
+    @method_decorator(xframe_options_exempt)
+    def get(self, request, *args, **kwargs):
+        account_pk = kwargs.get('pk', None)
+        if account_pk:
+            account_json = customer_by_id_proxy(request, account_pk)
+            account = json.loads(account_json.content)
+
+            agreements = []
+            for agreement_pk in account['reselleragreement_set']:
+                agreements_json = agreements_by_account_id(request, agreement_pk)
+                agreements += [json.loads(agreements_json.content)]
+
+            contacts = []
+            for contact_pk in account['customercontact_set']:
+                contacts_json = account_contacts_by_pk(request,contact_pk)
+                contacts += [json.loads(contacts_json.content)]
+
+            account_form = AccountForm(initial=account)
+
+            return render(
+                request,
+                self.template_name,
+                {
+                    'account_form': account_form,
+                    'account': account,
+                    'agreements': agreements,
+                    'contacts': contacts,
+                }
+            )
+        else:
+            raise Http404()
+
+    @method_decorator(xframe_options_exempt, csrf_protect)
+    def post(self, request, *args, **kwargs):
+        account_pk = kwargs.get('pk', None)
+        if account_pk:
+            form = AccountForm(
+                data=request.POST,
+                initial=request.POST)
+            if form.is_valid():
+                form.fix_boolean_fields()
+                json_data = form.cleaned_data
+                response = patch_account(account_pk, json_data)
+                if response.status_code == 200:
+                        messages.success(
+                            request,
+                            str(response.status_code) + ': OK' #+ response.text
+                        )
+                else:
+                    messages.warning(
+                        request,
+                        str(response.status_code) + ': ' + response.text
+                    )
+            else:
+                messages.error('form data error')
+                return redirect('sales-account-detail-view', pk=account_pk)
+        else:
+            return Http404()
+        return redirect('sales-account-detail-view', pk=account_pk)
+
+
+
+
+    @method_decorator(xframe_options_exempt, jwt_required)
+    def get(self, request, *args, **kwargs):
+        search = request.GET.get('q', '')
+        return user_proxy(search)
+
+        try:
+            Issue = request.atlassian_model
+        except:
+            from atlassian.models import Issue
+
+        issue_key = request.GET.get('issue_key')
+        property_key = 'customers'
+        issue = None
+        data = json.loads(request.body)
+        customer = data['customer']
+        customer_id = data['customer_id']
+
+        if issue_key:
+            issue = Issue.objects.get(key=issue_key)
+            Issue.jira.add_issue_property(
+                issue_key,
+                property_key,
+                {
+                    'customer': customer,
+                    'customer_id': customer_id
+                }
+            )
+
+        return HttpResponse(status=200)
 
 
 class SalesAccountsListView(View):
@@ -138,7 +249,7 @@ class SalesContactsDetailView(View):
             )
         else:
             raise Http404()
-            
+
     @method_decorator(xframe_options_exempt, jwt_required)
     def post(self, request, *args, **kwargs):
         contact_pk = kwargs.get('pk', None) 
@@ -163,85 +274,56 @@ class SalesContactsDetailView(View):
             raise Http404()
         return redirect('sales-contacts-detail-view', pk=contact_pk)
 
+
+class SalesContactsAddView(CreateView):
+    template_name = "sales/contact-add-view.html"
+    form_class = ContactForm
+
+    @method_decorator(xframe_options_exempt, jwt_required)
+    def get(self, request, *args, **kwargs):
+        return render(
+            request,
+            self.template_name,
+            {
+                'form': self.form_class()
+            }
+
+        )
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            contact_data = {
+                'first_name': form.cleaned_data['first_name'],
+                'last_name': form.cleaned_data['last_name'],
+                'email': form.cleaned_data['email'],
+            }
+            response = contacts_proxy_post(contact_data)
+            if response.status_code == 204:
+               messages.success(
+                   request,
+                   str(response.status_code) + ': Created' #+ response.text
+               )
+            else:
+               messages.warning(
+                   request,
+                   str(response.status_code) + ': ' + response.reason_phrase
+               )
+        else:
+            messages.error(request, str(form.errors))
+            return render(
+                        request,
+                        self.template_name,
+                        {
+                            'form': self.form_class()
+                        }
+            )
+        return redirect('sales-contacts-list-view')
+
+
 class SalesUsersSearch(View):
 
     @method_decorator(xframe_options_exempt, jwt_required)
     def get(self, request, *args, **kwargs):
         search = request.GET.get('q', '')
         return user_proxy(search)
-
-
-@csrf_exempt
-@jwt_required
-@xframe_options_exempt
-def customers_view(request):
-    Issue = request.atlassian_model
-    key = request.GET.get('key')
-    property_key = 'customers'
-    issue = None
-    customers_json = None
-
-    if key:
-        issue = Issue.objects.get(key=key)
-    
-    customers = customers_proxy_cache(request)
-    if customers:
-        customers_json = json.loads(customers.content)
-
-    if key and issue and customers:
-        try:
-            customer_property = Issue.jira.issue_property(
-                issue, property_key)
-        except:
-            customer_property = {
-                'value':{
-                    'customer': 'click to choose one',
-                    'customer_id': 0,
-                }
-            }
-
-        rest_url = '/rest/api/2/issue/' + issue.key + '/properties/customers'
-        return render(
-            request,
-            'customers_view.html',
-            {
-                'issue': issue,
-                'rest_url': rest_url,
-                'customers': customers_json,
-                'c_property': customer_property,
-            })
-    else:
-        return HttpResponseBadRequest()
-
-
-@xframe_options_exempt
-def customers_proxy_view(request):
-    return customers_proxy_cache(request)
-
-
-@csrf_protect
-def customers_view_update(request):
-    try:
-        Issue = request.atlassian_model
-    except:
-        from atlassian.models import Issue
-
-    issue_key = request.GET.get('issue_key')
-    property_key = 'customers'
-    issue = None
-    data = json.loads(request.body)
-    customer = data['customer']
-    customer_id = data['customer_id']
-
-    if issue_key:
-        issue = Issue.objects.get(key=issue_key)
-        Issue.jira.add_issue_property(
-            issue_key,
-            property_key,
-            {
-                'customer': customer,
-                'customer_id': customer_id
-            }
-        )
-
-    return HttpResponse(status=200)
