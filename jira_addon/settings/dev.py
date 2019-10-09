@@ -70,6 +70,8 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS += [
     'django_atlassian.apps.DjangoAtlassianConfig',
     'atlassian.apps.AtlassianConfig',
+    'customers.apps.CustomersConfig',
+    'sales.apps.SalesConfig',
     'debug_toolbar',
 ]
 
@@ -89,5 +91,5 @@ HOST_MIDDLEWARE_URLCONF_MAP = {
 INTERNAL_IPS = ['127.0.0.1', 'localhost']
 
 # Celery related configuration
-CELERY_BROKER_URL = 'redis://'+REDIS_HOST+':6379'
+CELERY_BROKER_URL = 'redis://redis:6379'
 CELERY_RESULT_BACKEND = 'django-db'

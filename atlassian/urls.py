@@ -44,35 +44,8 @@ urlpatterns = [
         views.postfunction_decrement_triggered,
         name='atlassian-postfunction-decrement-triggered'),
 
-    # fluendo issue to customer views
-    url(r'^customers-view/$',
-        views.customers_view,
-        name='customers-view'),
-    url(r'^customers-view-update/$',
-        views.customers_view_update,
-        name='customers-view-update'),
-    url(r'^customers-proxy/$',
-        views.customers_proxy_view,
-        name='customers-proxy'),
-
-    # sales customers views
-    url(r'sales/accounts/$',
-        views.SalesAccountsListView.as_view(),
-        name='sales-accounts-list-view'),
-    url(r'sales/accounts/(?P<pk>[0-9]+)/$',
-        views.SalesAccountDetailView.as_view(),
-        name='sales-account-detail-view'),
-    url(r'sales/contacts/$',
-        views.SalesContactsListView.as_view(),
-        name='sales-contacts-list-view'),
-    url(r'sales/contacts/(?P<pk>[0-9]+)/$',
-        views.SalesContactsDetailView.as_view(),
-        name='sales-contacts-detail-view'),
-    url(r'sales/contacts/add/$', 
-        views.SalesContactsAddView.as_view(),
-        name='sales-contacts-add-view'),
-    url(r'sales/users/$', views.SalesUsersSearch.as_view(), ),
-
+    # sales urls & views
+    url(r'^sales/', include('sales.urls')),
 ]
 
 if settings.DEBUG and 'debug_toolbar' in settings.INSTALLED_APPS:
