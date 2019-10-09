@@ -6,6 +6,8 @@ DB_USER = os.environ.get('DB_USER')
 DB_PASSWD = os.environ.get('DB_PASSWD')
 DB_HOST = os.environ.get('DB_HOST')
 
+REDIS_HOST = os.environ.get('REDIS_HOST')
+
 LDAP_NAME = os.environ.get('LDAP_NAME')
 LDAP_USER = os.environ.get('LDAP_USER')
 LDAP_PASSWD = os.environ.get('LDAP_PASSWD')

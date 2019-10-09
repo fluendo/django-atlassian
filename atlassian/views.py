@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView, View
+from django.views.generic import CreateView
 from django.shortcuts import render
 from django.conf import settings
 from django.views.decorators.cache import cache_page
@@ -27,7 +28,7 @@ from customers.proxy_api import (
     customer_by_id_proxy,
     customers_proxy_cache,
     contact_by_id_proxy,
-    contacts_proxy_cache,
+    contacts_proxy,
     contact_proxy_patch,
     account_contacts_by_pk,
     user_proxy,

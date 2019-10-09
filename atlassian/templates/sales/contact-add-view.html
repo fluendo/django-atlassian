@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load atlassian_extras %}
 {% load static %}
 
 {% block content %}
@@ -49,7 +48,7 @@
               <ol class="aui-nav aui-nav-breadcrumbs">
                   <li><a href="#">Fluendo</a></li>
                   <li><a href="{% url 'sales-contacts-list-view' %}" class="custom">Contacts</a></li>
-                  <li class="aui-nav-selected">Detail View</li>
+                  <li class="aui-nav-selected">Add</li>
               </ol>
               <h1>{{contact.company_name}}</h1>
           </div>
@@ -83,7 +82,7 @@
                 id="{{field.name}}"
                 name="{{field.name}}"
                 placeholder="{{field.label}}"
-                value="{{field.value| none_to_empty_str }}"/>
+                value=""/>
             <div class="description"></div>
         {% endfor %}
         </div>
@@ -91,7 +90,7 @@
             <div class="buttons">
                 <input class="button submit"
                     type="submit"
-                    value="Update"
+                    value="Create"
                     id="save-button">
                 <a class="cancel" href="{% url 'sales-contacts-list-view' %}">Cancel</a>
             </div>

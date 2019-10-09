@@ -15,6 +15,7 @@ python-ldap==3.1.0
 pytz==2018.5
 six==1.11.0
 psycopg2==2.7.5
+ptvsd == 4.3.2
 redis==2.10.6
 requests==2.18.4
 PyJWT==1.6.4
