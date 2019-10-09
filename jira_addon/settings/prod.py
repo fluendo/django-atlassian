@@ -66,6 +66,8 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS += [
     'django_atlassian.apps.DjangoAtlassianConfig',
     'atlassian.apps.AtlassianConfig',
+    'customers.apps.CustomersConfig',
+    'sales.apps.SalesConfig',
 ]
 
 MIDDLEWARE += [

@@ -68,8 +68,8 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS += [
     'django_atlassian.apps.DjangoAtlassianConfig',
     'atlassian.apps.AtlassianConfig',
-    'sales.apps.SalesConfig',
     'customers.apps.CustomersConfig',
+    'sales.apps.SalesConfig',
     'debug_toolbar',
 ]
 
