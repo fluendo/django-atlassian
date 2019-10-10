@@ -41,7 +41,7 @@ def customers_view(request):
         rest_url = '/rest/api/2/issue/' + issue.key + '/properties/customers'
         return render(
             request,
-            'customers_view.html',
+            'customers/customers_view.html',
             {
                 'issue': issue,
                 'rest_url': rest_url,
