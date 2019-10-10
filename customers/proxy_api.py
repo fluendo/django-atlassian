@@ -15,8 +15,12 @@ def customers_proxy(request):
     api_url = settings.WEB_FLUENDO_API_SERVER + '/customers/?limit=200'
     r = requests.get(api_url, headers=web_auth)
     if r.status_code == 200:
+        if type(r.json()) == dict:
+            request_data = r.json()['results']
+        elif type(r.json()) == list:
+            request_data = r.json()
         data = sorted(
-            r.json()['results'],
+            request_data,
             key=operator.itemgetter('company_name')
         )
     else:
