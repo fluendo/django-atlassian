@@ -89,6 +89,28 @@
                         "type": "number"
                     }
                 ]
+            },{
+            "key": "jira-issue-leads-indexing",
+            "name": {
+                "value": "Leads index",
+                "i18n": "leads.index"
+            },
+            "entityType": "issue",
+            "keyConfigurations": [{
+                "propertyKey": "leads",
+                "extractions": [{
+                        "objectName": "product",
+                        "type": "text"
+                    },
+                    {
+                        "objectName": "project",
+                        "type": "text"
+                    },
+                    {
+                        "objectName": "email",
+                        "type": "text"
+                    }
+                ]
             }],
             "conditions": [{
                 "condition": "user_is_logged_in"
