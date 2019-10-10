@@ -17,10 +17,10 @@ urlpatterns = [
     url(r'^contacts/(?P<pk>[0-9]+)/$',
         views.SalesContactsDetailView.as_view(),
         name='sales-contacts-detail-view'),
+    url(r'^contacts/add/$',
+            views.SalesContactsAddView.as_view(),
+            name='sales-contacts-add-view'),
     url(r'^users/$', 
         views.SalesUsersSearch.as_view(),
         name="sales-users-view"),
-    url(r'^sales/contacts/add/$',
-            views.SalesContactsAddView.as_view(),
-            name='sales-contacts-add-view'),
 ]
