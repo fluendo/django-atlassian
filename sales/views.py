@@ -34,7 +34,7 @@ class SalesAccountsListView(View):
 
     @method_decorator(xframe_options_exempt, jwt_required)
     def get(self, request, *args, **kwargs):
-        accounts = customers_proxy_cache(request, *args, **kwargs)
+        accounts = customers_proxy(request, *args, **kwargs)
         return render(
             request,
             self.template_name,

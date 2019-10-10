@@ -5,9 +5,7 @@
 
   <link rel="stylesheet" type="text/css" href='{% static "atlassian/css/style.css" %}' >
   <style>
-    tr {
-      cursor: pointer;
-    }
+    tr { cursor: pointer; }
   </style>
 
   <header class="aui-page-header">
@@ -25,19 +23,32 @@
                   <li><a href="{% url 'sales-accounts-list-view' %}" class="custom">Accounts</a></li>
                   <li class="aui-nav-selected">List View</li>
               </ol>
-          </div>
-          <div class="aui-toolbar2" role="toolbar">
-              <div class="aui-toolbar2-inner">
-                  <div class="aui-toolbar2-secondary">
-                    <div class="aui-buttons">
-                      <button class="aui-button">New Contact</button>
-                    </div>
+              <form class="">
+                  <div class="field-group">
+                      <input class="text medium-field" type="text" name="search"/>
+                      <button class="aui-button"><span class="aui-icon aui-icon-small aui-iconfont-search">search</span></button>
                   </div>
+                  <div class="field-group">
+                    <label for="freshsales">
+                      <input type="checkbox" name="freshsales" />
+                      search in freshsales accounts
+                    </label>
+                  </div>
+              </form>
+          </div>
+          <div class="aui-page-header-actions">
+              <div class="aui-buttons">
+                  <button class="aui-button">New Account</button>
+                  <button class="aui-button">Help</button>
+                  <button class="aui-button">About</button>
               </div>
           </div>
       </div>
-
   </header>
+
+  <section>
+
+  </section>
 
   <section>
     <table class="aui aui-table-sortable" id="customer-list">

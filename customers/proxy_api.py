@@ -10,15 +10,24 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.cache import cache_page
 
 
+def customers_proxy(request):
+    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/customers/?limit=200'
+    r = requests.get(api_url, headers=web_auth)
+    if r.status_code == 200:
+        data = sorted(
+            r.json()['results'],
+            key=operator.itemgetter('company_name')
+        )
+    else:
+        data = None
+    return JsonResponse(data, safe=False)
+
 # Cache time to live is 5 minutes.
 CACHE_TTL = 60 * 5
 @cache_page(CACHE_TTL)
 def customers_proxy_cache(request):
-    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
-    api_url = settings.WEB_FLUENDO_API_SERVER + '/customers/'
-    r = requests.get(api_url, headers=web_auth)
-    data = sorted(r.json(), key=operator.itemgetter('company_name'))
-    return JsonResponse(data, safe=False)
+    return customers_proxy(request)
 
 @xframe_options_exempt
 def customer_by_id_proxy(request, pk):

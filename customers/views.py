@@ -1,3 +1,7 @@
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.views.decorators.clickjacking import xframe_options_exempt
+from django_atlassian.decorators import jwt_required
+
 
 @csrf_exempt
 @jwt_required
