@@ -1,6 +1,12 @@
+import json
+
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.shortcuts import render
+
 from django_atlassian.decorators import jwt_required
+
+from proxy_api import customers_proxy_cache
 
 
 @csrf_exempt
@@ -35,7 +41,7 @@ def customers_view(request):
         rest_url = '/rest/api/2/issue/' + issue.key + '/properties/customers'
         return render(
             request,
-            'customers_view.html',
+            'customers/customers_view.html',
             {
                 'issue': issue,
                 'rest_url': rest_url,
