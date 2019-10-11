@@ -83,7 +83,7 @@ def contacts_proxy_post(data):
     web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN,
     'Content-type': 'application/json'}
     api_url = settings.WEB_FLUENDO_API_SERVER + '/contacts/'
-    r = requests.post(api_url, data=json.dumps(data), headers=web_auth)
+    r = requests.post(api_url, data=data, headers=web_auth)
     return JsonResponse(r.status_code, safe=False)
 
 

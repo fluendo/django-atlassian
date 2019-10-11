@@ -35,10 +35,6 @@ from customers.proxy_api import (
     patch_account
 )
 
-from atlassian.forms import (
-    AccountForm,
-    ContactForm
-)
 
 
 # For initiative to epic relationships create a linkedtype of "Belongs to" or something similar. Store it as a global configuration.

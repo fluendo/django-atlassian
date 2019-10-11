@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load widget_tweaks %}
 
 {% block content %}
 <script>
@@ -74,16 +75,19 @@
         {% for hidden in form.hidden_fields %}
             {{hidden}}
         {% endfor %}
-        {% for field in form.visible_fields %}
-            {{ field.errors }}
-            <label for="first-name">{{field.label}}</label>
-            <input class="text medium-long-field"
-                type="text"
-                id="{{field.name}}"
-                name="{{field.name}}"
-                placeholder="{{field.label}}"
-                value=""/>
-            <div class="description"></div>
+        </div>
+        <div class="aui-group" style="padding-right: 2em;padding-left: 2em;">
+        {% for group, elements in form.groups.items %}
+                <label>{{group|upper}}</label>
+                {% for field in form.visible_fields %}
+                    {% if field.name in elements %}
+                     <div class="field-group">
+                         {{ field.errors }}
+                         <label for="{{field.label}}">{{field.label}}</label>
+                         {% render_field field class="text medium-long-field"%}
+                     </div>
+                    {% endif %}
+                {% endfor %}
         {% endfor %}
         </div>
         <div class="buttons-container">
