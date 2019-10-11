@@ -21,7 +21,7 @@ from django.contrib import messages
 
 from django_atlassian.decorators import jwt_required
 
-from models import Issue
+from atlassian.models import Issue
 
 from customers.proxy_api import (
     agreements_by_account_id,
