@@ -158,7 +158,15 @@
                 <tbody>
                     {% for contact in contacts %}
                     <tr id="a-{{contact.id}}">
-                        <td>{{contact.id}}</td>
+                        <td>
+                            {% if contact.contact %}
+                            <a href="{% url 'sales-contacts-detail-view' contact.contact.id %}">
+                            {% else %}
+                            <a>
+                            {% endif %}
+                                {{ contact.contact.id }}
+                            </a>
+                        </td>
                         <td>
                             <input 
                                 class="text medium-long-field"
