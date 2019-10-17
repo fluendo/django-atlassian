@@ -78,14 +78,21 @@
             <div class="buttons">
                 <input class="button submit"
                     type="submit"
-                    value="Update"
+                    value="SAVE"
                     id="comment-save-button">
-                <a class="cancel" href="">Cancel</a>
+                <a href="{{fluendo.BASE_ADMIN_URL}}{{fluendo.CUSTOMERS.CUSTOMERS_URL}}{{account.id}}/?_popup=1"
+                    target="_blank"
+                    class="button"
+                    title="backoffice">CUSTOMER</a>
+                <a href="{{fluendo.BASE_ADMIN_URL}}{{fluendo.FRESHSALES.ACCOUNTS_URL}}{{account.account.id}}?_popup=1"
+                    target="_blank"
+                    class="button"
+                    title="backoffice">ACCOUNT</a>
+            </section>
             </div>
         </div>
 
     </form>
-    </section>
 
     <section style="padding: 2em 0em 0em 2em">
     {% if agreements %}
@@ -102,7 +109,12 @@
             <tbody>
                 {% for agreement in agreements %}
                 <tr id="a-{{agreement.id}}" data-agreement-id="{{agreement.id}}">
-                    <td>{{agreement.id}}</td>
+                    <td>
+                        <a 
+                            href="{{fluendo.BASE_ADMIN_URL}}{{fluendo.CUSTOMERS.AGREEMENTS_URL}}{{agreement.id}}?_popup=1"
+                            target="_blank"
+                            title="fluendo backoffice">{{agreement.id}}</a>
+                    </td>
                     <td>{{agreement.start_date}}</td>
                     <td>{{agreement.support_period_from}}</td>
                     <td>{{agreement.support_period_to}}</td>

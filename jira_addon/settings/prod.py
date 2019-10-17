@@ -21,6 +21,11 @@ WEB_FLUENDO_TOKEN = os.environ.get('WEB_FLUENDO_TOKEN')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', False)
 
+FLUENDO['BASE_ADMIN_URL'] = os.environ.get(
+    'FLUENDO_BASE_ADMIN_URL',
+    '//fluendo.com/en/admin/'
+)
+
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 DATABASES = {

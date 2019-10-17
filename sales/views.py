@@ -283,6 +283,7 @@ class SalesAccountDetailView(View):
                 contacts += [json.loads(contacts_json.content)]
 
             account_form = AccountForm(initial=account)
+            fluendo = settings.FLUENDO
 
             return render(
                 request,
@@ -292,6 +293,7 @@ class SalesAccountDetailView(View):
                     'account': account,
                     'agreements': agreements,
                     'contacts': contacts,
+                    'fluendo': fluendo,
                 }
             )
         else:
