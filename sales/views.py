@@ -255,10 +255,14 @@ class SalesAccountsListView(View):
     @method_decorator(xframe_options_exempt, jwt_required)
     def get(self, request, *args, **kwargs):
         accounts = customers_proxy_cache(request, *args, **kwargs)
+        fluendo = settings.FLUENDO
         return render(
             request,
             self.template_name,
-            {'accounts': json.loads(accounts.content)}
+            {
+                'accounts': json.loads(accounts.content),
+                'fluendo': fluendo
+            }
         )
 
 
