@@ -214,6 +214,15 @@
                             "entity": "project",
                             "propertyKey": "fluendo-contacts"
                         }
+                    },
+                    {
+                        "condition": "entity_property_equal_to",
+                        "params":{
+                            "entity": "project",
+                            "propertyKey": "fluendo",
+                            "objectName": "contacts",
+                            "value": "1"
+                        }
                     }
                 ]
             }
