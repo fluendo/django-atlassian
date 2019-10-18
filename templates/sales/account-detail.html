@@ -155,7 +155,7 @@
             <h4>Contacts</h4>
             <form class="aui" method="POST">
             {% csrf_token %}
-            <table class="aui" id="contacts-list" style="width: 70%">
+            <table class="aui" id="contacts-list" style="width: 70%; margin-bottom: 1em;">
                 <thead>
                     <tr>
                         <th id="basic-number">#</th>
@@ -164,10 +164,15 @@
                         <th id="customer-basic-fname">position</th>
                         <th id="customer-basic-fname">email</th>
                         <th id="customer-basic-fname">phone</th>
-                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td>
+                            <a><i class="fa fa-plus-circle"></i></a>
+                        </td>
+                        <td colspan="5">&nbsp;</td>
+                    </tr>
                     {% for contact in contacts %}
                     <tr id="a-{{contact.id}}">
                         <td>
@@ -177,96 +182,30 @@
                             <a>
                             {% endif %}
                                 {{ contact.contact.id }}
+                                <i class="fas fa-edit"></i>
                             </a>
                         </td>
                         <td>
-                            <input 
-                                class="text medium-long-field"
-                                type="text"
-                                id="full-name"
-                                name="full-name"
-                                placeholder="full name"
-                                value="{{contact.full_name}}"
-                            />
+                            {{contact.contact.last_name}},&nbsp;
+                            {{contact.contact.first_name}}
                         </td>
-                        <td>{{contact.type}}</td>
+                        <td>{{contact.contact.job_title}}</td>
                         <td>
-                            <input 
-                                class="text medium-long-field"
-                                type="text"
-                                id="position"
-                                name="position"
-                                placeholder="position"
-                                value="{{contact.position}}"/>
+                            {{contact.contact.job_title | default:'--'}}
                         </td>
                         <td>
-                            <input 
-                                class="text medium-long-field"
-                                type="text"
-                                id="email"
-                                name="email"
-                                placeholder="email"
-                                value="{{contact.email}}"/>
+                            {{contact.contact.email}}
                         </td>
                         <td>
-                            <input 
-                                class="text medium-field"
-                                type="text"
-                                id="phone"
-                                name="phone"
-                                placeholder="phone"
-                                value="{{contact.phone}}"/>
-                        </td>
-                        <td>
-                            <i class="fas fa-save"></i>
-                            <i class="fas fa-trash-alt"></i>
+                            {{contact.contact.phone_work | default:'--'}}
+                            {{contact.contact.phone_mobile | default:'--'}}
                         </td>
                     </tr>
                     {% endfor %}
-
-                    <tr id="a-{{contact.id}}">
-                        <td>#</td>
-                        <td>
-                            <input 
-                                class="text medium-long-field"
-                                type="text"
-                                id="full-name"
-                                name="full-name"
-                                placeholder="full name"/>
-                        </td>
-                        <td></td>
-                        <td>
-                            <input 
-                                class="text medium-long-field"
-                                type="text"
-                                id="position"
-                                name="position"
-                                placeholder="position"/>
-                        </td>
-                        <td>
-                            <input
-                                class="text medium-long-field"
-                                type="text"
-                                id="position"
-                                name="position"
-                                placeholder="position"/>
-                        </td>
-                        <td>
-                            <input
-                                class="text medium-field"
-                                type="text"
-                                id="phone"
-                                name="phone"
-                                placeholder="phone"/>
-                        </td>
-                        <td>
-                            <i class="fas fa-save"></i>
-                        </td>
-                    </tr>
-
                 </tbody>
             </table>
             </form>
+
         {% else %}
             <div class="aui-group">
                 <div class="aui-item">
