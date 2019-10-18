@@ -86,8 +86,10 @@
                          {{ field.errors }}
                          <label for="{{field.label}}">{{field.label}}</label>
                          {% render_field field class="text medium-long-field"%}
-                         {% if field.name == 'user' %}
-                         <i class="fas fa-edit"></i>
+                         {% if field.name == 'user' and field.value %}
+                         <a href="#">
+                            <i class="fas fa-edit"></i>
+                         </a>
                          {% endif %}
                      </div>
                     {% endif %}
