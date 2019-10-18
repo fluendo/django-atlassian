@@ -79,7 +79,7 @@
         </div>
         <div class="aui-group" style="padding-right: 2em;padding-left: 2em;">
         {% for group, elements in form.groups.items %}
-                <label>{{group|upper}}</label>
+                <label style="font-weight: bold;">{{group|upper}}</label>
                 {% for field in form.visible_fields %}
                     {% if field.name in elements %}
                      <div class="field-group">
