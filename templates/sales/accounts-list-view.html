@@ -55,9 +55,9 @@
       <thead>
           <tr>
               <th id="basic-number">#</th>
-              <th id="customer-basic-fname">Customer</th>
-              <th># Agreements</th>
-              <th># Contacts</th>
+              <th id="customer-basic-fname">Account</th>
+              <th>#A</th>
+              <th>#C</th>
               <th id="city-basic-fname">City</th>
               <th id="street-basic-fname">Street</th>
               <th id="country-basic-fname">Country</th>
@@ -66,7 +66,12 @@
       <tbody>
         {% for account in accounts %}
           <tr>
-            <td>{{account.id}}</td>
+            <td>
+                <a href="{{fluendo.BASE_ADMIN_URL}}{{fluendo.CUSTOMERS.CUSTOMERS_URL}}{{account.id}}/?_popup=1"
+                    target="_blank"
+                    class="button"
+                    title="backoffice">{{account.id}}</a>
+            </td>
             <td>
               <a href="{% url 'sales-account-detail-view' pk=account.id %}">
                 {{account.company_name}}

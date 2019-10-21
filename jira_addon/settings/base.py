@@ -27,6 +27,21 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+FLUENDO = {
+    'BASE_ADMIN_URL': '//localhost:8000/en/admin/',
+    'FRESHSALES':{
+        'ACCOUNTS_URL': 'freshsales/salesaccounts/',
+        'CONTACTS_URL': 'freshsales/salescontacts/',
+    },
+    'CUSTOMERS': {
+        'CUSTOMERS_URL': 'customers/customer/',
+        'CONTACTS_URL': 'users/contact/',
+        'AGREEMENTS_URL': 'sales/agreement/',
+    },
+    'USERS':{
+        'USERS_URL': 'auth/user/',
+    }
+}
 
 # Application definition
 
