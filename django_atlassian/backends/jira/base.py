@@ -289,7 +289,7 @@ class DatabaseConvertion(AtlassianDatabaseConvertion):
             elif field[10] == 'string':
                 return data
             elif field[10] == 'issuelinks':
-                return [item['key'] for item in data]
+                return [item['outwardIssue']['key'] for item in data]
             # Handle Jira Software special array
             elif field[10] == 'com.pyxis.greenhopper.jira:gh-sprint':
                 # TODO parse the string properly in the form:
