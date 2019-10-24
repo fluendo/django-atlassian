@@ -299,7 +299,7 @@ class DatabaseConvertion(AtlassianDatabaseConvertion):
                 try:
                     inwardIssues = [item['inwardIssue']['key'] for item in data]
                     print(inwardIssues)
-                    return inwardIssues:324
+                    return inwardIssues
                 except:
                     print(data)
             # Handle Jira Software special array
