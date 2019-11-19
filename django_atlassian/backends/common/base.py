@@ -348,7 +348,7 @@ class AtlassianDatabaseCursor(object):
 
     def escape_type(self, value):
         if type(value) == unicode or type(value) == str:
-            return "'%s'" % value
+            return '"%s"' % value
         else:
             return value
 
