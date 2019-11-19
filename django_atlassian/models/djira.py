@@ -433,6 +433,7 @@ class Issue(models.base.Model, JiraIssueModel):
 
     class Meta:
         abstract = True
+        managed = False
 
 
 class AtlassianMeta:
