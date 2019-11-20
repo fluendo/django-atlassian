@@ -21,6 +21,7 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         'issuetype': 'TextField',
         'user': 'TextField',
         'project': 'TextField',
+        'resolution': 'TextField',
         'com.pyxis.greenhopper.jira:gh-epic-status': 'TextField',
     }
 
@@ -123,6 +124,16 @@ class DatabaseCursor(AtlassianDatabaseCursor):
     uri_edit_pattern = '/rest/api/3/issue/%(issue_id)s'
     uri_field = '/rest/api/3/field'
 
+    def _get_resolutions(self):
+        uri_resolution = '/rest/api/3/resolution'
+        # Get the resolution types
+        response = self.connection.get_request(uri_resolution)
+        if response.status_code != requests.codes.ok:
+            logger.warning('JIRA Cloud returned %d for %s', response.status_code, uri_resolution)
+            return []
+        else:
+            return [(r['name'], r['name']) for r in json.loads(response.content)]
+
     def get_fields_qs(self, fields):
         return 'fields=%s' % ','.join(f[9] for f in fields)
 
@@ -204,6 +215,9 @@ class DatabaseCursor(AtlassianDatabaseCursor):
             if c['name'] == 'Epic Status':
                 c['schema']['type'] = 'string'
                 c['choices'] = (('To Do', 'To Do'), ('In Progress', 'In Progress'), ('Done', 'Done'))
+            elif c['name'] == 'Resolution':
+                c['choices'] = self._get_resolutions()
+
         # The KEY field is never returned
         c = {
             "id": "key",
@@ -283,6 +297,9 @@ class DatabaseConvertion(AtlassianDatabaseConvertion):
                 return data['data']['key']
             else:
                 return None
+        # Handle the resolution
+        elif field[1] == 'resolution' and data is not None:
+            return data['name']
         elif field[1] == 'array' and data is not None:
             if field[10] == 'component':
                 return [item['name'] for item in data]
