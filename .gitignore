@@ -3,3 +3,4 @@ static_media/
 *.pyc
 .vscode/
 jira-addon-venv
+web.env

@@ -1,7 +1,7 @@
 {
     "name": "Fluendo Atlassian Extensions",
     "description": "Fluendo Atlassian Extensions",
-    "key": "com.fluendo.jira-addon",
+    "key": "com.fluendo.atlassian-addon",
     "baseUrl": "{{base_url}}",
     "vendor": {
         "name": "Fluendo S.A.",

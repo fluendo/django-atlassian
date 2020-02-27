@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 class IpWhiteListMiddleware(MiddlewareMixin):
     """
-    Middleware which just only allows requests from  ip address set in settings.py with variable name ALLOWED_IPS
+    Middleware which just only allows requests from
+    ip address set in settings.py with variable name ALLOWED_IPS
     """
 
     def get_client_ip(self, request):

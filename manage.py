@@ -3,7 +3,7 @@ import os
 import sys
 
 if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "jira_addon.settings.dev")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fluendo.settings.dev")
     try:
         from django.core.management import execute_from_command_line
         from django.conf import settings

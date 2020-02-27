@@ -5,4 +5,3 @@ urlpatterns = [
     url(r'^atlassian/', include('django_atlassian.urls')),
     url(r'^atlassian/', include('atlassian.urls')),
 ]
-
