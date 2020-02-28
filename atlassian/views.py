@@ -13,7 +13,6 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView, View
 from django.views.generic import CreateView
-from django.shortcuts import render
 from django.conf import settings
 from django.views.decorators.cache import cache_page
 from django.http import JsonResponse, Http404
