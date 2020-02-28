@@ -1,0 +1,62 @@
+{
+    "name": "Fluendo Atlassian Extensions",
+    "description": "Fluendo Atlassian Extensions",
+    "key": "com.fluendo.atlassian-addon",
+    "baseUrl": "{{base_url}}",
+    "vendor": {
+        "name": "Fluendo S.A.",
+        "url": "https://fluendo.com/"
+    },
+    "authentication": {
+        "type": "jwt"
+    },
+    "lifecycle": {
+        "installed": "{% url 'django-atlassian-installed' %}"
+    },
+    "scopes": [
+        "READ"
+    ],
+    "modules": {
+        "dynamicContentMacros": [
+            {
+                "key": "helloworld-macro",
+                "name": {
+                    "value": "Hello World Macro"
+                },
+                "url": "{% url 'confluence-helloworld' %}",
+                "description": {
+                    "value": "Says 'Hello World'."
+                },
+                "outputType": "block",
+                "bodyType": "none"
+            },
+            {
+                "key": "initiative-status-macro",
+                "name": {
+                    "value": "Initiative Status"
+                },
+                "url": "{% url 'confluence-initiative-status' %}?initiativeKey={key}",
+                "description": {
+                    "value": "Displays the status of the children issues of an initiative."
+                },
+                "parameters": [
+                    {
+                       "identifier": "key",
+                       "name": {
+                         "value": "Initiative issue key"
+                       },
+                       "description": {
+                         "value": "Allows switching between view types"
+                       },
+                       "type": "string",
+                       "required": true,
+                       "multiple": false,
+                       "hidden": false
+                   }
+               ],
+                "outputType": "inline",
+                "bodyType": "none"
+            }
+        ]
+    }
+}
