@@ -7,6 +7,7 @@ DB_NAME = os.environ.get('DB_NAME')
 DB_USER = os.environ.get('DB_USER')
 DB_PASSWD = os.environ.get('DB_PASSWD')
 DB_HOST = os.environ.get('DB_HOST')
+DB_PORT = os.environ.get('DB_PORT')
 
 REDIS_HOST = os.environ.get('REDIS_HOST')
 
@@ -66,7 +67,7 @@ DATABASES = {
         'USER': DB_USER,
         'PASSWORD': DB_PASSWD,
         'HOST': DB_HOST,
-        'PORT': '5432',
+        'PORT': DB_PORT,
     },
     'jira': {
         'ENGINE': 'django_atlassian.backends.jira',

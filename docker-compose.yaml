@@ -34,7 +34,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWD}
     ports:
-      - "${PG_PORT}:5234"
+      - "${DB_PORT}:5432"
     volumes: 
       - jiradb:/var/lib/postgresql/data
     tty: true
