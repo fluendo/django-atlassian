@@ -146,6 +146,7 @@ INSTALLED_APPS = [
     'atlassian.apps.AtlassianConfig',
     'customers.apps.CustomersConfig',
     'sales.apps.SalesConfig',
+    'confluence.apps.ConfluenceConfig',
 ]
 
 MIDDLEWARE = [

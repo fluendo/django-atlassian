@@ -6,6 +6,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^atlassian/', include('django_atlassian.urls')),
     url(r'^atlassian/', include('atlassian.urls')),
+    url(r'^confluence/', include('confluence.urls')),
 ]
 
 if settings.DEBUG and 'debug_toolbar' in settings.INSTALLED_APPS:
