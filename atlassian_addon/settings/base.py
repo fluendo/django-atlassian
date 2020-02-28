@@ -135,7 +135,6 @@ LOGGING = {
 # Application definition
 INSTALLED_APPS = [
     'django_atlassian.apps.DjangoAtlassianConfig',
-    'atlassian.apps.AtlassianConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -144,6 +143,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_countries',
     'widget_tweaks',
+    'atlassian.apps.AtlassianConfig',
     'customers.apps.CustomersConfig',
     'sales.apps.SalesConfig',
 ]
@@ -159,7 +159,7 @@ MIDDLEWARE = [
     'django_atlassian.middleware.JWTAuthenticationMiddleware',
 ]
 
-ROOT_URLCONF = 'fluendo.urls'
+ROOT_URLCONF = 'atlassian_addon.urls'
 
 TEMPLATES = [
     {
@@ -177,7 +177,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'fluendo.wsgi.application'
+WSGI_APPLICATION = 'atlassian_addon.wsgi.application'
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
