@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.conf.urls import url, include
 
-import views
+import jira_views as views
 
 urlpatterns = [
     # basic views

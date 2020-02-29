@@ -2,7 +2,7 @@
 from django.conf import settings
 from django.conf.urls import url, include
 
-import views
+import confluence_views as views
 
 urlpatterns = [
     # basic views

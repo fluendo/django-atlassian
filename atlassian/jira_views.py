@@ -134,7 +134,7 @@ def postfunction_increment_create(request, workflow_conf=None):
         'fields': numeric_fields,
         'field': field
     }
-    return render(request, 'increment_create.html', data)
+    return render(request, 'jira/increment_create.html', data)
 
 
 @csrf_exempt
@@ -150,7 +150,7 @@ def postfunction_increment_view(request, workflow_conf=None):
             field = f
             break
 
-    return render(request, 'increment_view.html', {'field': field})
+    return render(request, 'jira/increment_view.html', {'field': field})
 
 
 @csrf_exempt
@@ -188,7 +188,7 @@ def postfunction_decrement_create(request, workflow_conf=None):
         'fields': numeric_fields,
         'field': field
     }
-    return render(request, 'decrement_create.html', data)
+    return render(request, 'jira/decrement_create.html', data)
 
 
 @csrf_exempt
@@ -204,7 +204,7 @@ def postfunction_decrement_view(request, workflow_conf=None):
             field = f
             break
 
-    return render(request, 'decrement_view.html', {'field': field})
+    return render(request, 'jira/decrement_view.html', {'field': field})
 
 
 @csrf_exempt
@@ -230,11 +230,11 @@ def postfunction_decrement_triggered(request):
 
 @xframe_options_exempt
 def helloworld(request):
-    return render(request, 'fluendo.html')
+    return render(request, 'jira/fluendo.html')
 
 
 class AppDescriptor(TemplateView):
-    template_name = 'atlassian-connect.json'
+    template_name = 'jira/atlassian-connect.json'
     content_type = 'application/json'
 
     def get_context_data(self, *args, **kwargs):

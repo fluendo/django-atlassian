@@ -146,7 +146,6 @@ INSTALLED_APPS = [
     'atlassian.apps.AtlassianConfig',
     'customers.apps.CustomersConfig',
     'sales.apps.SalesConfig',
-    'confluence.apps.ConfluenceConfig',
 ]
 
 MIDDLEWARE = [
@@ -160,7 +159,7 @@ MIDDLEWARE = [
     'django_atlassian.middleware.JWTAuthenticationMiddleware',
 ]
 
-ROOT_URLCONF = 'atlassian_addon.urls'
+ROOT_URLCONF = 'fluendo.urls'
 
 TEMPLATES = [
     {
@@ -178,7 +177,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'atlassian_addon.wsgi.application'
+WSGI_APPLICATION = 'fluendo.wsgi.application'
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators

@@ -1,11 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'jira/base.html' %}
 
 {% block content %}
 <script>
   AP.require(["jira"], function(jira) {
     // When the configuration is saved, this method is called. Return the values for your input elements.
     jira.WorkflowConfiguration.onSave(function() {
-      return $('#decrement-create-field').val();
+      return $('#increment-create-field').val();
     });
   
     // Validate any appropriate input and return true/false
@@ -14,8 +14,8 @@
     });
   });
 </script>
-<form id="decrement-create-form">
-  <select id="decrement-create-field">
+<form id="increment-create-form">
+  <select id="increment-create-field">
   {% for f in fields %}
   <option
     {% if f == field %}selected{% endif %}
