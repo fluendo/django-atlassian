@@ -45,9 +45,6 @@
                        "name": {
                          "value": "Initiative issue key"
                        },
-                       "description": {
-                         "value": "Allows switching between view types"
-                       },
                        "type": "string",
                        "required": true,
                        "multiple": false,
