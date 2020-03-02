@@ -4,47 +4,17 @@ services:
     restart: always
     build: .
     command: python manage.py runserver 0.0.0.0:8000
+    env_file: .env
     ports: 
-     - "8002:8000"
-     - "3002:3002"
+        - "9000:8000"
+    network_mode: bridge
+    external_links:
+        - fluendo
+        - postgres:db
+        - redis
     volumes: 
-     - .:/app
-    env_file: web.env
-    depends_on: 
-     - db_addon
-     - redis_addon
+        - .:/app
     tty: true
     stdin_open: true
   
-  redis_addon:
-    restart: always
-    image: redis:latest
-    ports:
-      - "${REDIS_PORT}:6379" 
-    volumes: 
-      - jiraddon_redis:/data
-    tty: true
-    stdin_open: true
 
-  db_addon:
-    restart: always
-    image: postgres:11-alpine
-    environment: 
-      POSTGRES_DB: ${DB_NAME} 
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWD}
-    ports:
-      - "${DB_PORT}:5432"
-    volumes: 
-      - jiradb:/var/lib/postgresql/data
-    tty: true
-    stdin_open: true
-
-volumes: 
-  jiraddon_redis:
-  jiradb:
-
-networks: 
-  default:
-    external:
-     name: webfluendo_default

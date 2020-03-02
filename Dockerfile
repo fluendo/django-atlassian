@@ -1,4 +1,4 @@
-FROM python:2.7
+FROM python:2.7-slim
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTCODE=1
@@ -9,5 +9,5 @@ RUN apt-get update && apt-get install -y build-essential \
     git
 WORKDIR /app
 COPY . .
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip --user
+RUN pip install -r requirements.txt --user
