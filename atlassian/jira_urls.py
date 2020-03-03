@@ -44,10 +44,5 @@ urlpatterns = [
         views.postfunction_decrement_triggered,
         name='atlassian-postfunction-decrement-triggered'),
 
-    # customers
-    url(r'', include('customers.urls')),
-
-    # sales urls & views
-    url(r'^sales/', include('sales.urls')),
 ]
 
