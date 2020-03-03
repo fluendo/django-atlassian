@@ -19,8 +19,7 @@ from django.http import JsonResponse, Http404
 from django.contrib import messages
 
 from django_atlassian.decorators import jwt_required
-
-from models import Issue
+from atlassian.models import Issue
 
 from customers.proxy_api import (
     agreements_by_account_id,
@@ -33,8 +32,6 @@ from customers.proxy_api import (
     user_proxy,
     patch_account
 )
-
-
 
 # For initiative to epic relationships create a linkedtype of "Belongs to" or something similar. Store it as a global configuration.
 # Create a entitytype property searchable for that, then on JQL we can say parentStatus = 'Done' o better parentResolved
