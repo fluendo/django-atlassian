@@ -49,7 +49,7 @@
 
 </script>
 
-<div class="aui">
+<div class="aui" style="height: 600px;">
   <img 
     src="https://web-fluendo.s3.amazonaws.com/static/img/favicon.png"
     width="16px"
@@ -57,15 +57,15 @@
   <span>{{issue.key}} Customer</span>
   <br/>
   <b>{{c_property.value.customer}}</b>
-</div>
 
-<form class="aui" 
-  id="customers-form" 
+<form class="aui" id="customers-form" 
   onsubmit="javascript: return false;">
   {% csrf_token %}
   <select id="customers-list">
   </select>
 <form>
+
+</div>
 
 <script>
 $( function() {
