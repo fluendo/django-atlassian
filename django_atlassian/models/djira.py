@@ -25,11 +25,14 @@ from jira import JIRA
 from jira.resources import Issue as JiraIssue
 from jira.resilientsession import ResilientSession
 
+from .base import JiraModel
+
 logger = logging.getLogger('django_atlassian')
+
 
 class IssueManager(Manager):
 
-    def create_from_json(self, json):
+    def create_from_json(self, json_data):
         """
         Some modules notify with an Issue. In order to manage it in a django way
         we need to convert the json received into a real Issue instance object
@@ -39,7 +42,7 @@ class IssueManager(Manager):
         args = {}
         for x in self.model.AtlassianMeta.description:
             field = self.model._meta.get_field(x[8])
-            value = convert.extract(json, x, None)
+            value = convert.extract(json_data, x, None)
             if value:
                 value = convert.from_native(value, x)
             if type(field) == models.ForeignKey and value:
@@ -51,10 +54,12 @@ class IssueManager(Manager):
 
 class JiraManagerMixin(JIRA):
     def __init__(self, *args, **kwargs):
+        if not self.model:
+            return
         try:
             db_alias = router.db_for_read(self.model)
             db_settings = connections.databases[db_alias]
-            if db_settings['USER'] and db_settings['PASSWORD']:
+            if db_settings.get('USER') and db_settings.get('PASSWORD'):
                 super(JiraManagerMixin, self).__init__(
                         server=db_settings['NAME'],
                         basic_auth=(
@@ -62,7 +67,7 @@ class JiraManagerMixin(JIRA):
                             db_settings['PASSWORD']
                         )
                 )
-            elif db_settings['SECURITY']:
+            elif db_settings.get('SECURITY'):
                 jwt = {
                     'secret': db_settings['SECURITY'].shared_secret,
                     'payload': {'iss': db_settings['SECURITY'].key},
@@ -76,6 +81,7 @@ class JiraManagerMixin(JIRA):
 
 
 class JiraManager(EmptyManager, JiraManagerMixin):
+    model = None
 
     def __init__(self, *args, **kwargs):
         super(JiraManager, self).__init__(None)
@@ -91,9 +97,9 @@ class IssueLinkList(collections.MutableSequence):
     """
     IssueLink abstraction
     """
-    uri_get = '/rest/api/3/issue/%(key)s?fields=issuelinks'
-    uri_create = '/rest/api/3/issueLink'
-    uri_delete = '/rest/api/3/issueLink/%(link_id)s'
+    uri_get = '/rest/api/latest/issue/%(key)s?fields=issuelinks'
+    uri_create = '/rest/api/latest/issueLink'
+    uri_delete = '/rest/api/latest/issueLink/%(link_id)s'
 
     def __init__(self, model, db, link_type, inward):
         self.model = model
@@ -111,9 +117,9 @@ class IssueLinkList(collections.MutableSequence):
         count = 0
         for x in content['fields']['issuelinks']:
             if x['type']['id'] == self.link_type['id']:
-                if self.inward and x.has_key('inwardIssue'):
+                if self.inward and 'inwardIssue' in x:
                     count = count + 1
-                elif not self.inward and x.has_key('outwardIssue'):
+                elif not self.inward and 'outwardIssue' in x:
                     count = count + 1
         return count
 
@@ -165,13 +171,13 @@ class IssueLinkList(collections.MutableSequence):
         link_id = 0
         for x in content['fields']['issuelinks']:
             if x['type']['id'] == self.link_type['id']:
-                if self.inward and x.has_key('inwardIssue'):
+                if self.inward and 'inwardIssue' in x:
                     if count == index:
                         link = x['inwardIssue']
                         link_id = x['id']
                         break
                     count = count + 1
-                elif not self.inward and x.has_key('outwardIssue'):
+                elif not self.inward and 'outwardIssue' in x:
                     if count == index:
                         link = x['outwardIssue']
                         link_id = x['id']
@@ -189,8 +195,8 @@ class IssueLinks(object):
 
     db = None
     key = None
-    uri_get_all = '/rest/api/3/issueLinkType'
-    uri_get = '/rest/api/3/issue/%(key)s?fields=issuelinks'
+    uri_get_all = '/rest/api/latest/issueLinkType'
+    uri_get = '/rest/api/latest/issue/%(key)s?fields=issuelinks'
 
     def __init__(self, model):
         db_alias = router.db_for_read(model._meta.model)
@@ -247,7 +253,7 @@ class Attachment(object):
         return "'Attachment' attribute {} not defined".format(attr)
 
     def delete(self):
-        uri = '/rest/api/3/attachment/{}'.format(self.id)
+        uri = '/rest/api/latest/attachment/{}'.format(self.id)
         try:
             response = self.db.connection.delete_request(uri)
             return response.status_code
@@ -264,10 +270,11 @@ class JiraIssueModel(JiraIssue):
             db = connections.databases[self.AtlassianMeta.db]
             options['server'] = db['NAME']
             sc = db['SECURITY']
-            jwt = {
-                'secret': sc.shared_secret,
-                'payload': {'iss': sc.key},
-            }
+            if sc:
+                jwt = {
+                    'secret': sc.shared_secret,
+                    'payload': {'iss': sc.key},
+                }
         else:
             # static models 
             db = self.get_db().connection
@@ -281,8 +288,23 @@ class JiraIssueModel(JiraIssue):
         if jwt:
             self._session = self.__class__.jira._session
 
+class AtlassianMeta:
+    """
+    Base class for all JIRA related Meta.
+    """
 
-class Issue(models.base.Model, JiraIssueModel):
+    def __init__(self):
+        # The database name this model refers to. Even if this breaks django
+        # purpose of resuable models being independent of the database backend,
+        # for JIRA there's 1:1 relation between the database (connection) and the model
+        self.db = None
+        # The set of FieldInfo as returned by the introspection
+        # get_table_description(). Given that several REST API methods return a
+        # full issue in JSON, we can parse it directly without the need of another
+        # round trip to the server
+        self.description = []
+
+class Issue(models.Model, JiraIssueModel, JiraModel):
     """
     Base class for all JIRA Issue models.
     """
@@ -296,7 +318,7 @@ class Issue(models.base.Model, JiraIssueModel):
 
     def __init__(self, *args, **kwargs):
         super(Issue, self).__init__(*args, **kwargs)
-        self.find(self.jira_key)
+        #self.jira.find(self.jira_key)
 
     def __getattr__(self, name):
         if name == 'links':
@@ -313,12 +335,12 @@ class Issue(models.base.Model, JiraIssueModel):
 
     def get_property(self, prop_name):
         # Create a connection
-        # Call curl -X GET https://jira-instance1.net/rest/api/3/issue/ENPR-4/properties/{propertyKey}
+        # Call curl -X GET https://jira-instance1.net/rest/api/latest/issue/ENPR-4/properties/{propertyKey}
         pass
 
     def set_property(self, prop_name, value):
         # Create a connection
-        # Call curl -X PUT -H "Content-type: application/json" https://jira-instance1.net/rest/api/3/issue/`ENPR-4`/properties/{propertyKey} -d '{"content":"Test if works on Jira Cloud", "completed" : 1}'
+        # Call curl -X PUT -H "Content-type: application/json" https://jira-instance1.net/rest/api/latest/issue/`ENPR-4`/properties/{propertyKey} -d '{"content":"Test if works on Jira Cloud", "completed" : 1}'
         pass
 
     def is_parent(self):
@@ -371,22 +393,23 @@ class Issue(models.base.Model, JiraIssueModel):
         """
         Get the Issue's changelog
         """
-        uri = "/rest/api/3/issue/%(issue)s/changelog" % { 'issue': self.key }
+        uri = "/rest/api/latest/issue/%(issue)s/changelog" % { 'issue': self.key }
         response = self.get_db().connection.get_request(uri)
         response.raise_for_status()
         content = json.loads(response.content)
+
         return content
 
     def get_statuses(self):
         """
         Get the available statuses on the system
         """
-        uri = "/rest/api/3/status"
+        uri = "/rest/api/latest/status"
         response = self.get_db().connection.get_request(uri)
         response.raise_for_status()
         content = json.loads(response.content)
         return content
-    
+
     def get_attachment(self):
         """
         Get an url list of attached files
@@ -401,9 +424,9 @@ class Issue(models.base.Model, JiraIssueModel):
         :param attachment: a file like object
         :param filename: a file name
         """
-        uri = "/rest/api/3/issue/{}/attachments".format(self.key)
+        uri = "/rest/api/latest/issue/{}/attachments".format(self.key)
         if isinstance(attachment, str):
-            attachment = open(attachment, "rb") 
+            attachment = open(attachment, "rb")
 
         if not filename:
             filename = os.path.basename(attachment.name)
@@ -420,13 +443,13 @@ class Issue(models.base.Model, JiraIssueModel):
         Delete attachment file
         :param attachment: it is an Attachment object
         """
-        uri = '/rest/api/3/attachment/{}'.format(attachment.id)
+        uri = '/rest/api/latest/attachment/{}'.format(attachment.id)
 
         try:
             response = self.get_db().connection.delete_request(uri)
             return response.status_code
         except Exception as e:
-            raise e 
+            raise e
 
     def __unicode__(self):
         return str(self.key)
@@ -434,23 +457,6 @@ class Issue(models.base.Model, JiraIssueModel):
     class Meta:
         abstract = True
         managed = False
-
-
-class AtlassianMeta:
-    """
-    Base class for all JIRA related Meta.
-    """
-
-    def __init__(self):
-        # The database name this model refers to. Even if this breaks django
-        # purpose of resuable models being independent of the database backend,
-        # for JIRA there's 1:1 relation between the database (connection) and the model
-        self.db = None
-        # The set of FieldInfo as returned by the introspection
-        # get_table_description(). Given that several REST API methods return a
-        # full issue in JSON, we can parse it directly without the need of another
-        # round trip to the server
-        self.description = []
 
 
 def create_model(name):
@@ -479,6 +485,7 @@ def populate_model(db, model):
     am = getattr(model, 'AtlassianMeta', None)
     if not am:
         am = AtlassianMeta()
+        am.db = db.alias
         setattr(model, 'AtlassianMeta', am)
     # Check if the description is already populated
     if am.description:
@@ -508,6 +515,18 @@ def populate_model(db, model):
             choices = row[12]
             is_relation = column_name in relations
 
+            rows_with_same_fields = [f for f in table_description if f[8] == field_name]
+            if len(rows_with_same_fields) > 1:
+                # In some not properly JIRA configurations we can meet with fields with same name and
+                # same db_column but with diffrent JIRA field id.
+                if (f for f in rows_with_same_fields if f.column == column_name and f.name == field_name):
+                    logger.warning('{} field with {} db_column already presented. Skip.'
+                                   .format(field_name, column_name))
+                    continue
+                # In some not properly JIRA configurations we can meet with fields with same names and
+                # different JIRA field id. Let's add JIRA field id as suffix.
+                field_name = field_name.rstrip('_') + "_{}".format(row[9])
+            field_name = field_name.rstrip('_')
             # Use the correct column name
             extra_params['db_column'] = column_name
             # Skip the primary key, we already have one
@@ -550,7 +569,11 @@ def populate_model(db, model):
                     continue
 
                 if field_type == 'ForeignKey' and rel_to:
-                    field = field_cls(rel_to, related_name='%sed' % field_name, **extra_params)
+
+                    field = field_cls(rel_to,
+                                      on_delete=models.CASCADE,
+                                      related_name='%sed' % field_name,
+                                      **extra_params)
                 else:
                     field = field_cls(**extra_params)
 

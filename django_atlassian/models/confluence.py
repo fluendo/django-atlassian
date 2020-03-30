@@ -4,7 +4,10 @@ from __future__ import unicode_literals
 
 from django.db import models
 
-class Content(models.base.Model):
+from .base import ConfluanceModel
+
+
+class Content(models.base.Model, ConfluanceModel):
     """
     Base class for all Confluence content models.
     """
