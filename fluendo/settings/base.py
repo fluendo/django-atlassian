@@ -55,7 +55,7 @@ HOST_MIDDLEWARE_URLCONF_MAP = {
     # The atlassian connect based app
     #"atlassian.fluendo.com": "fluendo.atlassian_urls",
     #"atlassian-addon-prod.fluendo.com": "fluendo.atlassian_urls",
-    #"localhost": "atlassian_addon.atlassian_urls",
+    #"localhost": "fluendo.atlassian_urls",
 }
 
 # Database
