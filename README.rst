@@ -15,7 +15,7 @@ Django-atlassian allows you to build a Atlassian Connect apps using Django, it i
 Installation
 ------------
 
-Download and install using ``pip install django-atlassina``
+Download and install using ``pip install django-atlassian``
 
 .. code-block:: bash
 
