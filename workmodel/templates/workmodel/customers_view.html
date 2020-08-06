@@ -29,7 +29,7 @@
     jQuery.ajax({
       type: 'POST',
       dataType: 'json',
-      url: "/atlassian/customers-view-update/?issue_key={{issue.key}}",
+      url: "{% url 'customers-view-update' %}?issue_key={{issue.key}}",
       data: JSON.stringify({
         customer: c_text,
         customer_id: c_item,
@@ -73,7 +73,7 @@ $( function() {
   customers_list.auiSelect2();
 
   $.get(
-    '/atlassian/customers-proxy/',
+    "{% url 'customers-proxy' %}",
     function(data){
       data.forEach(function(customer){
         option = new Option(
