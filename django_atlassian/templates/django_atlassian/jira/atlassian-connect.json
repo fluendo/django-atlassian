@@ -1,0 +1,21 @@
+{
+    "name": "{{ name }}",
+    "description": "{{ description }}",
+    "key": "{{ key }}",
+    "baseUrl": "{{ base_url }}",
+    "vendor": {
+        "name": "{{ vendor_name }}",
+        "url": "{{ vendor_url }}",
+    },
+    "authentication": {
+        "type": "jwt"
+    },
+    "lifecycle": {
+        "installed": "{% url 'django-atlassian-installed' %}"
+    },
+    "scopes": [
+        "read", "write"
+    ],
+    "apiVersion": 1,
+    "modules": {{ modules|safe }}
+}

@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="ap-local-base-url" content="{{localBaseUrl}}">
+  <title>{{title}}</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+
+  <!--  AUI Core -->
+  <script src="https://aui-cdn.atlassian.com/aui-adg/6.0.9/js/aui.min.js"></script>
+  <link rel="stylesheet" href="https://aui-cdn.atlassian.com/aui-adg/6.0.9/css/aui.min.css" media="all">
+
+  <!-- AUI Experimental components -->
+  <link rel="stylesheet" href="https://aui-cdn.atlassian.com/aui-adg/6.0.9/css/aui-experimental.min.css" media="all">
+  <script src="https://aui-cdn.atlassian.com/aui-adg/6.0.9/js/aui-experimental.min.js"></script>
+  <!-- AUI Datepicker and Soy templates -->
+  <script src="https://aui-cdn.atlassian.com/aui-adg/6.0.9/js/aui-datepicker.min.js"></script>
+  <script src="https://aui-cdn.atlassian.com/aui-adg/6.0.9/js/aui-soy.min.js"></script>
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" media="all">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+  <script src="https://fluendo.atlassian.net/atlassian-connect/all.js"></script>
+  <script src="https://connect-cdn.atl-paas.net/all.js"></script>
+
+</head>
+
+<body "ac-content" style="background: white;">
+  <section id="content" role="main">
+    {% block content %}
+    {% endblock %}
+  </section>
+
+  <script>
+      AP.resize('100%','100%');
+      AP.sizeToParent();
+  </script>
+
+</body>
+</html>
