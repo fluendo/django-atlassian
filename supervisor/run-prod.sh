@@ -26,6 +26,6 @@ export URL_BASE='https://atlassian.fluendo.com/'
 # runme
 cd /home/ubuntu/atlassian-addon-prod/atlassian-addon
 exec /home/ubuntu/atlassian-addon-prod/pyenv-prod/bin/gunicorn \
-fluendo.wsgi:application \
+atlassian_addon.wsgi:application \
 --bind unix:/tmp/atlassian_addon_prod.sock \
 --log-level debug -w 4
