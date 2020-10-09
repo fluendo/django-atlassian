@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.http import HttpResponse, HttpResponseBadRequest
 from django_atlassian.decorators import jwt_required
+from django_atlassian.models.connect import SecurityContext
 
 from workmodel.models import Issue
 from fluendo.proxy_api import customers_proxy_cache
@@ -161,11 +162,8 @@ def customers_view_update(request):
 @jwt_required
 def initiative_status(request):
     key = request.GET.get('initiativeKey')
-    # FIXME The confluence plugin does not have access to the JIRA instance (yet?)
-    # so we instantiate
-    # a new jira connection with the credentials found on the databases
-    db = settings.DATABASES['jira']
-    j = JIRA(db['NAME'], basic_auth=(db['USER'], db['PASSWORD']))
+    sc = SecurityContext.objects.filter(key=request.atlassian_sc.key, product_type='jira').get()
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
     r = j.search_issues(
         "issue in linkedIssues({0}, contains) "\
         "OR parent in linkedIssues({0}, contains) "\
