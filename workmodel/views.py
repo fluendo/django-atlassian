@@ -155,6 +155,8 @@ def customers_view_update(request):
         )
 
     return HttpResponse(status=200)
+
+
 @xframe_options_exempt
 @jwt_required
 def initiative_status(request):
