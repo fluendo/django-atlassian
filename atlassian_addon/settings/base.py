@@ -155,7 +155,6 @@ INSTALLED_APPS = [
     'django_atlassian.apps.DjangoAtlassianConfig',
     'sales.apps.SalesConfig',
     'workmodel.apps.WorkModelConfig',
-    'feedback.apps.FeedbackConfig',
 ]
 
 MIDDLEWARE = [
