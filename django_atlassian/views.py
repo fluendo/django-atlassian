@@ -12,6 +12,7 @@ from django.conf import settings
 from django.apps import apps
 from django.views.generic.base import TemplateView
 from django.core.exceptions import ImproperlyConfigured
+from django.template import engines
 
 from models.connect import SecurityContext
 
@@ -85,7 +86,11 @@ class ApplicationDescriptor(TemplateView):
                         modules[k] = modules[k] + v
             except ImportError:
                 continue
-        context['modules'] = json.dumps(modules)
+
+        # Process the contents of the modules by the tenplate engine
+        django_engine = engines['django']
+        template = django_engine.from_string(json.dumps(modules))
+        context['modules'] = template.render()
         # Get the needed settings or abort
         context['name'] = getattr(settings, 'DJANGO_ATLASSIAN_{}_NAME'.format(self.get_application_name().upper()))
         context['description'] = getattr(settings, 'DJANGO_ATLASSIAN_{}_DESCRIPTION'.format(self.get_application_name().upper()))
