@@ -199,3 +199,74 @@ def initiative_status(request):
             'done_pt': done_pt,
         }
     )
+
+
+@csrf_exempt
+@jwt_required
+def addon_enabled(request):
+    sc = request.atlassian_sc
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    field_name = 'com.fluendo.atlassian-addon__workmodel-affected-products-field'
+    options = j.custom_field_options_app(field_name)
+    projects = j.projects()
+    options_ids = [option.properties.id for option in options]
+    for project in projects:
+        properties = { 'name': project.name, 'key': project.key, 'id': project.id }
+        # Create the option based on the project id
+        if not project.id in options_ids:
+            j.create_custom_field_option_app(
+                field_name,
+                project.name,
+                properties
+            )
+        # Update the options in case the project name or key have changed
+        else:
+            option = [option for option in options if option.properties.id == project.id][0]
+            option.update(value=project.name, id=option.id, properties=properties)
+    return HttpResponse(204)
+
+
+@csrf_exempt
+@jwt_required
+def project_created(request):
+    sc = request.atlassian_sc
+    data = json.loads(request.body)
+    project = data['project']
+    properties = { 'name': project['name'], 'key': project['key'], 'id': str(project['id']) }
+    field_name = 'com.fluendo.atlassian-addon__workmodel-affected-products-field'
+
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    j.create_custom_field_option_app(field_name, project['name'], properties)
+    return HttpResponse(204)
+
+
+@csrf_exempt
+@jwt_required
+def project_updated(request):
+    sc = request.atlassian_sc
+    data = json.loads(request.body)
+    project = data['project']
+    properties = { 'name': project['name'], 'key': project['key'], 'id': str(project['id']) }
+    field_name = 'com.fluendo.atlassian-addon__workmodel-affected-products-field'
+
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    options = j.custom_field_options_app(field_name)
+    option = [option for option in options if option.properties.id == str(project['id'])][0]
+    option.update(value=project['name'], id=option.id, properties=properties)
+    return HttpResponse(204)
+
+
+@csrf_exempt
+@jwt_required
+def project_deleted(request):
+    sc = request.atlassian_sc
+    data = json.loads(request.body)
+    project = data['project']
+    field_name = 'com.fluendo.atlassian-addon__workmodel-affected-products-field'
+
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    options = j.custom_field_options_app(field_name)
+    option = [option for option in options if option.properties.id == str(project['id'])][0]
+    option.delete()
+    return HttpResponse(204)
+
