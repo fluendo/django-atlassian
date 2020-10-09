@@ -171,7 +171,6 @@ def initiative_status(request):
         .format(key)
     )
     total = len(r)
-    print(total)
     todo = progress = done = 0
     todo_pt = progress_pt = done_pt = 0
     if total != 0:
