@@ -28,6 +28,7 @@ def installed(request):
         shared_secret = post['sharedSecret']
         client_key = post['clientKey']
         host = post['baseUrl']
+        product_type = post['productType']
     except MultiValueDictKeyError:
         return HttpResponseBadRequest()
 
@@ -52,6 +53,7 @@ def installed(request):
         sc.host = host
         sc.shared_secret = shared_secret
         sc.client_key = client_key
+        sc.product_type = product_type
         sc.save()
 
     return HttpResponse(status=204)
