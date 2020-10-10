@@ -49,6 +49,23 @@ modules = [
                 }]
             }
         ],
+        "jiraIssueFields": [
+            {
+                "key" : "workmodel-affected-products-field",
+                "name" : {
+                    "value" : "Affected Products"
+                },
+                "description" : {
+                    "value" : "Products that are affected by an issue"
+                },
+                "type": "multi_select",
+                "extractions": [{
+                    "path": "name",
+                    "type": "string",
+                    "name": "name"
+                }]
+            }
+        ],
         "webPanels": [
             {
                 "url": "{% url 'workmodel-customers-view' %}?key={issue.key}",
@@ -61,7 +78,25 @@ modules = [
                 "conditions": [{
                     "condition": "user_is_logged_in"
                 }]
+            }
+        ],
+        "webhooks": [
+            {
+                "event": "connect_addon_enabled",
+                "url": "{% url 'workmodel-addon-enabled' %}",
             },
+            {
+                "event": "project_created",
+                "url": "{% url 'workmodel-project-created' %}",
+            },
+            {
+                "event": "project_updated",
+                "url": "{% url 'workmodel-project-updated' %}",
+            },
+            {
+                "event": "project_deleted",
+                "url": "{% url 'workmodel-project-deleted' %}",
+            }
         ]
     }
 ]

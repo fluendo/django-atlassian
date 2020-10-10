@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.http import HttpResponse, HttpResponseBadRequest
 from django_atlassian.decorators import jwt_required
+from django_atlassian.models.connect import SecurityContext
 
 from workmodel.models import Issue
 from fluendo.proxy_api import customers_proxy_cache
@@ -155,15 +156,14 @@ def customers_view_update(request):
         )
 
     return HttpResponse(status=200)
+
+
 @xframe_options_exempt
 @jwt_required
 def initiative_status(request):
     key = request.GET.get('initiativeKey')
-    # FIXME The confluence plugin does not have access to the JIRA instance (yet?)
-    # so we instantiate
-    # a new jira connection with the credentials found on the databases
-    db = settings.DATABASES['jira']
-    j = JIRA(db['NAME'], basic_auth=(db['USER'], db['PASSWORD']))
+    sc = SecurityContext.objects.filter(key=request.atlassian_sc.key, product_type='jira').get()
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
     r = j.search_issues(
         "issue in linkedIssues({0}, contains) "\
         "OR parent in linkedIssues({0}, contains) "\
@@ -171,7 +171,6 @@ def initiative_status(request):
         .format(key)
     )
     total = len(r)
-    print(total)
     todo = progress = done = 0
     todo_pt = progress_pt = done_pt = 0
     if total != 0:
@@ -198,3 +197,74 @@ def initiative_status(request):
             'done_pt': done_pt,
         }
     )
+
+
+@csrf_exempt
+@jwt_required
+def addon_enabled(request):
+    sc = request.atlassian_sc
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    field_name = 'com.fluendo.atlassian-addon__workmodel-affected-products-field'
+    options = j.custom_field_options_app(field_name)
+    projects = j.projects()
+    options_ids = [option.properties.id for option in options]
+    for project in projects:
+        properties = { 'name': project.name, 'key': project.key, 'id': project.id }
+        # Create the option based on the project id
+        if not project.id in options_ids:
+            j.create_custom_field_option_app(
+                field_name,
+                project.name,
+                properties
+            )
+        # Update the options in case the project name or key have changed
+        else:
+            option = [option for option in options if option.properties.id == project.id][0]
+            option.update(value=project.name, id=option.id, properties=properties)
+    return HttpResponse(204)
+
+
+@csrf_exempt
+@jwt_required
+def project_created(request):
+    sc = request.atlassian_sc
+    data = json.loads(request.body)
+    project = data['project']
+    properties = { 'name': project['name'], 'key': project['key'], 'id': str(project['id']) }
+    field_name = 'com.fluendo.atlassian-addon__workmodel-affected-products-field'
+
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    j.create_custom_field_option_app(field_name, project['name'], properties)
+    return HttpResponse(204)
+
+
+@csrf_exempt
+@jwt_required
+def project_updated(request):
+    sc = request.atlassian_sc
+    data = json.loads(request.body)
+    project = data['project']
+    properties = { 'name': project['name'], 'key': project['key'], 'id': str(project['id']) }
+    field_name = 'com.fluendo.atlassian-addon__workmodel-affected-products-field'
+
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    options = j.custom_field_options_app(field_name)
+    option = [option for option in options if option.properties.id == str(project['id'])][0]
+    option.update(value=project['name'], id=option.id, properties=properties)
+    return HttpResponse(204)
+
+
+@csrf_exempt
+@jwt_required
+def project_deleted(request):
+    sc = request.atlassian_sc
+    data = json.loads(request.body)
+    project = data['project']
+    field_name = 'com.fluendo.atlassian-addon__workmodel-affected-products-field'
+
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    options = j.custom_field_options_app(field_name)
+    option = [option for option in options if option.properties.id == str(project['id'])][0]
+    option.delete()
+    return HttpResponse(204)
+
