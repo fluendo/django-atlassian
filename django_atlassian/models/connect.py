@@ -22,6 +22,7 @@ class SecurityContext(models.base.Model):
     key = models.CharField(max_length=512, null=False, blank=False)
     client_key = models.CharField(max_length=512, null=False, blank=False)
     host = models.CharField(max_length=512, null=False, blank=False)
+    product_type = models.CharField(max_length=512, null=False, blank=False)
 
 
     def create_token(self, method, uri):
