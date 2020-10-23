@@ -2,8 +2,11 @@
 from __future__ import unicode_literals
 
 import json
+import atlassian_jwt
 
 from jira import JIRA
+
+from django.urls import reverse
 from django.conf import settings
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
@@ -86,43 +89,43 @@ def issue_created(request):
 @jwt_required
 @xframe_options_exempt
 def customers_view(request):
-    Issue = request.atlassian_model
+    sc = request.atlassian_sc
     key = request.GET.get('key')
     property_key = 'customers'
-    issue = None
     customers_json = None
 
-    if key:
-        issue = Issue.objects.get(key=key)
-
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
     customers = customers_proxy_cache(request)
-    if customers:
-        customers_json = json.loads(customers.content)
+    customers_json = json.loads(customers.content)
+    try:
+        p = j.issue_property(key, property_key)
+        customer = p.value.customer
+        customer_id = p.value.customer_id
+    except:
+        customer = 'Click to choose one'
+        customer_id = 0
 
-    if key and issue and customers:
-        try:
-            customer_property = Issue.jira.issue_property(
-                issue, property_key)
-        except:
-            customer_property = {
-                'value':{
-                    'customer': 'click to choose one',
-                    'customer_id': 0,
-                }
-            }
+    customer_property = {
+        'value': {
+            'customer': customer,
+            'customer_id': customer_id
+        }
+    }
 
-        rest_url = '/rest/api/2/issue/' + issue.key + '/properties/customers'
-        return render(
-            request,
-            'workmodel/customers_view.html',
-            {
-                'issue': issue,
-                'rest_url': rest_url,
-                'customers': customers_json,
-                'c_property': customer_property,
-            })
-    else:
-        return HttpResponseBadRequest()
+    # Encode the update URL to make a secure call to ourselves
+    url = "{}?key={}".format(reverse('customers-view-update'), key)
+    token = atlassian_jwt.encode_token('POST', url, sc.client_key, sc.shared_secret)
+
+    return render(
+        request,
+        'workmodel/customers_view.html',
+        {
+            'key': key,
+            'jwt': token,
+            'customers': customers_json,
+            'c_property': customer_property,
+        }
+    )
 
 
 @xframe_options_exempt
@@ -131,30 +134,17 @@ def customers_proxy_view(request):
 
 
 @csrf_protect
+@jwt_required
 def customers_view_update(request):
-    try:
-        Issue = request.atlassian_model
-    except:
-        from atlassian.models import Issue
-
-    issue_key = request.GET.get('issue_key')
+    sc = request.atlassian_sc
+    key = request.GET.get('key')
     property_key = 'customers'
-    issue = None
     data = json.loads(request.body)
     customer = data['customer']
     customer_id = data['customer_id']
 
-    if issue_key:
-        issue = Issue.objects.get(key=issue_key)
-        Issue.jira.add_issue_property(
-            issue_key,
-            property_key,
-            {
-                'customer': customer,
-                'customer_id': customer_id
-            }
-        )
-
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    j.add_issue_property(key, property_key, {'customer': customer, 'customer_id': customer_id })
     return HttpResponse(status=200)
 
 
