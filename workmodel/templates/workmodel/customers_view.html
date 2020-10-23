@@ -73,7 +73,7 @@ $( function() {
   customers_list.auiSelect2();
 
   $.get(
-    "{% url 'customers-proxy' %}",
+    "{% url 'workmodel-customers-proxy' %}",
     function(data){
       data.forEach(function(customer){
         option = new Option(
