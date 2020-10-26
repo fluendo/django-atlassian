@@ -1,4 +1,4 @@
-{% extends 'atlassian/base.html' %}
+{% extends 'django_atlassian/base.html' %}
 
 {% block content %}
 
@@ -29,7 +29,8 @@
     jQuery.ajax({
       type: 'POST',
       dataType: 'json',
-      url: "{% url 'customers-view-update' %}?issue_key={{issue.key}}",
+      url: "{% url 'customers-view-update' %}?key={{ key }}",
+      headers: {"Authorization": "JWT {{ jwt }}" },
       data: JSON.stringify({
         customer: c_text,
         customer_id: c_item,
@@ -54,9 +55,9 @@
     src="https://web-fluendo.s3.amazonaws.com/static/img/favicon.png"
     width="16px"
     height="16px" />
-  <span>{{issue.key}} Customer</span>
+  <span>{{ key }} Customer</span>
   <br/>
-  <b>{{c_property.value.customer}}</b>
+  <b>{{ c_property.value.customer }}</b>
 
 <form class="aui" id="customers-form" 
   onsubmit="javascript: return false;">
@@ -73,7 +74,7 @@ $( function() {
   customers_list.auiSelect2();
 
   $.get(
-    "{% url 'customers-proxy' %}",
+    "{% url 'workmodel-customers-proxy' %}",
     function(data){
       data.forEach(function(customer){
         option = new Option(
