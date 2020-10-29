@@ -230,4 +230,7 @@ CELERY_RESULT_BACKEND = 'django-db'
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT= os.path.join(os.path.dirname(BASE_DIR), 'static_media')
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static_media')
+STATICFILES_DIRS = [
+    ('atlassian_addon', os.path.join(os.path.dirname(BASE_DIR), 'atlassian_addon', 'static')),
+]
