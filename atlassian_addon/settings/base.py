@@ -173,7 +173,7 @@ ROOT_URLCONF = 'atlassian_addon.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': ['atlassian_addon/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
