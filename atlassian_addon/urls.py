@@ -7,4 +7,5 @@ urlpatterns = [
     url(r'^atlassian/', include('django_atlassian.urls')),
     url(r'^workmodel/', include('workmodel.urls')),
     url(r'^sales/', include('sales.urls')),
+    url(r'^metabase/', include('metabase.urls')),
 ]

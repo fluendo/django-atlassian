@@ -1,0 +1,203 @@
+{% extends 'atlassian_addon/page.html' %}
+{% block extra-scripts %}
+  <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+{% endblock %}
+{% block body %}
+<body class="aui-page">
+<section id="content" role="main">
+  <div class="aui-page-panel ac-content">
+    <div class="aui-page-panel-inner">
+      <section class="aui-page-panel-content">
+        <div id="metabase-item" class="aui-item">
+        </div>
+        <div id="metabase-message">
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+<script type="text/underscore-template" id="configurationSavedTemplate">
+  <div class="aui-message aui-message-warning">
+    <p class="title">
+        <strong>Configuration saved</strong>
+    </p>
+    <p>Due to limitations with the Atlassian Connect API it is not possible to refresh the gadget. You need to do it manually.</p>
+  </div>
+</script>
+<script type="text/underscore-template" id="itemTemplate">
+  <div id="metabase-content">
+    <iframe id="metabase-embedded" width="100%" height="600px" src="{{ iframe_url }}" frameborder="0" allowtransparency>
+    </iframe>
+  </div>
+</script>
+<script type="text/underscore-template" id="itemConfigurationTemplate">
+  <form class='aui'>
+    <div class='field-group'>
+      <label for='payload'>Payload:<span class='aui-icon icon-required'>required</span></label>
+      <textarea data-aui-validation-field data-aui-validation-json class="textarea" name="payload" id="payload" rows="6" placeholder="The Metabase payload as defined on the embeddable code"><% if(payload) print(JSON.stringify(payload, null, 2)) %></textarea>
+    </div>
+    <fieldset class="group">
+      <legend><span>Theme</span></legend>
+      <div class="radio">
+        <input class="radio" type="radio" <% if(theme == "night") { %> checked="checked" <% } %> name="theme" id="night">
+        <label for="night">Night</label>
+      </div>
+      <div class="radio">
+        <input class="radio" type="radio" <% if(theme == "light") { %> checked="checked" <% } %> name="theme" id="light">
+        <label for="light">Light</label>
+      </div>
+    </fieldset>
+    <fieldset class="group">
+      <legend><span>Style</span></legend>
+      <div class="checkbox">
+        <input class="checkbox" type="checkbox" name="border" id="border" <% if(border) { %> checked="checked" <% } %>>
+        <label for="border">Show border</label>
+      </div>
+      <div class="checkbox">
+        <input class="checkbox" type="checkbox" name="title" id="title" <% if(title) { %> checked="checked" <% } %>>
+        <label for="title">Show title</label>
+      </div>
+    </fieldset>
+    <div class='buttons-container'>
+      <button type='submit' id='saveConfiguration' class='aui-button'>Save</button>
+    </div>
+  </form>
+</script>
+<script type="text/javascript">
+  var ConfigurationSavedView = function() {
+    return {
+      template: function(value) {
+        return _.template($('#configurationSavedTemplate').html())(value);
+      },
+      render: function() {
+        $('#metabase-message').html(this.template());
+      }
+    }
+  };
+  var ItemView = function() {
+    return {
+      template: function(value) {
+        return _.template($('#itemTemplate').html())(value);
+      },
+      render: function(configuration) {
+        $('#metabase-item').html(this.template());
+      }
+    }
+  };
+
+  var ItemConfigurationView = function() {
+    return {
+      template: function(value) {
+        return _.template($('#itemConfigurationTemplate').html())(value);
+      },
+      render: function(config) {
+        var cur_iframe = "{{ iframe_url }}"
+        if (config) {
+          $('#metabase-item').html(this.template(config));
+        } else {
+          $('#metabase-item').html(this.template({
+            payload: null,
+            border: true,
+            title: true,
+            theme: 'light',
+          }));
+        }
+        $('#metabase-item').on('aui-valid-submit', 'form', function(e) {
+          e.preventDefault();
+          var service = new ItemConfigurationService();
+          var $payload = JSON.parse($('#payload').val());
+          var $theme = $("input[name='theme']:checked").attr('id');
+          var $border = $('#border').prop('checked');
+          var $title = $('#title').prop('checked');
+          var configuration = {payload: $payload, theme: $theme, border: $border, title: $title};
+          service.save(configuration, function() {
+            if (cur_iframe !== "")
+              new ItemView().render(configuration);
+            new ConfigurationSavedView().render();
+          });
+        });
+      }
+    }
+  };
+
+  var ItemConfigurationService = function() {
+    return {
+      getConfiguration: function(configuredCallback, errorCallback) {
+        AP.require(['request'], function(request) {
+          request({
+            url: '/rest/api/2/dashboard/{{dashboard}}/items/{{dashboardItem}}/properties/metabase-configuration',
+            success: function(response) {
+              configuredCallback(JSON.parse(response).value);
+            }
+          });
+        });
+      },
+      isConfigured : function(configuredCallback, notConfiguredCallback) {
+        var that = this;
+        AP.require(['request'], function(request) {
+          request({
+            url: '/rest/api/2/dashboard/{{dashboard}}/items/{{dashboardItem}}/properties',
+            success: function(response) {
+              var arrayOfProperties = JSON.parse(response).keys;
+              var configured = _.find(arrayOfProperties, function(property) {
+                return "metabase-configuration" == property.key;
+              });
+              if (configured) {
+                that.getConfiguration(configuredCallback)
+              } else {
+                notConfiguredCallback();
+              }
+            }
+          });
+        });
+      },
+      save : function(configuration, successCallback) {
+        AP.require(['request'], function(request) {
+          request({
+            url: '/rest/api/2/dashboard/{{dashboard}}/items/{{dashboardItem}}/properties/metabase-configuration',
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(configuration),
+            success: successCallback
+          });
+        });
+      }
+    }
+  };
+
+  var MetabaseView = function() {
+    return {
+      render: function() {
+        var service = new ItemConfigurationService();
+        service.isConfigured(function(config) {
+          new ItemView().render(config)
+        }, function() {
+          new ItemConfigurationView().render();
+        });
+      }
+    }
+  };
+
+  AP.require(['jira'], function (jira) {
+    jira.DashboardItem.onDashboardItemEdit(function() {
+      new ItemConfigurationService().getConfiguration(function(config) {
+        new ItemConfigurationView().render(config);
+      });
+    });
+  });
+
+  // Register a plugin validator that ensures an input field must start with a certain sequence of characters.
+  AJS.formValidation.register(['json'], function(field) {
+    try {
+      JSON.parse(field.el.value);
+      field.validate();
+    } catch(err) {
+      field.invalidate(AJS.format('Input must be valid JSON'));
+    }
+  });
+
+  new MetabaseView().render();
+
+</script>
+</body>
+{% endblock %}
