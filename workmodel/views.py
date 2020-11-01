@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import json
 import atlassian_jwt
-
+from urlparse import urlparse
 from jira import JIRA
 
 from django.urls import reverse
@@ -151,8 +151,13 @@ def customers_view_update(request):
 @xframe_options_exempt
 @jwt_required
 def initiative_status(request):
+    # Mandatory parameters
     key = request.GET.get('initiativeKey')
-    sc = SecurityContext.objects.filter(key=request.atlassian_sc.key, product_type='jira').get()
+    # Get the security context from the same jira instance
+    sc = request.atlassian_sc
+    parsed_uri = urlparse(sc.host)
+    jira_host = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
+    sc = SecurityContext.objects.filter(host=jira_host, key=request.atlassian_sc.key, product_type='jira').get()
     j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
     r = j.search_issues(
         "issue in linkedIssues({0}, contains) "\
