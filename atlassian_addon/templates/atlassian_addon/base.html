@@ -1,0 +1,27 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="ap-local-base-url" content="{{ localBaseUrl }}">
+  {% block title %}
+    <title>{{title}}</title>
+  {% endblock %}
+  {% block scripts %}
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://connect-cdn.atl-paas.net/all.js"></script>
+    <script src='{% static "atlassian_addon/vendor/aui/aui-prototyping.js" %}'></script>
+    {% block extra-scripts %}
+    {% endblock %}
+  {% endblock %}
+  {% block styles %}
+    <link rel="stylesheet" href='{% static "atlassian_addon/vendor/aui/aui-prototyping.css" %}' media="all"/>
+    {% block extra-styles %}
+    {% endblock %}
+  {% endblock %}
+</head>
+
+{% block body %}
+{% endblock %}
+</html>

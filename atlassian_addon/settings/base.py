@@ -155,6 +155,7 @@ INSTALLED_APPS = [
     'django_atlassian.apps.DjangoAtlassianConfig',
     'sales.apps.SalesConfig',
     'workmodel.apps.WorkModelConfig',
+    'metabase.apps.MetabaseModelConfig',
 ]
 
 MIDDLEWARE = [
@@ -173,7 +174,7 @@ ROOT_URLCONF = 'atlassian_addon.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': ['atlassian_addon/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -230,4 +231,7 @@ CELERY_RESULT_BACKEND = 'django-db'
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT= os.path.join(os.path.dirname(BASE_DIR), 'static_media')
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static_media')
+STATICFILES_DIRS = [
+    ('atlassian_addon', os.path.join(os.path.dirname(BASE_DIR), 'atlassian_addon', 'static')),
+]

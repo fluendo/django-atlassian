@@ -22,5 +22,5 @@ redis==2.10.6
 requests==2.18.4
 PyJWT==1.6.4
 ipdb==0.11
-git+https://github.com/fluendo/jira.git@OPE-1066
+git+https://github.com/fluendo/jira.git@OPE-1085
 gunicorn==19.9.0

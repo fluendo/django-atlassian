@@ -1,0 +1,119 @@
+{% extends 'atlassian_addon/page.html' %}
+{% load static %}
+{% block extra-scripts %}
+  <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+{% endblock %}
+{% block main %}
+  <div class="aui-page-panel">
+    <div class="aui-page-panel-inner">
+      <section class="aui-page-panel-content">
+        <div class="aui-page-header">
+          <div class="aui-page-header-inner">
+            <div class="aui-page-header-main">
+              <h1 class="component-heading">Configuration</h1>
+            </div>
+          </div>
+        </div>
+        <div id="configuration">
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script type="text/underscore-template" id="configurationTemplate">
+  <form id='configurationForm' class='aui'>
+    <div class='field-group'>
+      <label for='url'>URL:</label>
+      <input class='text long-field' type='text' id='url' value="<%=url%>"/>
+    </div>
+    <div class='field-group'>
+      <label for='token'>Token:</label>
+      <input class='text long-field' id='token' value="<%=token%>"></input>
+    </div>
+    <div class='buttons-container'>
+      <button type='submit' id='saveConfiguration' class='aui-button'>Save</button>
+    </div>
+  </form>
+</script>
+
+<script>
+  var MetabaseConfigurationService = function() {
+    return {
+      getConfiguration: function(configuredCallback, errorCallback) {
+        AP.require(['request'], function(request) {
+          request({
+            url: '/rest/atlassian-connect/1/addons/com.fluendo.atlassian-addon/properties/metabase-configuration',
+            success: function(response) {
+              configuredCallback(JSON.parse(response).value);
+            }
+          });
+        });
+      },
+      isConfigured : function(configuredCallback, notConfiguredCallback) {
+        var that = this;
+        AP.require(['request'], function(request) {
+          request({
+            url: '/rest/atlassian-connect/1/addons/com.fluendo.atlassian-addon/properties',
+            success: function(response) {
+              var arrayOfProperties = JSON.parse(response).keys;
+              var configured = _.find(arrayOfProperties, function(property) {
+                return "metabase-configuration" == property.key;
+              });
+              if (configured) {
+                that.getConfiguration(configuredCallback);
+              } else {
+                notConfiguredCallback();
+              }
+            }
+          });
+        });
+      },
+      save : function(configuration, successCallback) {
+        AP.require(['request'], function(request) {
+          request({
+            url: '/rest/atlassian-connect/1/addons/com.fluendo.atlassian-addon/properties/metabase-configuration',
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(configuration),
+            success: successCallback
+          });
+        });
+      }
+    }
+  };
+
+  var MetabaseConfigurationView = function() {
+    return {
+      template: function(value) {
+        return _.template($('#configurationTemplate').html())(value);
+      },
+      render: function() {
+        var that = this;
+        var service = new MetabaseConfigurationService();
+        service.isConfigured(function(config) {
+          $('#configuration').html(that.template({url: config.url, token: config.token}));
+        }, function() {
+          $('#configuration').html(that.template({url: null, token: null}));
+        });
+        $('#configuration').on('aui-valid-submit', 'form', function(e) {
+          e.preventDefault();
+          var service = new MetabaseConfigurationService();
+          var $url = $('#url').val();
+          var $token = $('#token').val();
+          var configuration = {url: $url, token: $token};
+          service.save(configuration, function() {
+            AJS.flag({type: 'success', body: 'Configuration correctly saved', close: 'auto'})
+          });
+        });
+      }
+    }
+  };
+
+  AP.require(['jira'], function (jira) {
+    new MetabaseConfigurationView().render();
+  });
+
+
+</script>
+{% endblock %}
+
