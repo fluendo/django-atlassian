@@ -52,13 +52,12 @@ def dashboard_item_view(request):
               "resource": {
                   resource: getattr(prop.value.payload.resource, resource)
               },
-              "params": {
-              },
+              "params": getattr(prop.value.payload, "params", {}),
               "exp": round(time.time()) + (60 * 10) # 10 minute expiration
             }
-            token = jwt.encode(payload, configuration[0].value.token, algorithm="HS256")
+            token = jwt.encode(payload, configuration[0].value.secret_key, algorithm="HS256")
             iframe_url = "{}/embed/{}/{}#bordered={}&titled={}&theme={}".format(
-                configuration[0].value.url,
+                configuration[0].value.site_url,
                 resource,
                 token.decode("utf8"),
                 str(prop.value.border).lower(),
