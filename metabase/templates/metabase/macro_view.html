@@ -1,0 +1,15 @@
+{% extends 'atlassian_addon/page.html' %}
+{% block main %}
+<div class="aui-page-panel ac-content">
+  <div class="aui-page-panel-inner">
+    <section class="aui-page-panel-content">
+      <div id="metabase-item" class="aui-item">
+        <div id="metabase-content">
+          <iframe id="metabase-embedded" width="100%" height="600px" src="{{ iframe_url }}" frameborder="0" allowtransparency>
+          </iframe>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
