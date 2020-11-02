@@ -1,0 +1,30 @@
+{% extends "atlassian_addon/page.html" %}
+{% load static %}
+{% block main %}
+  <div class="aui-page-panel">
+    <div class="aui-page-panel-inner">
+      <section class="aui-page-panel-content">
+        <div id="configuration">
+          <form id="configurationForm" class="aui" method="post" action="{% url "metabase-confluence-configuration-page" %}">
+            {% csrf_token %}
+            <input name="id" id="id" type="hidden" value="{{ conf.id }}"/>
+            <div class="field-group">
+              <label for="site_url">Site URL:</label>
+              <input class="text long-field" type="text" name="site_url" id="site_url" value="{{ conf.site_url }}"/>
+            </div>
+            <div class="field-group">
+              <label for="secret_key">Secret key:</label>
+              <input class="text long-field" name="secret_key" id="secret_key" value="{{ conf.secret_key }}"></input>
+            </div>
+            <div class="buttons-container">
+              <button type="submit" id="saveConfiguration" class="aui-button">Save</button>
+            </div>
+          </form>
+        </div>
+        <div class="aui-message aui-message-info">
+          <p>For more information on where to take those values from, check the <a target="_parent" href="https://metabase.com/embedding/">Metabase embedded documentation</a></p>
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

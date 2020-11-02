@@ -25,7 +25,7 @@ modules = [
         ],
         "generalPages": [
             {
-                "url": "{% url 'metabase-configuration-page' %}",
+                "url": "{% url 'metabase-jira-configuration' %}",
                 "location": "admin_plugins_menu/metabase-settings",
                 "name": {
                     "value": "Configuration"

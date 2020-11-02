@@ -16,6 +16,9 @@
         </div>
         <div id="configuration">
         </div>
+        <div class="aui-message aui-message-info">
+          <p>For more information on where to take those values from, check the <a target="_parent" href="https://metabase.com/embedding/">Metabase embedded documentation</a></p>
+        </div>
       </section>
     </div>
   </div>
@@ -23,12 +26,12 @@
 <script type="text/underscore-template" id="configurationTemplate">
   <form id='configurationForm' class='aui'>
     <div class='field-group'>
-      <label for='url'>URL:</label>
-      <input class='text long-field' type='text' id='url' value="<%=url%>"/>
+      <label for='site_url'>Site URL:</label>
+      <input class='text long-field' type='text' id='site_url' value="<%=site_url%>"/>
     </div>
     <div class='field-group'>
-      <label for='token'>Token:</label>
-      <input class='text long-field' id='token' value="<%=token%>"></input>
+      <label for='secret_key'>Secret key:</label>
+      <input class='text long-field' id='secret_key' value="<%=secret_key%>"></input>
     </div>
     <div class='buttons-container'>
       <button type='submit' id='saveConfiguration' class='aui-button'>Save</button>
@@ -91,16 +94,16 @@
         var that = this;
         var service = new MetabaseConfigurationService();
         service.isConfigured(function(config) {
-          $('#configuration').html(that.template({url: config.url, token: config.token}));
+          $('#configuration').html(that.template({site_url: config.site_url, secret_key: config.secret_key}));
         }, function() {
-          $('#configuration').html(that.template({url: null, token: null}));
+          $('#configuration').html(that.template({site_url: null, secret_key: null}));
         });
         $('#configuration').on('aui-valid-submit', 'form', function(e) {
           e.preventDefault();
           var service = new MetabaseConfigurationService();
-          var $url = $('#url').val();
-          var $token = $('#token').val();
-          var configuration = {url: $url, token: $token};
+          var $site_url = $('#site_url').val();
+          var $secret_key = $('#secret_key').val();
+          var configuration = {site_url: $site_url, secret_key: $secret_key};
           service.save(configuration, function() {
             AJS.flag({type: 'success', body: 'Configuration correctly saved', close: 'auto'})
           });

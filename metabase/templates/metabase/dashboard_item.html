@@ -2,20 +2,18 @@
 {% block extra-scripts %}
   <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
 {% endblock %}
-{% block body %}
-<body class="aui-page">
-<section id="content" role="main">
-  <div class="aui-page-panel ac-content">
-    <div class="aui-page-panel-inner">
-      <section class="aui-page-panel-content">
-        <div id="metabase-item" class="aui-item">
-        </div>
-        <div id="metabase-message">
-        </div>
-      </section>
-    </div>
+
+{% block main %}
+<div class="aui-page-panel ac-content">
+  <div class="aui-page-panel-inner">
+    <section class="aui-page-panel-content">
+      <div id="metabase-item" class="aui-item">
+      </div>
+      <div id="metabase-message">
+      </div>
+    </section>
   </div>
-</section>
+</div>
 <script type="text/underscore-template" id="configurationSavedTemplate">
   <div class="aui-message aui-message-warning">
     <p class="title">
