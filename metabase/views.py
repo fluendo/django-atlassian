@@ -28,10 +28,14 @@ def jira_configuration(request):
         'metabase/jira_configuration.html')
 
 
+@method_decorator(xframe_options_exempt, name='dispatch')
+@method_decorator(csrf_exempt, name='dispatch')
+# Something is wrong when decorating the post method. Couldn't find a
+# way to fix this but disabling both, the csrf token and the xframe
+# options on the dispatch method
 class ConfluenceConfiguration(View):
     http_method_names = ['get', 'post']
 
-    @method_decorator(xframe_options_exempt)
     @method_decorator(jwt_required)
     def get(self, request):
         conf, created = MetabaseConfiguration.objects.get_or_create(account=request.atlassian_sc)
@@ -39,7 +43,6 @@ class ConfluenceConfiguration(View):
           conf.save()
         return render(request, 'metabase/confluence_configuration.html', {'conf': conf})
 
-    @method_decorator(xframe_options_exempt)
     def post(self, request):
         conf = MetabaseConfiguration.objects.get(id=request.POST.get('id'))
         conf.site_url = request.POST.get('site_url')
