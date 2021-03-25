@@ -148,6 +148,50 @@ def customers_view_update(request):
     return HttpResponse(status=200)
 
 
+def get_child_issues(j, key, relation='contains', extra_jql=None):
+    """
+    Function to get the issues on a hierarchy of issues
+    """
+    jql = "issue in linkedIssues({0}, {1}) "\
+        "OR parent in linkedIssues({0}, {1}) "\
+        "OR parentEpic in linkedIssues({0}, {1})"\
+        .format(key, relation)
+    if extra_jql:
+        jql = "({0}) {1}".format(jql, extra_jql)
+    r = j.search_issues(jql)
+    return r
+
+
+def get_issues_progress(issues):
+    """
+    For a list of issues, get the corresponding status categories as absolute
+    values and relative to the total
+    """
+    total = len(issues)
+    todo = progress = done = 0
+    todo_pt = progress_pt = done_pt = 0
+    if total != 0:
+        for i in issues:
+            if i.fields.status.statusCategory.name == 'Done':
+                done = done + 1
+            elif i.fields.status.statusCategory.name == 'To Do':
+                todo = todo + 1
+            elif i.fields.status.statusCategory.name == 'In Progress':
+                progress = progress + 1
+        todo_pt = int(float(todo) / total * 100)
+        progress_pt = int(float(progress) / total * 100)
+        done_pt = int(float(done) / total * 100)
+    return {
+        'total': total,
+        'todo': todo,
+        'todo_pt': todo_pt,
+        'progress': progress,
+        'progress_pt': progress_pt,
+        'done': done,
+        'done_pt': done_pt,
+    }
+
+
 @xframe_options_exempt
 @jwt_required
 def initiative_status(request):
@@ -159,38 +203,48 @@ def initiative_status(request):
     jira_host = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
     sc = SecurityContext.objects.filter(host=jira_host, key=request.atlassian_sc.key, product_type='jira').get()
     j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
-    r = j.search_issues(
-        "issue in linkedIssues({0}, contains) "\
-        "OR parent in linkedIssues({0}, contains) "\
-        "OR parentEpic in linkedIssues({0}, contains)"\
-        .format(key)
-    )
-    total = len(r)
-    todo = progress = done = 0
-    todo_pt = progress_pt = done_pt = 0
-    if total != 0:
-        for i in r:
-            if i.fields.status.statusCategory.name == 'Done':
-                done = done + 1
-            elif i.fields.status.statusCategory.name == 'To Do':
-                todo = todo + 1
-            elif i.fields.status.statusCategory.name == 'In Progress':
-                progress = progress + 1
-        todo_pt = int(float(todo) / total * 100)
-        progress_pt = int(float(progress) / total * 100)
-        done_pt = int(float(done) / total * 100)
+    issues = get_child_issues(j, key)
+    summary = get_issues_progress(issues)
     return render(
         request,
         'workmodel/initiative_status.html',
-        {
-            'total': total,
-            'todo': todo,
-            'todo_pt': todo_pt,
-            'progress': progress,
-            'progress_pt': progress_pt,
-            'done': done,
-            'done_pt': done_pt,
-        }
+        summary
+    )
+
+
+@xframe_options_exempt
+@jwt_required
+def issue_versions(request):
+    # Mandatory parameters
+    key = request.GET.get('issueKey')
+    # Get the security context from the same jira instance
+    sc = request.atlassian_sc
+    parsed_uri = urlparse(sc.host)
+    jira_host = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
+    sc = SecurityContext.objects.filter(host=jira_host, key=request.atlassian_sc.key, product_type='jira').get()
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+
+    issues = get_child_issues(j, key)
+    versions = {}
+    for i in issues:
+        for v in i.fields.fixVersions:
+            if not v in versions:
+                versions[v.name] = {}
+                # Get the summary for each version and it's issues
+                issues = get_child_issues(j, key, extra_jql="AND fixVersion IN ('{0}')".format(v.name))
+                progress = get_issues_progress(issues)
+                versions[v.name]['progress'] = progress
+                versions[v.name]['projects'] = []
+            p = {
+                'project': i.fields.project.key,
+                'url': '{0}/browse/{1}/fixforversion/{2}'.format(jira_host, i.fields.project.key, v.id),
+                'status': "released" if v.released else "unreleased"
+            }
+            versions[v.name]['projects'] = versions[v.name]['projects'] + [p]
+    return render(
+        request,
+        'workmodel/issue_versions.html',
+        {'data': versions}
     )
 
 

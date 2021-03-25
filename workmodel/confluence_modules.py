@@ -24,6 +24,30 @@ modules = [
                ],
                 "outputType": "inline",
                 "bodyType": "none"
+             },
+             {
+                "key": "issue-versions-macro",
+                "name": {
+                    "value": "Issue versions"
+                },
+                "url": "{% url 'workmodel-issue-versions' %}?issueKey={key}",
+                "description": {
+                    "value": "Displays a table of versions associated with an issue or a descendant."
+                },
+                "parameters": [
+                    {
+                       "identifier": "key",
+                       "name": {
+                         "value": "Issue key"
+                       },
+                       "type": "string",
+                       "required": True,
+                       "multiple": False,
+                       "hidden": False
+                   }
+               ],
+                "outputType": "block",
+                "bodyType": "none"
             }
         ]
     }
