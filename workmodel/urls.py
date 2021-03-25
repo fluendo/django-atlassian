@@ -6,6 +6,7 @@ from workmodel import views
 
 urlpatterns = [
     url(r'^initiative_status/$', views.initiative_status, name='workmodel-initiative-status'),
+    url(r'^issue_versions/$', views.issue_versions, name='workmodel-issue-versions'),
     url(r'^customers-view/$', views.customers_view, name='workmodel-customers-view'),
     url(r'^customers-view-update/$', views.customers_view_update,  name='customers-view-update'),
     url(r'^customers-proxy/$', views.customers_proxy_view, name='workmodel-customers-proxy'),

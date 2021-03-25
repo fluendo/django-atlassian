@@ -1,0 +1,49 @@
+{% extends 'django_atlassian/base.html' %}
+{% block content %}
+<style>
+table > tbody,tfoot > tr {
+  background: #fff;
+  border-bottom: 1px solid #ccc;
+  color: #333;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%
+}
+</style>
+<script>
+  AJS.$(".progress-bar").tooltip();
+</script>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Project</th>
+      <th>Status</th>
+      <th style="width: 20%">Progress</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for name,v in data.items %}
+    <tr>
+      <td>{{ name }}</td>
+      <td>
+        {% for project in v.projects %}
+          <a href="{{ project.url }}"/>{{project.project }}</a>
+        {% endfor %}
+      </td>
+      <td>
+        {% if project.status == 'released' %}
+          <span class="aui-lozenge aui-lozenge-success">RELEASED</span>
+        {% else %}
+          <span class="aui-lozenge aui-lozenge-current">UNRELEASED</span>
+        {% endif %}
+      </td>
+      <td>{% include 'workmodel/partials/status_bar.html' with total=v.progress.total todo=v.progress.todo todo_pt=v.progress.todo_pt progress=v.progress.progress progress_pt=v.progress.progress_pt done=v.progress.done done_pt=v.progress.done_pt %}
+  </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
