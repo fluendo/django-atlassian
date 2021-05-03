@@ -230,11 +230,12 @@ def issue_versions(request):
         for v in i.fields.fixVersions:
             if not v in versions:
                 versions[v.name] = {}
-                # Get the summary for each version and it's issues
-                issues = get_child_issues(j, key, extra_jql="AND fixVersion IN ('{0}')".format(v.name))
-                progress = get_issues_progress(issues)
-                versions[v.name]['progress'] = progress
+                # Get the summary asynchronous
                 versions[v.name]['projects'] = []
+                # Encode the update URL to make a secure call to ourselves
+                url = "{}?issueKey={}&fixVersion={}".format(reverse('workmodel-issue-versions-progress'), key, v.name)
+                token = atlassian_jwt.encode_token('GET', url, sc.client_key, sc.shared_secret)
+                versions[v.name]['progress'] = "{}://{}{}&jwt={}".format(request.scheme, request.get_host(), url, token) 
             p = {
                 'project': i.fields.project.key,
                 'url': '{0}/browse/{1}/fixforversion/{2}'.format(jira_host, i.fields.project.key, v.id),
@@ -245,6 +246,26 @@ def issue_versions(request):
         request,
         'workmodel/issue_versions.html',
         {'data': versions}
+    )
+
+@xframe_options_exempt
+@jwt_required
+def issue_versions_progress(request):
+    # Mandatory parameters
+    key = request.GET.get('issueKey')
+    version = request.GET.get('fixVersion')
+    # Get the security context from the same jira instance
+    sc = request.atlassian_sc
+    parsed_uri = urlparse(sc.host)
+    jira_host = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
+    sc = SecurityContext.objects.filter(host=jira_host, key=request.atlassian_sc.key, product_type='jira').get()
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    issues = get_child_issues(j, key, extra_jql="AND fixVersion IN ('{0}')".format(version))
+    summary = get_issues_progress(issues)
+    return render(
+        request,
+        'workmodel/initiative_status.html',
+        summary
     )
 
 
