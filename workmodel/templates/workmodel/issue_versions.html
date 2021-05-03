@@ -9,11 +9,27 @@ table > tbody,tfoot > tr {
 
 table {
   border-collapse: collapse;
-  width: 100%
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Noto Sans", "Ubuntu", "Droid Sans", "Helvetica Neue", sans-serif;
 }
+
+iframe {
+  border: 0;
+  width: 100%;
+  height: 10px;
+}
+
 </style>
 <script>
   AJS.$(".progress-bar").tooltip();
+  /* Once the iframe has loaded, remove the spinner */
+  AJS.$(document).on('ready', function() {
+    AJS.$('iframe').each(function(idx) {
+        AJS.$(this).on('load', function() {
+            AJS.$(this).prev().remove();
+        });
+    });
+  });
 </script>
 <table>
   <thead>
@@ -34,14 +50,18 @@ table {
         {% endfor %}
       </td>
       <td>
-        {% if project.status == 'released' %}
-          <span class="aui-lozenge aui-lozenge-success">RELEASED</span>
-        {% else %}
-          <span class="aui-lozenge aui-lozenge-current">UNRELEASED</span>
-        {% endif %}
+        {% for project in v.projects %}
+          {% if project.status == 'released' %}
+            <span class="aui-lozenge aui-lozenge-success">RELEASED</span>
+          {% else %}
+            <span class="aui-lozenge aui-lozenge-current">UNRELEASED</span>
+          {% endif %}
+        {% endfor %}
       </td>
-      <td>{% include 'workmodel/partials/status_bar.html' with total=v.progress.total todo=v.progress.todo todo_pt=v.progress.todo_pt progress=v.progress.progress progress_pt=v.progress.progress_pt done=v.progress.done done_pt=v.progress.done_pt %}
-  </td>
+      <td>
+        <aui-spinner size="small"></aui-spinner>
+        <iframe src="{{ v.progress }}"></iframe>
+      </td>
     </tr>
     {% endfor %}
   </tbody>
