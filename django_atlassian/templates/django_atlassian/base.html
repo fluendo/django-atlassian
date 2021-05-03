@@ -10,17 +10,13 @@
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 
-  <!--  AUI Core -->
-  <script src="https://aui-cdn.atlassian.com/aui-adg/6.0.9/js/aui.min.js"></script>
-  <link rel="stylesheet" href="https://aui-cdn.atlassian.com/aui-adg/6.0.9/css/aui.min.css" media="all">
-
-  <!-- AUI Experimental components -->
-  <link rel="stylesheet" href="https://aui-cdn.atlassian.com/aui-adg/6.0.9/css/aui-experimental.min.css" media="all">
-  <script src="https://aui-cdn.atlassian.com/aui-adg/6.0.9/js/aui-experimental.min.js"></script>
-  <!-- AUI Datepicker and Soy templates -->
-  <script src="https://aui-cdn.atlassian.com/aui-adg/6.0.9/js/aui-datepicker.min.js"></script>
-  <script src="https://aui-cdn.atlassian.com/aui-adg/6.0.9/js/aui-soy.min.js"></script>
-
+  <!--  AUI -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aui/9.3.2/aui/aui-prototyping.js" integrity="sha512-x5f5JIJHkGK/pVbCY0lF2WW3G0mGUQNqdjTdHA2oPU/EdlR8EdURuh3xB/KOBkGYYRzTMY3a5aX30t4yy6lPXQ==" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aui/9.3.2/aui/aui-css-deprecations.min.js" integrity="sha512-/h1X4OnjS0OSUQDkb6qkIPrIddm82e/aIA+SPjC5N53YTMs+EKpk7fwIcD0kOKS3XohTnsdEBlpnvXChuqEwUQ==" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aui/9.3.2/aui/aui-prototyping-browserfocus.min.css" integrity="sha512-jZHQIDnNrVlaWTsIe7q/m7APqVjn2yWiKZtMZSM+Qi+UvoxElMNCHYCXcxzggFWVofbOtdYWI/2P/WIHA51R3w==" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aui/9.3.2/aui/aui-prototyping-darkmode.min.css" integrity="sha512-CoMdzyd1iRXToUds4Hva17uaC2/TGFxDslvUBrMcqH4Ze5GtSJYdu6iVwZ58jGmPMJD9X+/69apSu+Z8LDEW6w==" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aui/9.3.2/aui/aui-prototyping.min.css" integrity="sha512-l+I20mlSCqvsUNDjnDUc/c1rcXsRAArYNXHNPDjSZ0isGd5NkHmO+GEBz083hTY3YP356JVjLxq6JT7eyD4pUg==" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aui/9.3.2/aui/aui-prototyping.nodeps.min.css" integrity="sha512-l+I20mlSCqvsUNDjnDUc/c1rcXsRAArYNXHNPDjSZ0isGd5NkHmO+GEBz083hTY3YP356JVjLxq6JT7eyD4pUg==" crossorigin="anonymous" />
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" media="all">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 
@@ -29,6 +25,7 @@
 
 </head>
 
+{% block body %}
 <body "ac-content" style="background: white;">
   <section id="content" role="main">
     {% block content %}
@@ -41,4 +38,5 @@
   </script>
 
 </body>
+{% endblock %}
 </html>
