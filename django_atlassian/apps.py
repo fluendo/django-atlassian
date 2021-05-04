@@ -7,3 +7,5 @@ from django.apps import AppConfig
 class DjangoAtlassianConfig(AppConfig):
     name = 'django_atlassian'
 
+    def ready(self):
+        pass

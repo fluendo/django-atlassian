@@ -118,13 +118,13 @@ class DatabaseCursor(AtlassianDatabaseCursor):
 
 class DatabaseConvertion(AtlassianDatabaseConvertion):
     def extract(self, data, field, raw_field):
-        if raw_field.has_key('returnName'):
+        if 'returnName' in raw_field:
             return_name = raw_field['returnName']
             value = row
             for rn in return_name.split('.'):
                 value = value[rn]
             return value
-        elif row.has_key(field[9]):
+        elif field[9] in row:
             return row[field[9]]
         else:
             return None

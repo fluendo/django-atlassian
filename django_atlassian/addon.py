@@ -10,6 +10,7 @@ class Addon(object):
         #            reqObject.body = JSON.stringify({pluginUri: descriptorUrl});
         #            reqObject.jar = false;
         #            request.post(reqObject,
+        pass
 
-    
     def unregister(self, host, username, password, url):
+        pass

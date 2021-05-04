@@ -22,6 +22,7 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         'user': 'TextField',
         'project': 'TextField',
         'resolution': 'TextField',
+        'status': 'TextField',
         'com.pyxis.greenhopper.jira:gh-epic-status': 'TextField',
     }
 
@@ -99,7 +100,7 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         relations = {}
         content = cursor.get_raw_fields()
         for f in content:
-            if f.has_key('schema'):
+            if 'schema' in f:
                 if f['schema']['type'] == 'any' and \
                         f['schema']['custom'] in self.data_type_relations:
                     relations[f['clauseNames'][0]] = ('issues', 'issue')
@@ -120,12 +121,12 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
 
 class DatabaseCursor(AtlassianDatabaseCursor):
     arraysize = 100
-    uri_search_pattern = '/rest/api/3/search?%(get_opts)s&startAt=%(start_at)s&maxResults=%(max_results)s'
-    uri_edit_pattern = '/rest/api/3/issue/%(issue_id)s'
-    uri_field = '/rest/api/3/field'
+    uri_search_pattern = '/rest/api/latest/search?%(get_opts)s&startAt=%(start_at)s&maxResults=%(max_results)s'
+    uri_edit_pattern = '/rest/api/latest/issue/%(issue_id)s'
+    uri_field = '/rest/api/latest/field'
 
     def _get_resolutions(self):
-        uri_resolution = '/rest/api/3/resolution'
+        uri_resolution = '/rest/api/latest/resolution'
         # Get the resolution types
         response = self.connection.get_request(uri_resolution)
         if response.status_code != requests.codes.ok:
@@ -268,9 +269,9 @@ class DatabaseCursor(AtlassianDatabaseCursor):
 
 class DatabaseConvertion(AtlassianDatabaseConvertion):
     def extract(self, data, field, raw_field):
-        if data.has_key(field[9]):
+        if field[9] in data:
             return data[field[9]]
-        elif data['fields'].has_key(field[9]):
+        elif field[9] in data['fields']:
             return data['fields'][field[9]]
         else:
             logger.error("Field with id %s and name %s not found", field[8], field[9])
@@ -293,18 +294,22 @@ class DatabaseConvertion(AtlassianDatabaseConvertion):
                 return None
         # Handle the parent link
         elif field[1] == 'com.atlassian.jpo:jpo-custom-field-parent':
-            if data.has_key('data'):
+            if 'data' in data:
                 return data['data']['key']
             else:
                 return None
         # Handle the resolution
         elif field[1] == 'resolution' and data is not None:
             return data['name']
+        elif field[1] == 'status' and data is not None:
+            return data['name']
         elif field[1] == 'array' and data is not None:
             if field[10] == 'component':
                 return [item['name'] for item in data]
             elif field[10] == 'string':
                 return data
+            elif field[10] == 'version':
+                return [item['name'] for item in data]
             elif field[10] == 'issuelinks':
                 issuelinks = []
                 try:
