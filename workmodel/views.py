@@ -158,8 +158,18 @@ def get_child_issues(j, key, relation='contains', extra_jql=None):
         .format(key, relation)
     if extra_jql:
         jql = "({0}) {1}".format(jql, extra_jql)
-    r = j.search_issues(jql)
-    return r
+
+    start_at = 0
+    result = []
+    while True:
+        r = j.search_issues(jql, startAt=start_at)
+        total = len(r)
+        if total == 0:
+            break
+        result += r
+        start_at += total
+
+    return result
 
 
 def get_issues_progress(issues):
