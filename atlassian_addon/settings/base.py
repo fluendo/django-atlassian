@@ -10,6 +10,7 @@ DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT')
 
 REDIS_HOST = os.environ.get('REDIS_HOST')
+REDIS_PORT = os.environ.get('REDIS_PORT', 6379)
 
 JIRA_SERVER = os.environ.get('JIRA_SERVER')
 JIRA_USER = os.environ.get('JIRA_USER')
@@ -153,6 +154,7 @@ INSTALLED_APPS = [
     'django_countries',
     'widget_tweaks',
     'django_atlassian.apps.DjangoAtlassianConfig',
+    'django_celery_results',
     'sales.apps.SalesConfig',
     'workmodel.apps.WorkModelConfig',
     'metabase.apps.MetabaseModelConfig',
@@ -223,7 +225,7 @@ USE_TZ = True
 
 
 # Celery related configuration
-CELERY_BROKER_URL = 'redis://redis:6379'
+CELERY_BROKER_URL = 'redis://{}:{}'.format(REDIS_HOST, REDIS_PORT)
 CELERY_RESULT_BACKEND = 'django-db'
 
 
