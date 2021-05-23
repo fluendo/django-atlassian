@@ -5,6 +5,7 @@ import json
 import atlassian_jwt
 from urlparse import urlparse
 from jira import JIRA
+import datetime
 
 from django.urls import reverse
 from django.conf import settings
@@ -45,7 +46,7 @@ def customers_view(request):
     }
 
     # Encode the update URL to make a secure call to ourselves
-    url = "{}?key={}".format(reverse('customers-view-update'), key)
+    url = "{}?key={}".format(reverse('workmodel-customers-view-update'), key)
     token = atlassian_jwt.encode_token('POST', url, sc.client_key, sc.shared_secret)
 
     return render(
@@ -80,6 +81,20 @@ def customers_view_update(request):
     return HttpResponse(status=200)
 
 
+def search_issues(j, jql, expand=None):
+    start_at = 0
+    result = []
+    while True:
+        r = j.search_issues(jql, startAt=start_at, expand=expand)
+        total = len(r)
+        if total == 0:
+            break
+        result += r
+        start_at += total
+
+    return result
+
+
 def get_child_issues(j, key, relation='contains', extra_jql=None):
     """
     Function to get the issues on a hierarchy of issues
@@ -91,17 +106,7 @@ def get_child_issues(j, key, relation='contains', extra_jql=None):
     if extra_jql:
         jql = "({0}) {1}".format(jql, extra_jql)
 
-    start_at = 0
-    result = []
-    while True:
-        r = j.search_issues(jql, startAt=start_at)
-        total = len(r)
-        if total == 0:
-            break
-        result += r
-        start_at += total
-
-    return result
+    return get_issues(j, jql)
 
 
 def get_issues_progress(issues):
@@ -280,3 +285,117 @@ def project_deleted(request):
     option.delete()
     return HttpResponse(204)
 
+
+@csrf_exempt
+@jwt_required
+def issue_updated(request):
+    sc = request.atlassian_sc
+    data = json.loads(request.body)
+    issue = data['issue']
+    changelog = data['changelog']
+
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    to_update = []
+    # Check a hierarchy change and trigger the corresponding job
+    for item in changelog['items']:
+        # In case the issue has been transitioned
+        if item['field'] == 'status':
+            # Update ourselves and the whole hierarchy
+            # Get the Epic
+            i = j.issue(issue['key'])
+            epic_field = [x for x in j.fields() if 'Epic Link' == x['name']][0]['key']
+            epic_key = getattr(i.fields, epic_field)
+            if epic_key:
+                # Get the initiative
+                epic = j.issue(epic_key)
+                initiative_key = None
+                for il in epic.fields.issuelinks:
+                    if il.type.name == 'Contains':
+                        initiative_key = il.inwardIssue.key
+                        break
+                if initiative_key:
+                    to_update.append(initiative_key)
+                else:
+                    to_update.append(epic_key)
+            else:
+                to_update.append(issue['key'])
+        elif item['field'] == 'Link':
+            from_issue = parse.parse("This issue contains {}", item['fromString'])
+            if from_issue:
+                # Update ourselves
+                to_update.append(issue['key'])
+            from_issue = parse.parse("This issue is contained in {}", item['fromString'])
+            if from_issue:
+                # Update other
+                to_update.append(from_issue)
+            to_issue = parse.parse("This issue contains {}", item['toString'])
+            if to_issue:
+                # Update ourselves
+                to_update.append(issue['key'])
+            to_issue = parse.parse("This issue is contained in {}", item['toString'])
+            if to_issue:
+                # Update other
+                to_update.append(from_issue)
+        elif item['field'] == 'Epic Link':
+            if item['fromString']:
+                # Update other
+                to_update.append(item['fromString'])
+            if item['toString']:
+                # Update other
+                to_update.append(item['fromString'])
+        elif item['field'] == 'Epic Child':
+            if item['fromString']:
+                # Update ourselves
+                to_update.append(issue['key'])
+            if item['toString']:
+                # Update ourselves
+                to_update.append(issue['key'])
+    # Uniquify the list
+    to_update = list(set(to_update))
+    # Create a task to update each progress
+    from workmodel.tasks import update_issue_business_time
+    for u in to_update:
+        print("Updating business time for {}".format(u))
+        update_issue_business_time.delay(sc.id, u)
+    return HttpResponse(204)
+
+
+@xframe_options_exempt
+@jwt_required
+def jira_configuration(request):
+    # Get the addon configuration
+    sc = request.atlassian_sc
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    # default configuration
+    conf = { 'task_id': None }
+    try:
+        props = j.app_properties(sc.key)
+        for p in props:
+            if p.key == 'workmodel-configuration':
+                conf = {'task_id': p.value.task_id}
+                break
+    except:
+        pass
+    j.create_app_property(sc.key, 'workmodel-configuration', conf)
+    # Encode the update URL to make a secure call to ourselves
+    url = reverse('workmodel-configuration-update-issues-business-time')
+    token = atlassian_jwt.encode_token('POST', url, sc.client_key, sc.shared_secret)
+    return render(request, 'workmodel/jira_configuration.html', {'conf': conf, 'update_issues_url': url, 'update_issues_url_jwt': token})
+
+
+@csrf_exempt
+@jwt_required
+def configuration_update_issues_business_time(request):
+    sc = request.atlassian_sc
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    # We assume there is already a configuration stored
+    prop = None
+    props = j.app_properties(sc.key)
+    for p in props:
+        if p.key == 'workmodel-configuration':
+            prop = p
+            break
+    from workmodel.tasks import update_issues_business_time
+    res = update_issues_business_time.delay(sc.id)
+    prop.update({'task_id': res.task_id})
+    return HttpResponse(204)

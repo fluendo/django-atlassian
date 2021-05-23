@@ -11,8 +11,11 @@ urlpatterns = [
     url(r'^customers-view/$', views.customers_view, name='workmodel-customers-view'),
     url(r'^customers-view-update/$', views.customers_view_update,  name='customers-view-update'),
     url(r'^customers-proxy/$', views.customers_proxy_view, name='workmodel-customers-proxy'),
+    url(r'^issue-updated/$', views.issue_updated, name='workmodel-issue-updated'),
     url(r'^addon-enabled/$', views.addon_enabled, name='workmodel-addon-enabled'),
     url(r'^project-created/$', views.project_created, name='workmodel-project-created'),
     url(r'^project-updated/$', views.project_updated, name='workmodel-project-updated'),
     url(r'^project-deleted/$', views.project_deleted, name='workmodel-project-deleted'),
+    url(r'^jira-configuration/$', views.jira_configuration, name='workmodel-jira-configuration'),
+    url(r'^update-issues-business-time/$', views.configuration_update_issues_business_time, name='workmodel-configuration-update-issues-business-time'),
 ]
