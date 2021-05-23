@@ -5,7 +5,6 @@ modules = [
                 "key": "jira-issue-customers-indexing",
                 "name": {
                     "value": "Customers index",
-                    "i18n": "customers.index"
                 },
                 "entityType": "issue",
                 "keyConfigurations": [{
@@ -28,7 +27,6 @@ modules = [
                 "key": "jira-issue-leads-indexing",
                 "name": {
                     "value": "Leads index",
-                    "i18n": "leads.index"
                 },
                 "entityType": "issue",
                 "keyConfigurations": [{
