@@ -15,75 +15,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django_atlassian.decorators import jwt_required
 from django_atlassian.models.connect import SecurityContext
 
-from workmodel.models import Issue
 from fluendo.proxy_api import customers_proxy_cache
-
-def labels_update_labels(i, to_add, to_remove):
-    update = False
-    for l in to_add:
-        if l not in i.labels:
-            i.labels.append(l)
-            update = True
-    for l in to_remove:
-        if l in i.labels:
-            i.labels.remove(l)
-            update = True
-    if update:
-        print "Updating labels to"
-        i.save()
-
-
-def labels_set_parent_labels(i):
-    parent = i.get_parent()
-    if parent:
-        to_add = parent.labels
-        labels_update_labels(i, to_add, [])
-
-
-def labels_issue_created(i):
-    if i.has_parent():
-        labels_set_parent_labels(i)
-
-
-def labels_issue_updated(i, changelog):
-    # Check what has changed
-    for item in changelog['items']:
-        # In case the labels have changed
-        if item['field'] == 'labels':
-            # In case is a parent, we need to add/remove the labels
-            # in every children
-            if is_parent(i):
-                from_labels = item['fromString'].split(" ")
-                to_labels = item['toString'].split(" ")
-                to_add = [x for x in to_labels if x not in from_labels]
-                to_remove = [x for x in from_labels if x not in to_labels]
-                for children in i.get_children():
-                    labels_update_labels(children, to_add, to_remove)
-            # In case the labels have been updated, make sure to keep
-            # the parents labels too
-            if i.has_parent():
-                labels_set_parent_labels(i)
-
-
-@csrf_exempt
-@jwt_required
-def issue_updated(request):
-    Issue = request.atlassian_model
-    body = json.loads(request.body)
-    i = Issue.objects.create_from_json(body['issue'])
-    changelog = body['changelog']
-    labels_issue_updated(i, changelog)
-    return HttpResponse(204)
-
-
-@csrf_exempt
-@jwt_required
-def issue_created(request):
-    Issue = request.atlassian_model
-    body = json.loads(request.body)
-    i = Issue.objects.create_from_json(body['issue'])
-    labels_issue_created(i)
-    return HttpResponse(204)
 
 @csrf_exempt
 @jwt_required
