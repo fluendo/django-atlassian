@@ -5,7 +5,7 @@ from django_atlassian.models.connect import SecurityContext
 
 class MetabaseConfiguration(models.Model):
     """
-    Given that in confluence we can store the metabase configuration
+    Given that in confluence we can't store the metabase configuration
     as application properties, we need to store them in our own
     database system
     """

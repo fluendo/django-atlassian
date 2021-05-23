@@ -40,7 +40,7 @@ class ConfluenceConfiguration(View):
     def get(self, request):
         conf, created = MetabaseConfiguration.objects.get_or_create(account=request.atlassian_sc)
         if created:
-          conf.save()
+            conf.save()
         return render(request, 'metabase/confluence_configuration.html', {'conf': conf})
 
     def post(self, request):
