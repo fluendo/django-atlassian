@@ -155,6 +155,7 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'django_atlassian.apps.DjangoAtlassianConfig',
     'django_celery_results',
+    'django_celery_beat',
     'sales.apps.SalesConfig',
     'workmodel.apps.WorkModelConfig',
     'metabase.apps.MetabaseModelConfig',

@@ -15,6 +15,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.http import HttpResponse, HttpResponseBadRequest
 from django_atlassian.decorators import jwt_required
 from django_atlassian.models.connect import SecurityContext
+from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from fluendo.proxy_api import customers_proxy_cache
 
@@ -238,6 +239,15 @@ def addon_enabled(request):
         else:
             option = [option for option in options if option.properties.id == project.id][0]
             option.update(value=project.name, id=option.id, properties=properties)
+    # Confirm that there's already a schedule every day
+    schedule, created = IntervalSchedule.objects.get_or_create(every=1, period=IntervalSchedule.DAYS)
+    # Confirm that there's already a job that rescans every issue
+    if not PeriodicTask.objects.filter(args=json.dumps(['security_context.id', sc.id])).count():
+        PeriodicTask.objects.create(
+            interval=schedule, name="Update In-Progress business time",
+            task='workmodel.tasks.update_in_progress_business_time',
+            args=json.dumps(['security_context.id', sc.id]),
+        )
     return HttpResponse(204)
 
 

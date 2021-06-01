@@ -122,3 +122,20 @@ def update_issues_business_time(sc_id):
             prop = p
             break
     prop.update({'task_id': None})
+
+
+@shared_task
+def update_in_progress_business_time(sc_id):
+    sc = SecurityContext.objects.get(id=sc_id)
+    logger.info("Updating all In-Progress issues")
+    jira = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    # Search issues whoes current statusCategory is In Progress
+    issues = search_issues(jira, "statusCategory = 'In Progress' AND type IN ('Task', 'Bug', 'Story')")
+    to_update = []
+    for i in issues:
+        to_update.append(get_issue_hierarchy(jira, i.key))
+    # Uniquify the list
+    to_update = list(set(to_update))
+    for u in to_update:
+        logger.info("Updating business time for In-Progress issue {}".format(u))
+        update_issue_business_time(sc_id, u)
