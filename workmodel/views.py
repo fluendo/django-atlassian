@@ -286,6 +286,27 @@ def project_deleted(request):
     return HttpResponse(204)
 
 
+def get_issue_hierarchy(j, issue_key):
+    # Get the Epic
+    i = j.issue(issue_key)
+    epic_field = [x for x in j.fields() if 'Epic Link' == x['name']][0]['key']
+    epic_key = getattr(i.fields, epic_field)
+    if epic_key:
+        # Get the initiative
+        epic = j.issue(epic_key)
+        initiative_key = None
+        for il in epic.fields.issuelinks:
+            if il.type.name == 'Contains':
+                initiative_key = il.inwardIssue.key
+                break
+        if initiative_key:
+            return initiative_key
+        else:
+            return epic_key
+    else:
+        return issue_key
+
+
 @csrf_exempt
 @jwt_required
 def issue_updated(request):
@@ -300,25 +321,8 @@ def issue_updated(request):
     for item in changelog['items']:
         # In case the issue has been transitioned
         if item['field'] == 'status':
-            # Update ourselves and the whole hierarchy
-            # Get the Epic
-            i = j.issue(issue['key'])
-            epic_field = [x for x in j.fields() if 'Epic Link' == x['name']][0]['key']
-            epic_key = getattr(i.fields, epic_field)
-            if epic_key:
-                # Get the initiative
-                epic = j.issue(epic_key)
-                initiative_key = None
-                for il in epic.fields.issuelinks:
-                    if il.type.name == 'Contains':
-                        initiative_key = il.inwardIssue.key
-                        break
-                if initiative_key:
-                    to_update.append(initiative_key)
-                else:
-                    to_update.append(epic_key)
-            else:
-                to_update.append(issue['key'])
+            # Update ourselves or the whole hierarchy
+            to_update.append(get_issue_hierarchy(j, issue['key']))
         elif item['field'] == 'Link':
             from_issue = parse.parse("This issue contains {}", item['fromString'])
             if from_issue:
