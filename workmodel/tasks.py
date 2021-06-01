@@ -45,11 +45,14 @@ def calculate_task_business_time(jira, issue):
                 if fromCategory != 'In Progress' and toCategory != 'In Progress':
                     continue
                 # Always keep it sorted from oldest to newer
-                transitions.insert(0, {'created': created, 'fromString': item.fromString, 'toString': item.toString})
+                transitions.insert(0, {'created': created, 'fromCategory': fromCategory, 'toCategory': toCategory})
     if not transitions:
         days = 0
     else:
         days = 1
+        # In case the task is currently in progress, create a fake transition
+        if transitions[len(transitions) - 1]['toCategory'] == 'In Progress':
+            transitions.append({'created': datetime.date.today(), 'fromCategory': 'In Progress', 'toCategory': 'Done'})
         for i in range(1, len(transitions)):
             # Skip transitions that happened in the same day
             if transitions[i-1]['created'] == transitions[i]['created']:
@@ -91,6 +94,7 @@ def calculate_issue_business_time(jira, issue):
     logger.debug("Total spent time for {} is {} days".format(issue.key, days))
     # Store the information as a property
     jira.add_issue_property(issue.key, "transitions", { 'progress_summation': days })
+    # TODO keep track of the modification time
     return days
 
 
