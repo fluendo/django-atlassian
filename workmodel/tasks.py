@@ -8,9 +8,9 @@ from celery import shared_task
 from django_atlassian.models.connect import SecurityContext
 from django.utils import dateparse
 
-from workmodel.views import search_issues
+from workmodel.views import search_issues, get_issue_hierarchy
 
-workmodel_logger = logging.getLogger('workmodel_logger')
+logger = logging.getLogger('workmodel_logger')
 
 
 def transition_to_days(from_transition, to_transition):
