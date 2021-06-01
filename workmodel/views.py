@@ -374,27 +374,68 @@ def issue_updated(request):
     return HttpResponse(204)
 
 
+def get_jira_default_configuration(j, sc):
+    # default configuration
+    conf = {
+        'hierarchy': None,
+        'task_id': None
+    }
+    # already created configuration
+    props = j.app_properties(sc.key)
+    for p in props:
+        if p.key == 'workmodel-configuration':
+            conf = {}
+            if hasattr(p.value, 'task_id'):
+                conf['task_id'] = p.value.task_id
+            else:
+                conf['task_id'] = None
+            if hasattr(p.value, 'hierarchy'):
+                conf['hierarchy'] = p.raw['value']['hierarchy']
+            else:
+                conf['hierarchy'] = None
+    # Create the app configuration in case it is not there yet
+    j.create_app_property(sc.key, 'workmodel-configuration', conf)
+    return conf
+
+
 @xframe_options_exempt
 @jwt_required
 def jira_configuration(request):
     # Get the addon configuration
     sc = request.atlassian_sc
     j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
-    # default configuration
-    conf = { 'task_id': None }
-    try:
-        props = j.app_properties(sc.key)
-        for p in props:
-            if p.key == 'workmodel-configuration':
-                conf = {'task_id': p.value.task_id}
-                break
-    except:
-        pass
-    j.create_app_property(sc.key, 'workmodel-configuration', conf)
     # Encode the update URL to make a secure call to ourselves
     url = reverse('workmodel-configuration-update-issues-business-time')
     token = atlassian_jwt.encode_token('POST', url, sc.client_key, sc.shared_secret)
-    return render(request, 'workmodel/jira_configuration.html', {'conf': conf, 'update_issues_url': url, 'update_issues_url_jwt': token})
+    conf = get_jira_default_configuration(j, sc)
+    return render(request, 'workmodel/jira_configuration.html', {
+        'update_issues_url': url,
+        'update_issues_url_jwt': token,
+        'conf': conf
+    })
+
+
+@xframe_options_exempt
+@jwt_required
+def issues_hierarchy_configuration(request):
+    sc = request.atlassian_sc
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    # Get the current configuration
+    conf = get_jira_default_configuration(j, sc)
+    # Replace the ids with actual values
+    issue_types = j.issue_types()
+    resolved_hierarchies = []
+    for h in conf['hierarchy']:
+        hierarchy = h
+        h['issues'] = [i for i in issue_types if i.id in h['issues']]
+        resolved_hierarchies.append(h)
+    conf['hierarchy'] = resolved_hierarchies
+    return render(request, 'workmodel/issues_hierarchy_configuration.html', {
+        'issue_types': issue_types,
+        'fields': j.fields(),
+        'issue_link_types': j.issue_link_types(),
+        'conf': conf
+    })
 
 
 @csrf_exempt

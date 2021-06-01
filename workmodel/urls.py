@@ -17,5 +17,6 @@ urlpatterns = [
     url(r'^project-updated/$', views.project_updated, name='workmodel-project-updated'),
     url(r'^project-deleted/$', views.project_deleted, name='workmodel-project-deleted'),
     url(r'^jira-configuration/$', views.jira_configuration, name='workmodel-jira-configuration'),
+    url(r'^issues-hierarchy-configuration/$', views.issues_hierarchy_configuration, name='workmodel-issues-hierarchy-configuration'),
     url(r'^update-issues-business-time/$', views.configuration_update_issues_business_time, name='workmodel-configuration-update-issues-business-time'),
 ]

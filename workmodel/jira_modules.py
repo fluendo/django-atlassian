@@ -148,6 +148,14 @@ modules = [
                     "value": "Configuration"
               },
               "key": "workmodel-jira-configuration"
+            },
+            {
+                "url": "{% url 'workmodel-issues-hierarchy-configuration' %}",
+                "location": "admin_plugins_menu/workmodel-admin",
+                "name": {
+                    "value": "Issues hierarchy"
+              },
+              "key": "workmodel-issues-hierarchy-configuration"
             }
         ],
     }
