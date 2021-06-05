@@ -8,7 +8,7 @@ from celery import shared_task
 from django_atlassian.models.connect import SecurityContext
 from django.utils import dateparse
 
-from workmodel.views import search_issues, get_issue_hierarchy
+from workmodel.views import search_issues
 
 logger = logging.getLogger('workmodel_logger')
 
@@ -129,11 +129,18 @@ def update_in_progress_business_time(sc_id):
     sc = SecurityContext.objects.get(id=sc_id)
     logger.info("Updating all In-Progress issues")
     jira = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    conf = get_jira_default_configuration(j, sc)
+    hs = HierarchyService(sc, conf['hierarchy'])
     # Search issues whoes current statusCategory is In Progress
     issues = search_issues(jira, "statusCategory = 'In Progress' AND type IN ('Task', 'Bug', 'Story')")
     to_update = []
     for i in issues:
-        to_update.append(get_issue_hierarchy(jira, i.key))
+        try:
+            root = hs.get_root_issue(i.key)
+        except:
+            # nothing to do
+            continue
+        to_update.append(root.key)
     # Uniquify the list
     to_update = list(set(to_update))
     for u in to_update:

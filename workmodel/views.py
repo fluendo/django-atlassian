@@ -18,6 +18,7 @@ from django_atlassian.models.connect import SecurityContext
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from fluendo.proxy_api import customers_proxy_cache
+from workmodel.services import HierarchyService
 
 @csrf_exempt
 @jwt_required
@@ -296,27 +297,6 @@ def project_deleted(request):
     return HttpResponse(204)
 
 
-def get_issue_hierarchy(j, issue_key):
-    # Get the Epic
-    i = j.issue(issue_key)
-    epic_field = [x for x in j.fields() if 'Epic Link' == x['name']][0]['key']
-    epic_key = getattr(i.fields, epic_field)
-    if epic_key:
-        # Get the initiative
-        epic = j.issue(epic_key)
-        initiative_key = None
-        for il in epic.fields.issuelinks:
-            if il.type.name == 'Contains':
-                initiative_key = il.inwardIssue.key
-                break
-        if initiative_key:
-            return initiative_key
-        else:
-            return epic_key
-    else:
-        return issue_key
-
-
 @csrf_exempt
 @jwt_required
 def issue_updated(request):
@@ -324,15 +304,21 @@ def issue_updated(request):
     data = json.loads(request.body)
     issue = data['issue']
     changelog = data['changelog']
-
-    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
     to_update = []
     # Check a hierarchy change and trigger the corresponding job
     for item in changelog['items']:
         # In case the issue has been transitioned
         if item['field'] == 'status':
+            j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+            conf = get_jira_default_configuration(j, sc)
+            hs = HierarchyService(sc, conf['hierarchy'])
             # Update ourselves or the whole hierarchy
-            to_update.append(get_issue_hierarchy(j, issue['key']))
+            try:
+                root = hs.get_root_issue(issue['key'])
+                to_update.append(root.key)
+            except:
+                # nothing to do
+                pass
         elif item['field'] == 'Link':
             from_issue = parse.parse("This issue contains {}", item['fromString'])
             if from_issue:
