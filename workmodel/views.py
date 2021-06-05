@@ -378,7 +378,8 @@ def get_jira_default_configuration(j, sc):
     # default configuration
     conf = {
         'hierarchy': None,
-        'task_id': None
+        'task_id': None,
+        'version': 1,
     }
     # already created configuration
     props = j.app_properties(sc.key)
@@ -393,6 +394,10 @@ def get_jira_default_configuration(j, sc):
                 conf['hierarchy'] = p.raw['value']['hierarchy']
             else:
                 conf['hierarchy'] = None
+            if hasattr(p.value, 'version'):
+                conf['version'] = p.value.version
+            else:
+                conf['version'] = 1
     # Create the app configuration in case it is not there yet
     j.create_app_property(sc.key, 'workmodel-configuration', conf)
     return conf
