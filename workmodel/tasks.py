@@ -136,7 +136,7 @@ def update_in_progress_business_time(sc_id):
     to_update = []
     for i in issues:
         try:
-            root = hs.get_root_issue(i.key)
+            root = hs.root_issue(i.key)
         except:
             # nothing to do
             continue

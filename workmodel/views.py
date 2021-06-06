@@ -314,7 +314,7 @@ def issue_updated(request):
             hs = HierarchyService(sc, conf['hierarchy'])
             # Update ourselves or the whole hierarchy
             try:
-                root = hs.get_root_issue(issue['key'])
+                root = hs.root_issue(issue['key'])
                 to_update.append(root.key)
             except:
                 # nothing to do
