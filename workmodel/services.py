@@ -5,14 +5,49 @@ import jira
 from jira import JIRA
 
 class WorkmodelService(object):
-    def __init__(self, sc):
-        self.jira = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
-        # TODO Handle the configuration
+    def __init__(self, sc, conf=None):
+        self.sc = sc
+        self.jira = JIRA(self.sc.host, jwt={'secret': self.sc.shared_secret, 'payload': {'iss': self.sc.key}})
+        if not conf:
+            conf = self.get_configuration()
+        # instantiate the services
+        self.hierarchy = HierarchyService(self.jira, conf['hierarchy'])
+        self.business_time = BusinessTimeService(self.jira, conf, self.hierarchy)
+
+        # Create the app configuration in case it is not there yet
+        #self.jira.create_app_property(sc.key, 'workmodel-configuration', conf)
+
+    def get_configuration(self):
+        # already created configuration
+        try:
+            props = self.jira.app_properties(self.sc.key)
+            for p in props:
+                if p.key == 'workmodel-configuration':
+                    conf = {}
+                    if hasattr(p.value, 'task_id'):
+                        conf['task_id'] = p.value.task_id
+                    else:
+                        conf['task_id'] = None
+                    if hasattr(p.value, 'hierarchy'):
+                        conf['hierarchy'] = p.raw['value']['hierarchy']
+                    else:
+                        conf['hierarchy'] = None
+                    if hasattr(p.value, 'version'):
+                        conf['version'] = p.value.version
+                    else:
+                        conf['version'] = 1
+        except:
+            conf = {
+                'hierarchy': None,
+                'task_id': None,
+                'version': 1,
+            }
+        return conf
 
 
 class JiraService(object):
-    def __init__(self, sc, *args, **kwargs):
-        self.jira = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    def __init__(self, jira, *args, **kwargs):
+        self.jira = jira
 
     def _get_issue(self, issue):
         if type(issue) == str:
@@ -35,18 +70,22 @@ class JiraService(object):
     
         return result
 
+    def get_default_configuration(self):
+        raise NotImplementedError
+
     
 class HierarchyService(JiraService):
-    def __init__(self, sc, conf, *args, **kwargs):
-        super(HierarchyService, self).__init__(sc, args, kwargs)
+    def __init__(self, jira, conf, *args, **kwargs):
+        super(HierarchyService, self).__init__(jira, args, kwargs)
         self.hierarchies = []
-        for c in conf:
-            if c['type'] == 'sub-task':
-                self.hierarchies.append(SubTaskHierarchyLevel(self.jira))
-            if c['type'] == 'epic':
-                self.hierarchies.append(EpicHierarchyLevel(self.jira))
-            elif c['type'] == 'custom':
-                self.hierarchies.append(CustomHierarchyLevel(self.jira, c['issues'], c['field'], c['link']))
+        if conf:
+            for c in conf:
+                if c['type'] == 'sub-task':
+                    self.hierarchies.append(SubTaskHierarchyLevel(self.jira))
+                if c['type'] == 'epic':
+                    self.hierarchies.append(EpicHierarchyLevel(self.jira))
+                elif c['type'] == 'custom':
+                    self.hierarchies.append(CustomHierarchyLevel(self.jira, c['issues'], c['field'], c['link']))
 
     def root_issue(self, issue):
         # No configuration, do nothing
@@ -305,3 +344,20 @@ class CustomHierarchyLevel(HierarchyLevel):
             raise NotImplementedError
 
 
+class BusinessTimeService(JiraService):
+    def __init__(self, jira, conf, hierarchy, *args, **kwargs):
+        super(BusinessTimeService, self).__init__(jira, args, kwargs)
+        self.hierarchy = hierarchy
+
+    def calculate_issue_business_time(self, issue_key):
+        # Check if it is a container or an operative issue
+        pass
+
+    def transition_to_days(self, from_transition, to_transition):
+        fromDate = from_transition['created']
+        toDate = to_transition['created']
+        # Get the timespan
+        daygenerator = (fromDate + datetime.timedelta(x + 1) for x in range((toDate - fromDate).days))
+        # Remove non working days
+        days = sum(1 for day in daygenerator if day.weekday() < 5)
+        return days

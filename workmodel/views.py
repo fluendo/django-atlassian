@@ -18,7 +18,7 @@ from django_atlassian.models.connect import SecurityContext
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from fluendo.proxy_api import customers_proxy_cache
-from workmodel.services import HierarchyService
+from workmodel.services import WorkmodelService
 
 @csrf_exempt
 @jwt_required
@@ -309,12 +309,10 @@ def issue_updated(request):
     for item in changelog['items']:
         # In case the issue has been transitioned
         if item['field'] == 'status':
-            j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
-            conf = get_jira_default_configuration(j, sc)
-            hs = HierarchyService(sc, conf['hierarchy'])
+            wm = WorkmodelService(sc)
             # Update ourselves or the whole hierarchy
             try:
-                root = hs.root_issue(issue['key'])
+                root = wm.hierarchy.root_issue(issue['key'])
                 to_update.append(root.key)
             except:
                 # nothing to do
@@ -359,34 +357,6 @@ def issue_updated(request):
         update_issue_business_time.delay(sc.id, u)
     return HttpResponse(204)
 
-
-def get_jira_default_configuration(j, sc):
-    # default configuration
-    conf = {
-        'hierarchy': None,
-        'task_id': None,
-        'version': 1,
-    }
-    # already created configuration
-    props = j.app_properties(sc.key)
-    for p in props:
-        if p.key == 'workmodel-configuration':
-            conf = {}
-            if hasattr(p.value, 'task_id'):
-                conf['task_id'] = p.value.task_id
-            else:
-                conf['task_id'] = None
-            if hasattr(p.value, 'hierarchy'):
-                conf['hierarchy'] = p.raw['value']['hierarchy']
-            else:
-                conf['hierarchy'] = None
-            if hasattr(p.value, 'version'):
-                conf['version'] = p.value.version
-            else:
-                conf['version'] = 1
-    # Create the app configuration in case it is not there yet
-    j.create_app_property(sc.key, 'workmodel-configuration', conf)
-    return conf
 
 
 @xframe_options_exempt
