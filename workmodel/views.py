@@ -364,11 +364,11 @@ def issue_updated(request):
 def jira_configuration(request):
     # Get the addon configuration
     sc = request.atlassian_sc
-    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    wm = WorkmodelService(sc)
     # Encode the update URL to make a secure call to ourselves
     url = reverse('workmodel-configuration-update-issues-business-time')
     token = atlassian_jwt.encode_token('POST', url, sc.client_key, sc.shared_secret)
-    conf = get_jira_default_configuration(j, sc)
+    conf = wm.get_configuration()
     return render(request, 'workmodel/jira_configuration.html', {
         'update_issues_url': url,
         'update_issues_url_jwt': token,
@@ -380,15 +380,17 @@ def jira_configuration(request):
 @jwt_required
 def issues_hierarchy_configuration(request):
     sc = request.atlassian_sc
+    wm = WorkmodelService(sc)
+    conf = wm.get_configuration()
+    # TODO refactor this, for later
     j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
-    # Get the current configuration
-    conf = get_jira_default_configuration(j, sc)
     # Replace the ids with actual values
     issue_types = j.issue_types()
     resolved_hierarchies = []
     for h in conf['hierarchy']:
         hierarchy = h
-        h['issues'] = [i for i in issue_types if i.id in h['issues']]
+        if h['issues']:
+            h['issues'] = [i for i in issue_types if i.id in h['issues']]
         resolved_hierarchies.append(h)
     conf['hierarchy'] = resolved_hierarchies
     return render(request, 'workmodel/issues_hierarchy_configuration.html', {
