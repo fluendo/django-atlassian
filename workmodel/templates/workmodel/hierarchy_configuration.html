@@ -271,14 +271,14 @@
                   <td><input class="is-operative-selector" type="checkbox" name="is_operative" value="True" {% if h.is_operative %} checked {% endif %} {% if h.type == "sub-task" %} disabled {% endif %}/></td>
                   <td><input class="is-container-selector" type="checkbox" name="is_container" value="True" {% if h.is_container %} checked {% endif %} {% if h.type == "epic" or h.type == "sub-task" %} disabled {% endif %}/></td>
                   <td>
-                    <select class="issue-type-selector selector-ui" multiple="">
+                    <select class="issue-type-selector selector-ui" multiple="" {% if h.type == "epic" or h.type == "sub-task" %} disabled {% endif %}>
                       {% for it in issue_types %}
                         <option value="{{ it.id }}" {% if it in h.issues %} selected {% endif %}>{{ it.name }}</option>
                       {% endfor %}
                     </select> 
                   </td>
                   <td>
-                    <select class="field-selector selector-ui">
+                    <select class="field-selector selector-ui" {% if h.type == "epic" or h.type == "sub-task" %} disabled {% endif %}>
                       <option value="" {% if not h.field %} selected {% endif %}>None</option>
                       {% for f in fields %}
                         <option value="{{ f.key }}" {% if f.key == h.field %} selected {% endif %}>{{ f.name }}</option>
@@ -286,7 +286,7 @@
                     </select> 
                   </td>
                   <td>
-                    <select class="link-type-selector selector-ui">
+                    <select class="link-type-selector selector-ui" {% if h.type == "epic" or h.type == "sub-task" %} disabled {% endif %}>
                       <option value="" {% if not h.link %} selected {% endif %}>None</option>
                       {% for lt in issue_link_types %}
                         <option value="{{ lt.id }}" {% if lt.id == h.link.id %} selected {% endif %}>{{ lt.name }}</option>
