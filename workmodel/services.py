@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import datetime
 import jira
+import logging
 from jira import JIRA
+
+from django.utils import dateparse
+
+logger = logging.getLogger('workmodel_logger')
 
 class WorkmodelService(object):
     def __init__(self, sc, conf=None):
@@ -149,7 +155,37 @@ class HierarchyService(JiraService):
                     issues += self.child_issues(ch, expand=expand)
                 break
         return issues
-            
+
+    def hierarchy_level(self, issue):
+        # No configuration, do nothing
+        if not self.hierarchies:
+            raise ValueError
+
+        # A single hierarchy, compare the issuetype only
+        issue = self._get_issue(issue)
+        if len(self.hierarchies) == 1:
+            if self.hierarchies[0].check_issue_type(i):
+                return i
+            else:
+                raise ValueError
+        # TODO reverse on the configuration
+        ret = None
+        for idx in range(0, len(self.hierarchies) - 1):
+            h = self.hierarchies[idx]
+            h_prev = self.hierarchies[idx+1]
+            if h.check_issue_type(issue):
+                jql = h.children_jql(issue, h_prev)
+                if not jql:
+                    continue
+
+                children = self.search_issues(jql)
+                ret = h
+                # no issues, try with the next level
+                if not children:
+                    continue
+                else:
+                    break
+        return h
 
 class HierarchyLevel(object):
     def __init__(self, jira, t, is_operative, is_container, *args, **kwargs):
@@ -331,10 +367,7 @@ class BusinessTimeService(JiraService):
     def __init__(self, sc, jira, conf, hierarchy, *args, **kwargs):
         super(BusinessTimeService, self).__init__(sc, jira, args, kwargs)
         self.hierarchy = hierarchy
-
-    def calculate_issue_business_time(self, issue_key):
-        # Check if it is a container or an operative issue
-        pass
+        self.statuses = self.jira.statuses()
 
     def transition_to_days(self, from_transition, to_transition):
         fromDate = from_transition['created']
@@ -344,3 +377,115 @@ class BusinessTimeService(JiraService):
         # Remove non working days
         days = sum(1 for day in daygenerator if day.weekday() < 5)
         return days
+
+    def calculate_issue_business_time(self, issue):
+        transitions = []
+        for h in issue.changelog.histories:
+            # Get all transitions
+            created = dateparse.parse_datetime(h.created).date()
+            for item in h.items:
+                if item.field == 'status':
+                    # Get transitions where the from status is of "In Progress" category
+                    # Get transitions where the to status is of "In Progress" category
+                    # Warning: We have duplicate names for statuses
+                    fromCategory = toCategory = None
+                    for s in self.statuses:
+                        if fromCategory and toCategory:
+                            break
+                        if s.name == item.fromString:
+                            fromCategory = s.statusCategory.name
+                        if s.name == item.toString:
+                            toCategory = s.statusCategory.name
+                    if fromCategory != 'In Progress' and toCategory != 'In Progress':
+                        continue
+                    # Always keep it sorted from oldest to newer
+                    transitions.insert(0, {'created': created, 'fromCategory': fromCategory, 'toCategory': toCategory})
+        if not transitions:
+            days = 0
+        else:
+            days = 1
+            # In case the task is currently in progress, create a fake transition
+            if transitions[len(transitions) - 1]['toCategory'] == 'In Progress':
+                transitions.append({'created': datetime.date.today(), 'fromCategory': 'In Progress', 'toCategory': 'Done'})
+            for i in range(1, len(transitions)):
+                # Skip transitions that happened in the same day
+                if transitions[i-1]['created'] == transitions[i]['created']:
+                    continue
+                # Sum every filtered timespan
+                days += self.transition_to_days(transitions[i-1], transitions[i])
+        return days
+
+    def business_time(self, issue):
+        logger.info("Updating issue {} business time".format(issue))
+        issue = self._get_issue(issue, expand='changelog')
+        # Get the hierarchy level this issue belongs to
+        h = self.hierarchy.hierarchy_level(issue)
+        # Check if it is a container or an operative issue
+        children = []
+        days = 0
+        if h.is_container:
+            # Get the children issue
+            children = self.hierarchy.child_issues(issue, expand='changelog')
+            for ch in children:
+                days += self.business_time(ch)
+        if not children and h.is_operative:
+            # No children, do our own stuff
+            days = self.calculate_issue_business_time(issue)
+        # Store the information as a property
+        logger.info("Days for {} is {}".format(issue, days))     
+        self.jira.add_issue_property(issue.key, "transitions", { 'progress_summation': days })
+        return days
+
+    def update_in_progress_business_time(self):
+        logger.info("Updating all In-Progress issues")
+        # Get all the operative hierarchies
+        issue_types = []
+        for h in self.hierarchy.hierarchies:
+            if h.is_operative:
+                issue_types += h.get_issue_types()
+        # Uniquify the list
+        issue_types = list(set(issue_types))
+        if not issue_types:
+            logger.info("No issue types set, nothing to do")
+            return
+
+        # Search issues whoes current statusCategory is In Progress
+        issues = self.jira.search_issues("statusCategory = 'In Progress' AND type IN ({})".format(",".join("'{0}'".format(it) for it in issue_types)))
+        to_update = []
+        for i in issues:
+            try:
+                root = self.hierarchy.root_issue(i.key)
+            except:
+                # nothing to do
+                continue
+            to_update.append(root.key)
+        # Uniquify the list
+        to_update = list(set(to_update))
+        for u in to_update:
+            logger.info("Updating business time for In-Progress issue {}".format(u))
+            self.business_time(u)
+
+    def update_all_business_time(self, task_id):
+        logger.info("Updating all issues")
+
+        # We assume there is already a configuration stored
+        prop = None
+        props = self.jira.app_properties(self.sc.key)
+        for p in props:
+            if p.key == 'workmodel-configuration':
+                prop = p
+                break
+        prop.raw['value']['task_id'] = task_id
+        prop.update(prop.raw['value'])
+        issues = self.search_issues("", expand='changelog')
+        for issue in issues:
+            self.business_time(issue)
+        # Remove the addon task id
+        prop = None
+        props = self.jira.app_properties(self.sc.key)
+        for p in props:
+            if p.key == 'workmodel-configuration':
+                prop = p
+                break
+        prop.raw['value']['task_id'] = None
+        prop.update(prop.raw['value'])
