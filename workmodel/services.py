@@ -11,8 +11,8 @@ class WorkmodelService(object):
         if not conf:
             conf = self.get_configuration()
         # instantiate the services
-        self.hierarchy = HierarchyService(self.jira, conf['hierarchy'])
-        self.business_time = BusinessTimeService(self.jira, conf, self.hierarchy)
+        self.hierarchy = HierarchyService(self.sc, self.jira, conf['hierarchy'])
+        self.business_time = BusinessTimeService(self.sc, self.jira, conf, self.hierarchy)
 
         # Create the app configuration in case it is not there yet
         #self.jira.create_app_property(sc.key, 'workmodel-configuration', conf)
@@ -46,7 +46,8 @@ class WorkmodelService(object):
 
 
 class JiraService(object):
-    def __init__(self, jira, *args, **kwargs):
+    def __init__(self, sc, jira, *args, **kwargs):
+        self.sc = sc
         self.jira = jira
 
     def _get_issue(self, issue):
@@ -75,8 +76,8 @@ class JiraService(object):
 
     
 class HierarchyService(JiraService):
-    def __init__(self, jira, conf, *args, **kwargs):
-        super(HierarchyService, self).__init__(jira, args, kwargs)
+    def __init__(self, sc, jira, conf, *args, **kwargs):
+        super(HierarchyService, self).__init__(sc, jira, args, kwargs)
         self.hierarchies = []
         if conf:
             for c in conf:
@@ -327,8 +328,8 @@ class CustomHierarchyLevel(HierarchyLevel):
 
 
 class BusinessTimeService(JiraService):
-    def __init__(self, jira, conf, hierarchy, *args, **kwargs):
-        super(BusinessTimeService, self).__init__(jira, args, kwargs)
+    def __init__(self, sc, jira, conf, hierarchy, *args, **kwargs):
+        super(BusinessTimeService, self).__init__(sc, jira, args, kwargs)
         self.hierarchy = hierarchy
 
     def calculate_issue_business_time(self, issue_key):
