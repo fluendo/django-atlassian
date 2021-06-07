@@ -353,7 +353,6 @@ def issue_updated(request):
     # Create a task to update each progress
     from workmodel.tasks import update_issue_business_time
     for u in to_update:
-        print("Updating business time for {}".format(u))
         update_issue_business_time.delay(sc.id, u)
     return HttpResponse(204)
 
@@ -386,17 +385,20 @@ def issues_hierarchy_configuration(request):
     j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
     # Replace the ids with actual values
     issue_types = j.issue_types()
+    issue_link_types = j.issue_link_types()
     resolved_hierarchies = []
     for h in conf['hierarchy']:
         hierarchy = h
         if h['issues']:
             h['issues'] = [i for i in issue_types if i.id in h['issues']]
+        if h['link']:
+            h['link'] = [i for i in issue_link_types if i.id == h['link']][0]
         resolved_hierarchies.append(h)
     conf['hierarchy'] = resolved_hierarchies
     return render(request, 'workmodel/issues_hierarchy_configuration.html', {
         'issue_types': issue_types,
         'fields': j.fields(),
-        'issue_link_types': j.issue_link_types(),
+        'issue_link_types': issue_link_types,
         'conf': conf
     })
 

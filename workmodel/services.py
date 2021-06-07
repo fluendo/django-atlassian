@@ -100,10 +100,10 @@ class HierarchyService(JiraService):
             raise ValueError
 
         # A single hierarchy, compare the issuetype only
-        i = self._get_issue(issue)
+        issue = self._get_issue(issue)
         if len(self.hierarchies) == 1:
-            if self.hierarchies[0].check_issue_type(i):
-                return i
+            if self.hierarchies[0].check_issue_type(issue):
+                return issue
             else:
                 raise ValueError
         # Now the complex part, take into account the field and the upper hierarchy
@@ -115,16 +115,16 @@ class HierarchyService(JiraService):
             idx = l - idx
             h = self.hierarchies[idx]
             h_next = self.hierarchies[idx-1]
-            parent = h.parent(i, h_next)
+            parent = h.parent(issue, h_next)
             if parent:
-                i = parent
+                issue = parent
                 found = True
             else:
                 if found:
                     break
                 else:
                     continue
-        return i
+        return issue
 
 
     def child_issues(self, issue, expand=None):
@@ -135,8 +135,8 @@ class HierarchyService(JiraService):
         # A single hierarchy, compare the issuetype only
         issue = self._get_issue(issue)
         if len(self.hierarchies) == 1:
-            if self.hierarchies[0].check_issue_type(i):
-                return i
+            if self.hierarchies[0].check_issue_type(issue):
+                return issue
             else:
                 raise ValueError
         # TODO reverse on the configuration
@@ -234,7 +234,7 @@ class HierarchyLevel(object):
         return parent
 
     def children_jql(self, issue, h_prev):
-        issues = []
+        jql = None
         try:
             jql = self.children_jql_downward().format(issue_key=issue.key)
         except NotImplementedError:
