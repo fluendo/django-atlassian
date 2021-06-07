@@ -31,14 +31,14 @@ class WorkmodelService(object):
                     if hasattr(p.value, 'hierarchy'):
                         conf['hierarchy'] = p.raw['value']['hierarchy']
                     else:
-                        conf['hierarchy'] = None
+                        conf['hierarchy'] = []
                     if hasattr(p.value, 'version'):
                         conf['version'] = p.value.version
                     else:
                         conf['version'] = 1
         except:
             conf = {
-                'hierarchy': None,
+                'hierarchy': [],
                 'task_id': None,
                 'version': 1,
             }
