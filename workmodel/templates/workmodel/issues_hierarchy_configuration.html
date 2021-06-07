@@ -91,7 +91,10 @@ AJS.$(document).on('click', '#add-row', function(event) {
   event.preventDefault();
   var cloned_row = _.template($('#hierarchyTemplate').html())();
   var last_row = $("tbody tr").last()[0];
-  $(cloned_row).insertAfter(last_row);
+  if (last_row)
+      $(cloned_row).insertAfter(last_row);
+  else
+      $("tbody").append(cloned_row);
   AJS.$("tbody tr").last().find(".selector-ui").auiSelect2();
   // Change the order arrows behaviour
   update_arrows(last_row);
@@ -268,8 +271,8 @@ AJS.$(document).ready(function() {
                       <option value="sub-task" {% if h.type == "sub-task" %} selected {% endif %}>Sub-Task</option>
                     </select>
                   </td>
-                  <td><input class="is-operative-selector" type="checkbox" name="is_operative" value="True" {% if h.is_operative %} checked {% endif %}/></td>
-                  <td><input class="is-container-selector" type="checkbox" name="is_container" value="True" {% if h.is_container %} checked {% endif %}/></td>
+                  <td><input class="is-operative-selector" type="checkbox" name="is_operative" value="True" {% if h.is_operative %} checked {% endif %} {% if h.type == "sub-task" %} disabled {% endif %}/></td>
+                  <td><input class="is-container-selector" type="checkbox" name="is_container" value="True" {% if h.is_container %} checked {% endif %} {% if h.type == "epic" or h.type == "sub-task" %} disabled {% endif %}/></td>
                   <td>
                     <select class="issue-type-selector selector-ui" multiple="">
                       {% for it in issue_types %}
@@ -289,7 +292,7 @@ AJS.$(document).ready(function() {
                     <select class="link-type-selector selector-ui">
                       <option value="" {% if not h.link %} selected {% endif %}>None</option>
                       {% for lt in issue_link_types %}
-                        <option value="{{ lt.id }}" {% if lt.name == h.link %} selected {% endif %}>{{ lt.name }}</option>
+                        <option value="{{ lt.id }}" {% if lt.id == h.link.id %} selected {% endif %}>{{ lt.name }}</option>
                       {% endfor %}
                     </select> 
                   </td>
