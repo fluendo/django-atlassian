@@ -404,16 +404,7 @@ def issues_hierarchy_configuration(request):
 @csrf_exempt
 @jwt_required
 def configuration_update_issues_business_time(request):
-    sc = request.atlassian_sc
-    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
-    # We assume there is already a configuration stored
-    prop = None
-    props = j.app_properties(sc.key)
-    for p in props:
-        if p.key == 'workmodel-configuration':
-            prop = p
-            break
     from workmodel.tasks import update_issues_business_time
-    res = update_issues_business_time.delay(sc.id)
-    prop.update({'task_id': res.task_id})
+    sc = request.atlassian_sc
+    update_issues_business_time.delay(sc.id)
     return HttpResponse(204)
