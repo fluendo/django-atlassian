@@ -360,7 +360,7 @@ def issue_updated(request):
 
 @xframe_options_exempt
 @jwt_required
-def jira_configuration(request):
+def business_time_configuration(request):
     # Get the addon configuration
     sc = request.atlassian_sc
     wm = WorkmodelService(sc)
@@ -368,7 +368,7 @@ def jira_configuration(request):
     url = reverse('workmodel-configuration-update-issues-business-time')
     token = atlassian_jwt.encode_token('POST', url, sc.client_key, sc.shared_secret)
     conf = wm.get_configuration()
-    return render(request, 'workmodel/jira_configuration.html', {
+    return render(request, 'workmodel/business_time_configuration.html', {
         'update_issues_url': url,
         'update_issues_url_jwt': token,
         'conf': conf
@@ -377,7 +377,7 @@ def jira_configuration(request):
 
 @xframe_options_exempt
 @jwt_required
-def issues_hierarchy_configuration(request):
+def hierarchy_configuration(request):
     sc = request.atlassian_sc
     wm = WorkmodelService(sc)
     conf = wm.get_configuration()
@@ -395,7 +395,7 @@ def issues_hierarchy_configuration(request):
             h['link'] = [i for i in issue_link_types if i.id == h['link']][0]
         resolved_hierarchies.append(h)
     conf['hierarchy'] = resolved_hierarchies
-    return render(request, 'workmodel/issues_hierarchy_configuration.html', {
+    return render(request, 'workmodel/hierarchy_configuration.html', {
         'issue_types': issue_types,
         'fields': j.fields(),
         'issue_link_types': issue_link_types,

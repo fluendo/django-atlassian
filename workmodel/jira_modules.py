@@ -142,20 +142,20 @@ modules = [
         ],
         "generalPages": [
             {
-                "url": "{% url 'workmodel-jira-configuration' %}",
+                "url": "{% url 'workmodel-business-time-configuration' %}",
                 "location": "admin_plugins_menu/workmodel-admin",
                 "name": {
-                    "value": "Configuration"
+                    "value": "Business Time"
               },
-              "key": "workmodel-jira-configuration"
+              "key": "workmodel-business-time-configuration"
             },
             {
-                "url": "{% url 'workmodel-issues-hierarchy-configuration' %}",
+                "url": "{% url 'workmodel-hierarchy-configuration' %}",
                 "location": "admin_plugins_menu/workmodel-admin",
                 "name": {
-                    "value": "Issues hierarchy"
+                    "value": "Hierarchies"
               },
-              "key": "workmodel-issues-hierarchy-configuration"
+              "key": "workmodel-hierarchy-configuration"
             }
         ],
     }
