@@ -50,9 +50,9 @@ class JiraService(object):
         self.sc = sc
         self.jira = jira
 
-    def _get_issue(self, issue):
-        if type(issue) == str:
-            return self.jira.issue(issue)
+    def _get_issue(self, issue, expand=None):
+        if type(issue) == str or type(issue) == unicode:
+            return self.jira.issue(issue, expand=expand)
         elif type(issue) == jira.resources.Issue:
             return issue
         else:
