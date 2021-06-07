@@ -15,7 +15,7 @@ class WorkmodelService(object):
         self.business_time = BusinessTimeService(self.sc, self.jira, conf, self.hierarchy)
 
         # Create the app configuration in case it is not there yet
-        #self.jira.create_app_property(sc.key, 'workmodel-configuration', conf)
+        self.jira.create_app_property(sc.key, 'workmodel-configuration', conf)
 
     def get_configuration(self):
         # already created configuration
