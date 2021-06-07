@@ -83,9 +83,9 @@ class HierarchyService(JiraService):
                 if c['type'] == 'sub-task':
                     self.hierarchies.append(SubTaskHierarchyLevel(self.jira))
                 if c['type'] == 'epic':
-                    self.hierarchies.append(EpicHierarchyLevel(self.jira))
+                    self.hierarchies.append(EpicHierarchyLevel(self.jira, c['is_operative']))
                 elif c['type'] == 'custom':
-                    self.hierarchies.append(CustomHierarchyLevel(self.jira, c['issues'], c['field'], c['link']))
+                    self.hierarchies.append(CustomHierarchyLevel(self.jira, c['is_operative'], c['is_container'], c['issues'], c['field'], c['link']))
 
     def root_issue(self, issue):
         # No configuration, do nothing
@@ -151,9 +151,11 @@ class HierarchyService(JiraService):
             
 
 class HierarchyLevel(object):
-    def __init__(self, jira, t, *args, **kwargs):
+    def __init__(self, jira, t, is_operative, is_container, *args, **kwargs):
         self.jira = jira
         self.type = t
+        self.is_operative = is_operative
+        self.is_container = is_container
 
     def get_issue_types(self):
         raise NotImplementedError
@@ -165,10 +167,10 @@ class HierarchyLevel(object):
         raise NotImplementedError
 
     def is_operative(self):
-        raise NotImplementedError
+        return self.is_operative
 
     def is_container(self):
-        raise NotImplementedError
+        return self.is_container
 
     def children_jql_upward(self):
         raise NotImplementedError
@@ -229,7 +231,7 @@ class HierarchyLevel(object):
 
 class SubTaskHierarchyLevel(HierarchyLevel):
     def __init__(self, jira, *args, **kwargs):
-        super(SubTaskHierarchyLevel, self).__init__(jira, 'sub-task', *args, **kwargs)
+        super(SubTaskHierarchyLevel, self).__init__(jira, 'sub-task', True, False, *args, **kwargs)
         self.sub_tasks = list(set([x.name for x in self.jira.issue_types() if x.subtask == True]))
         self.parent_field = [x for x in self.jira.fields() if 'Parent' == x['name']][0]['key']
 
@@ -245,19 +247,13 @@ class SubTaskHierarchyLevel(HierarchyLevel):
         # The parent issue does not have every field, we need to fetch again
         return self.jira.issue(parent_issue.key)
 
-    def is_operative(self):
-        return True
-
-    def is_container(self):
-        return False
-
     def children_jql_upward(self):
         return "parent = {issue_key}"
 
 
 class EpicHierarchyLevel(HierarchyLevel):
-    def __init__(self, jira, *args, **kwargs):
-        super(EpicHierarchyLevel, self).__init__(jira, 'epic', *args, **kwargs)
+    def __init__(self, jira, is_operative, *args, **kwargs):
+        super(EpicHierarchyLevel, self).__init__(jira, 'epic', is_operative, True, *args, **kwargs)
         self.epic = [x.name for x in self.jira.issue_types() if x.name == 'Epic']
         self.epic_field = [x for x in self.jira.fields() if 'Epic Link' == x['name']][0]['key']
 
@@ -271,19 +267,13 @@ class EpicHierarchyLevel(HierarchyLevel):
         else:
             return None
 
-    def is_operative(self):
-        return False
-
-    def is_container(self):
-        return True
-
     def children_jql_downward(self):
         return "'Epic Link' = {issue_key}"
 
 
 class CustomHierarchyLevel(HierarchyLevel):
-    def __init__(self, jira, issues = None, field = None, link= None, *args, **kwargs):
-        super(CustomHierarchyLevel, self).__init__(jira, 'custom', *args, **kwargs)
+    def __init__(self, jira, is_operative, is_container, issues = None, field = None, link = None, *args, **kwargs):
+        super(CustomHierarchyLevel, self).__init__(jira, 'custom', is_operative, is_container, *args, **kwargs)
         if issues:
             self.issues = [x.name for x in self.jira.issue_types() if x.id in issues]
         else:
@@ -326,14 +316,6 @@ class CustomHierarchyLevel(HierarchyLevel):
             return None
         else:
             raise NotImplementedError
-
-    def is_operative(self):
-        # TODO
-        raise NotImplementedError
-
-    def is_container(self):
-        # TODO
-        raise NotImplementedError
 
     def children_jql_downward(self):
         if self.field:
