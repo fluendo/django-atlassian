@@ -29,7 +29,7 @@
     jQuery.ajax({
       type: 'POST',
       dataType: 'json',
-      url: "{% url 'customers-view-update' %}?key={{ key }}",
+      url: "{% url 'workmodel-customers-view-update' %}?key={{ key }}",
       headers: {"Authorization": "JWT {{ jwt }}" },
       data: JSON.stringify({
         customer: c_text,

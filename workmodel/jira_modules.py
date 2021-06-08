@@ -5,7 +5,6 @@ modules = [
                 "key": "jira-issue-customers-indexing",
                 "name": {
                     "value": "Customers index",
-                    "i18n": "customers.index"
                 },
                 "entityType": "issue",
                 "keyConfigurations": [{
@@ -28,7 +27,6 @@ modules = [
                 "key": "jira-issue-leads-indexing",
                 "name": {
                     "value": "Leads index",
-                    "i18n": "leads.index"
                 },
                 "entityType": "issue",
                 "keyConfigurations": [{
@@ -47,6 +45,21 @@ modules = [
                         }
                     ]
                 }]
+            },
+            {
+                "key": "workmodel-transition-time-property",
+                "name": {
+                    "value": "Transition time",
+                },
+                "entityType": "issue",
+                "keyConfigurations": [{
+                    "propertyKey": "transitions",
+                    "extractions": [{
+                            "objectName": "progress_summation",
+                            "type": "number",
+                        }
+                    ]
+                }],
             }
         ],
         "jiraIssueFields": [
@@ -64,7 +77,23 @@ modules = [
                     "type": "string",
                     "name": "name"
                 }]
+            },
+            {
+                "key" : "workmodel-progress-summation-field",
+                "name" : {
+                    "value" : "Summation In-Progress",
+                },
+                "description" : {
+                    "value" : "Summation of In-Progress transitions"
+                },
+                "type": "read_only",
+                "property": {
+                    "path": "progress_summation",
+                    "key": "transitions",
+                    "type": "number"
+                }
             }
+
         ],
         "webPanels": [
             {
@@ -78,6 +107,15 @@ modules = [
                 "conditions": [{
                     "condition": "user_is_logged_in"
                 }]
+            }
+        ],
+        "webSections": [
+            {
+                  "key": "workmodel-admin",
+                  "location": "admin_plugins_menu",
+                  "name": {
+                      "value": "Workmodel"
+                  }
             }
         ],
         "webhooks": [
@@ -96,7 +134,29 @@ modules = [
             {
                 "event": "project_deleted",
                 "url": "{% url 'workmodel-project-deleted' %}",
+            },
+            {
+                "event": "jira:issue_updated",
+                "url": "{% url 'workmodel-issue-updated' %}",
             }
-        ]
+        ],
+        "generalPages": [
+            {
+                "url": "{% url 'workmodel-business-time-configuration' %}",
+                "location": "admin_plugins_menu/workmodel-admin",
+                "name": {
+                    "value": "Business Time"
+              },
+              "key": "workmodel-business-time-configuration"
+            },
+            {
+                "url": "{% url 'workmodel-hierarchy-configuration' %}",
+                "location": "admin_plugins_menu/workmodel-admin",
+                "name": {
+                    "value": "Hierarchies"
+              },
+              "key": "workmodel-hierarchy-configuration"
+            }
+        ],
     }
 ]

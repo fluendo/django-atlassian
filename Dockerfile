@@ -9,5 +9,5 @@ RUN apt-get update && apt-get install -y build-essential \
     git
 WORKDIR /app
 COPY . .
-RUN pip install --upgrade pip --user
-RUN pip install -r requirements.txt --user
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt

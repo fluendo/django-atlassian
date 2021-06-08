@@ -5,6 +5,7 @@ import json
 import atlassian_jwt
 from urlparse import urlparse
 from jira import JIRA
+import datetime
 
 from django.urls import reverse
 from django.conf import settings
@@ -14,76 +15,10 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.http import HttpResponse, HttpResponseBadRequest
 from django_atlassian.decorators import jwt_required
 from django_atlassian.models.connect import SecurityContext
+from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
-from workmodel.models import Issue
 from fluendo.proxy_api import customers_proxy_cache
-
-def labels_update_labels(i, to_add, to_remove):
-    update = False
-    for l in to_add:
-        if l not in i.labels:
-            i.labels.append(l)
-            update = True
-    for l in to_remove:
-        if l in i.labels:
-            i.labels.remove(l)
-            update = True
-    if update:
-        print "Updating labels to"
-        i.save()
-
-
-def labels_set_parent_labels(i):
-    parent = i.get_parent()
-    if parent:
-        to_add = parent.labels
-        labels_update_labels(i, to_add, [])
-
-
-def labels_issue_created(i):
-    if i.has_parent():
-        labels_set_parent_labels(i)
-
-
-def labels_issue_updated(i, changelog):
-    # Check what has changed
-    for item in changelog['items']:
-        # In case the labels have changed
-        if item['field'] == 'labels':
-            # In case is a parent, we need to add/remove the labels
-            # in every children
-            if is_parent(i):
-                from_labels = item['fromString'].split(" ")
-                to_labels = item['toString'].split(" ")
-                to_add = [x for x in to_labels if x not in from_labels]
-                to_remove = [x for x in from_labels if x not in to_labels]
-                for children in i.get_children():
-                    labels_update_labels(children, to_add, to_remove)
-            # In case the labels have been updated, make sure to keep
-            # the parents labels too
-            if i.has_parent():
-                labels_set_parent_labels(i)
-
-
-@csrf_exempt
-@jwt_required
-def issue_updated(request):
-    Issue = request.atlassian_model
-    body = json.loads(request.body)
-    i = Issue.objects.create_from_json(body['issue'])
-    changelog = body['changelog']
-    labels_issue_updated(i, changelog)
-    return HttpResponse(204)
-
-
-@csrf_exempt
-@jwt_required
-def issue_created(request):
-    Issue = request.atlassian_model
-    body = json.loads(request.body)
-    i = Issue.objects.create_from_json(body['issue'])
-    labels_issue_created(i)
-    return HttpResponse(204)
+from workmodel.services import WorkmodelService
 
 @csrf_exempt
 @jwt_required
@@ -113,7 +48,7 @@ def customers_view(request):
     }
 
     # Encode the update URL to make a secure call to ourselves
-    url = "{}?key={}".format(reverse('customers-view-update'), key)
+    url = "{}?key={}".format(reverse('workmodel-customers-view-update'), key)
     token = atlassian_jwt.encode_token('POST', url, sc.client_key, sc.shared_secret)
 
     return render(
@@ -148,6 +83,20 @@ def customers_view_update(request):
     return HttpResponse(status=200)
 
 
+def search_issues(j, jql, expand=None):
+    start_at = 0
+    result = []
+    while True:
+        r = j.search_issues(jql, startAt=start_at, expand=expand)
+        total = len(r)
+        if total == 0:
+            break
+        result += r
+        start_at += total
+
+    return result
+
+
 def get_child_issues(j, key, relation='contains', extra_jql=None):
     """
     Function to get the issues on a hierarchy of issues
@@ -159,17 +108,7 @@ def get_child_issues(j, key, relation='contains', extra_jql=None):
     if extra_jql:
         jql = "({0}) {1}".format(jql, extra_jql)
 
-    start_at = 0
-    result = []
-    while True:
-        r = j.search_issues(jql, startAt=start_at)
-        total = len(r)
-        if total == 0:
-            break
-        result += r
-        start_at += total
-
-    return result
+    return get_issues(j, jql)
 
 
 def get_issues_progress(issues):
@@ -301,6 +240,15 @@ def addon_enabled(request):
         else:
             option = [option for option in options if option.properties.id == project.id][0]
             option.update(value=project.name, id=option.id, properties=properties)
+    # Confirm that there's already a schedule every day
+    schedule, created = IntervalSchedule.objects.get_or_create(every=1, period=IntervalSchedule.DAYS)
+    # Confirm that there's already a job that rescans every issue
+    if not PeriodicTask.objects.filter(args=json.dumps(['security_context.id', sc.id])).count():
+        PeriodicTask.objects.create(
+            interval=schedule, name="Update In-Progress business time",
+            task='workmodel.tasks.update_in_progress_business_time',
+            args=json.dumps(['security_context.id', sc.id]),
+        )
     return HttpResponse(204)
 
 
@@ -348,3 +296,117 @@ def project_deleted(request):
     option.delete()
     return HttpResponse(204)
 
+
+@csrf_exempt
+@jwt_required
+def issue_updated(request):
+    sc = request.atlassian_sc
+    data = json.loads(request.body)
+    issue = data['issue']
+    changelog = data['changelog']
+    to_update = []
+    # Check a hierarchy change and trigger the corresponding job
+    for item in changelog['items']:
+        # In case the issue has been transitioned
+        if item['field'] == 'status':
+            wm = WorkmodelService(sc)
+            # Update ourselves or the whole hierarchy
+            try:
+                root = wm.hierarchy.root_issue(issue['key'])
+                to_update.append(root.key)
+            except:
+                # nothing to do
+                pass
+        elif item['field'] == 'Link':
+            from_issue = parse.parse("This issue contains {}", item['fromString'])
+            if from_issue:
+                # Update ourselves
+                to_update.append(issue['key'])
+            from_issue = parse.parse("This issue is contained in {}", item['fromString'])
+            if from_issue:
+                # Update other
+                to_update.append(from_issue)
+            to_issue = parse.parse("This issue contains {}", item['toString'])
+            if to_issue:
+                # Update ourselves
+                to_update.append(issue['key'])
+            to_issue = parse.parse("This issue is contained in {}", item['toString'])
+            if to_issue:
+                # Update other
+                to_update.append(from_issue)
+        elif item['field'] == 'Epic Link':
+            if item['fromString']:
+                # Update other
+                to_update.append(item['fromString'])
+            if item['toString']:
+                # Update other
+                to_update.append(item['fromString'])
+        elif item['field'] == 'Epic Child':
+            if item['fromString']:
+                # Update ourselves
+                to_update.append(issue['key'])
+            if item['toString']:
+                # Update ourselves
+                to_update.append(issue['key'])
+    # Uniquify the list
+    to_update = list(set(to_update))
+    # Create a task to update each progress
+    from workmodel.tasks import update_issue_business_time
+    for u in to_update:
+        update_issue_business_time.delay(sc.id, u)
+    return HttpResponse(204)
+
+
+
+@xframe_options_exempt
+@jwt_required
+def business_time_configuration(request):
+    # Get the addon configuration
+    sc = request.atlassian_sc
+    wm = WorkmodelService(sc)
+    # Encode the update URL to make a secure call to ourselves
+    url = reverse('workmodel-configuration-update-issues-business-time')
+    token = atlassian_jwt.encode_token('POST', url, sc.client_key, sc.shared_secret)
+    conf = wm.get_configuration()
+    return render(request, 'workmodel/business_time_configuration.html', {
+        'update_issues_url': url,
+        'update_issues_url_jwt': token,
+        'conf': conf
+    })
+
+
+@xframe_options_exempt
+@jwt_required
+def hierarchy_configuration(request):
+    sc = request.atlassian_sc
+    wm = WorkmodelService(sc)
+    conf = wm.get_configuration()
+    # TODO refactor this, for later
+    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
+    # Replace the ids with actual values
+    issue_types = j.issue_types()
+    issue_link_types = j.issue_link_types()
+    resolved_hierarchies = []
+    for h in conf['hierarchy']:
+        hierarchy = h
+        if h['issues']:
+            h['issues'] = [i for i in issue_types if i.id in h['issues']]
+        if h['link']:
+            h['link'] = [i for i in issue_link_types if i.id == h['link']][0]
+        resolved_hierarchies.append(h)
+    conf['hierarchy'] = resolved_hierarchies
+    return render(request, 'workmodel/hierarchy_configuration.html', {
+        'issue_types': issue_types,
+        'fields': j.fields(),
+        'issue_link_types': issue_link_types,
+        'conf': conf
+    })
+
+
+@csrf_exempt
+@jwt_required
+def configuration_update_issues_business_time(request):
+    from workmodel.tasks import update_issues_business_time
+    sc = request.atlassian_sc
+    update_issues_business_time.delay(sc.id)
+    return HttpResponse(204)

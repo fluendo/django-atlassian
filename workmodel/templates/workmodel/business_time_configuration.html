@@ -1,0 +1,28 @@
+{% extends 'atlassian_addon/page.html' %}
+{% load static %}
+{% block main %}
+  <div class="aui-page-panel">
+    <div class="aui-page-panel-inner">
+      <section class="aui-page-panel-content">
+        <div class="aui-page-header">
+          <div class="aui-page-header-inner">
+            <div class="aui-page-header-main">
+              <h1 class="component-heading">Business Time</h1>
+            </div>
+          </div>
+        </div>
+        <div id="configuration">
+          <button id="update-issues" class="aui-button aui-button-primary">Rescan issues progress</button>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script>
+  AJS.$(document).on('click', '#update-issues', function() {
+      $.ajax({
+        url: '{{ update_issues_url }}',
+        type: 'post',
+        headers: { "Authorization": 'JWT {{ update_issues_url_jwt }}' }});
+  });
+  </script>
+{% endblock %}
