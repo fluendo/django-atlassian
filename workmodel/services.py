@@ -25,11 +25,15 @@ class WorkmodelService(object):
 
     def get_configuration(self):
         # already created configuration
+        conf = {
+            'hierarchy': [],
+            'task_id': None,
+            'version': 1,
+        }
         try:
             props = self.jira.app_properties(self.sc.key)
             for p in props:
                 if p.key == 'workmodel-configuration':
-                    conf = {}
                     if hasattr(p.value, 'task_id'):
                         conf['task_id'] = p.value.task_id
                     else:
@@ -43,11 +47,7 @@ class WorkmodelService(object):
                     else:
                         conf['version'] = 1
         except:
-            conf = {
-                'hierarchy': [],
-                'task_id': None,
-                'version': 1,
-            }
+            pass
         return conf
 
 
