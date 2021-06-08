@@ -8,7 +8,6 @@ from celery import shared_task
 from django_atlassian.models.connect import SecurityContext
 from django.utils import dateparse
 
-from workmodel.views import search_issues
 from workmodel.services import WorkmodelService
 
 @shared_task

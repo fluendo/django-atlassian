@@ -1,0 +1,64 @@
+{% extends 'django_atlassian/base.html' %}
+
+{% block content %}
+
+<div style="height: 600px;">
+  <form class="aui" id="customers-form" onsubmit="javascript: return false;">
+    <label for="customers-list">Customer</label>
+    <select id="customers-list" name="customers-list">
+      <option value="None" {% if not customer %} selected {% endif %}>None</option>
+      {% for c in customers %}
+        <option value="{{ c.id }}" {% if customer == c.id %} selected {% endif %}>{{ c.company_name }}</option>
+      {% endfor %}
+    </select>
+  <form>
+</div>
+
+<script>
+  $(function() {
+    customers_list = AJS.$("#customers-list")
+    customers_list.auiSelect2();
+  
+    customers_list.on('change', function (e) {
+        var cs = new CustomerService()
+        var customer_id = AJS.$("#customers-list").val();
+        var customer_name = AJS.$("#customers-list").find('option:selected').text();
+
+        if (customer_id != "None")
+          cs.save({customer: customer_name, customer_id: customer_id}, function() {
+            AJS.flag({type: 'error', body: 'Can not save the property'});
+          });
+        else
+          cs.clear(function() {
+            AJS.flag({type: 'error', body: 'Can not clear the property'});
+          })
+    });
+  });
+
+  var CustomerService = function() {
+    return {
+      save: function(data, errorCallback) {
+        AP.require(['request'], function(request) {
+          request({
+            url: '/rest/api/3/issue/{{ key }}/properties/customers',
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            error: errorCallback
+          });
+        });
+      },
+      clear: function(errorCallback) {
+        AP.require(['request'], function(request) {
+          request({
+            url: '/rest/api/3/issue/{{ key }}/properties/customers',
+            type: 'DELETE',
+            error: errorCallback
+          });
+        });
+      }
+    }
+  };
+</script>
+
+{% endblock %}
