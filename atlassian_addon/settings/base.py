@@ -159,6 +159,7 @@ INSTALLED_APPS = [
     'sales.apps.SalesConfig',
     'workmodel.apps.WorkModelConfig',
     'metabase.apps.MetabaseModelConfig',
+    'fluendo.apps.FluendoConfig',
 ]
 
 MIDDLEWARE = [
