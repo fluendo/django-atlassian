@@ -13,7 +13,7 @@ from workmodel.services import WorkmodelService
 @shared_task
 def update_issue_business_time(sc_id, issue_key):
     sc = SecurityContext.objects.get(id=sc_id)
-    wm = WorkmodelService()
+    wm = WorkmodelService(sc)
     wm.business_time.business_time(issue_key)
 
 
