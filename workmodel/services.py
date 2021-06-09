@@ -67,15 +67,15 @@ class JiraService(object):
     def search_issues(self, jql, expand=None):
         start_at = 0
         result = []
-        while True:
+
+        r = self.jira.search_issues(jql, startAt=start_at, expand=expand)
+        total = len(r)
+        while total != 0:
+            for i in r:
+                yield i
+            start_at += total
             r = self.jira.search_issues(jql, startAt=start_at, expand=expand)
             total = len(r)
-            if total == 0:
-                break
-            result += r
-            start_at += total
-    
-        return result
 
     def get_default_configuration(self):
         raise NotImplementedError
@@ -136,25 +136,26 @@ class HierarchyService(JiraService):
         issue = self._get_issue(issue)
         if len(self.hierarchies) == 1:
             if self.hierarchies[0].check_issue_type(issue):
-                return issue
+                yield issue
             else:
                 raise ValueError
         # TODO reverse on the configuration
-        issues = []
         for idx in range(0, len(self.hierarchies) - 1):
             h = self.hierarchies[idx]
             h_prev = self.hierarchies[idx+1]
             if h.check_issue_type(issue):
                 jql = h.children_jql(issue, h_prev)
                 children = self.search_issues(jql, expand)
-                # no issues, try with the next level
-                if not children:
-                    continue
-                issues += children
+                has_children = False
                 for ch in children:
-                    issues += self.child_issues(ch, expand=expand)
+                    has_children = True
+                    yield ch
+                    for sch in self.child_issues(ch, expand=expand):
+                        yield sch
+                # no issues, try with the next level
+                if not has_children:
+                    continue
                 break
-        return issues
 
     def hierarchy_level(self, issue):
         # No configuration, do nothing
@@ -178,10 +179,10 @@ class HierarchyService(JiraService):
                 if not jql:
                     continue
 
-                children = self.search_issues(jql)
                 ret = h
+                children = self.search_issues(jql)
                 # no issues, try with the next level
-                if not children:
+                if next(children, None) == None:
                     continue
                 else:
                     break
@@ -421,14 +422,15 @@ class BusinessTimeService(JiraService):
         # Get the hierarchy level this issue belongs to
         h = self.hierarchy.hierarchy_level(issue)
         # Check if it is a container or an operative issue
-        children = []
+        has_children = False
         days = 0
         if h.is_container:
             # Get the children issue
             children = self.hierarchy.child_issues(issue, expand='changelog')
             for ch in children:
+                has_children = True
                 days += self.business_time(ch)
-        if not children and h.is_operative:
+        if not has_children and h.is_operative:
             # No children, do our own stuff
             days = self.calculate_issue_business_time(issue)
         # Store the information as a property
