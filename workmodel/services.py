@@ -145,7 +145,7 @@ class HierarchyService(JiraService):
             h_prev = self.hierarchies[idx+1]
             if h.check_issue_type(issue):
                 jql = h.children_jql(issue, h_prev)
-                if h.is_operative and extra_jql:
+                if h_prev.is_operative and extra_jql:
                     jql = "({0}) {1}".format(jql, extra_jql)
                 children = self.search_issues(jql, expand)
                 has_children = False
@@ -205,12 +205,6 @@ class HierarchyLevel(object):
 
     def parent_downwards_for_issue(self, issue):
         raise NotImplementedError
-
-    def is_operative(self):
-        return self.is_operative
-
-    def is_container(self):
-        return self.is_container
 
     def children_jql_upward(self):
         raise NotImplementedError
