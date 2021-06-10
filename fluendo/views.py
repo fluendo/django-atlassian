@@ -37,7 +37,7 @@ def customers_view(request):
         {
             'key': key,
             'customers': json.loads(customers.content),
-            'customer': customer_id,
+            'customer': int(customer_id),
         }
     )
 
