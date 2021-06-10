@@ -27,7 +27,7 @@ def customers_view(request):
     customers = customers_proxy_cache(request)
     try:
         p = j.issue_property(key, property_key)
-        customer_id = p.value.customer_id
+        customer_id = int(p.value.customer_id)
     except:
         customer_id = None
 
@@ -37,7 +37,7 @@ def customers_view(request):
         {
             'key': key,
             'customers': json.loads(customers.content),
-            'customer': int(customer_id),
+            'customer': customer_id,
         }
     )
 
