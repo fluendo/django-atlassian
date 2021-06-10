@@ -127,7 +127,7 @@ class HierarchyService(JiraService):
         return issue
 
 
-    def child_issues(self, issue, expand=None):
+    def child_issues(self, issue, expand=None, extra_jql=None):
         # No configuration, do nothing
         if not self.hierarchies:
             raise ValueError
@@ -145,12 +145,14 @@ class HierarchyService(JiraService):
             h_prev = self.hierarchies[idx+1]
             if h.check_issue_type(issue):
                 jql = h.children_jql(issue, h_prev)
+                if extra_jql:
+                    jql = "({0}) {1}".format(jql, extra_jql)
                 children = self.search_issues(jql, expand)
                 has_children = False
                 for ch in children:
                     has_children = True
                     yield ch
-                    for sch in self.child_issues(ch, expand=expand):
+                    for sch in self.child_issues(ch, expand=expand, extra_jql=extra_jql):
                         yield sch
                 # no issues, try with the next level
                 if not has_children:

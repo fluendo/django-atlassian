@@ -19,36 +19,23 @@ from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from workmodel.services import WorkmodelService
 
-def get_child_issues(j, key, relation='contains', extra_jql=None):
-    """
-    Function to get the issues on a hierarchy of issues
-    """
-    jql = "issue in linkedIssues({0}, {1}) "\
-        "OR parent in linkedIssues({0}, {1}) "\
-        "OR parentEpic in linkedIssues({0}, {1})"\
-        .format(key, relation)
-    if extra_jql:
-        jql = "({0}) {1}".format(jql, extra_jql)
-
-    return get_issues(j, jql)
-
-
 def get_issues_progress(issues):
     """
-    For a list of issues, get the corresponding status categories as absolute
+    For a generator of issues, get the corresponding status categories as absolute
     values and relative to the total
     """
-    total = len(issues)
+    total = 0
     todo = progress = done = 0
     todo_pt = progress_pt = done_pt = 0
+    for i in issues:
+        if i.fields.status.statusCategory.name == 'Done':
+            done = done + 1
+        elif i.fields.status.statusCategory.name == 'To Do':
+            todo = todo + 1
+        elif i.fields.status.statusCategory.name == 'In Progress':
+            progress = progress + 1
+        total = total + 1
     if total != 0:
-        for i in issues:
-            if i.fields.status.statusCategory.name == 'Done':
-                done = done + 1
-            elif i.fields.status.statusCategory.name == 'To Do':
-                todo = todo + 1
-            elif i.fields.status.statusCategory.name == 'In Progress':
-                progress = progress + 1
         todo_pt = int(float(todo) / total * 100)
         progress_pt = int(float(progress) / total * 100)
         done_pt = int(float(done) / total * 100)
@@ -73,8 +60,8 @@ def initiative_status(request):
     parsed_uri = urlparse(sc.host)
     jira_host = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
     sc = SecurityContext.objects.filter(host=jira_host, key=request.atlassian_sc.key, product_type='jira').get()
-    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
-    issues = get_child_issues(j, key)
+    wm = WorkmodelService(sc)
+    issues = wm.hierarchy.child_issues(key)
     summary = get_issues_progress(issues)
     return render(
         request,
@@ -93,9 +80,8 @@ def issue_versions(request):
     parsed_uri = urlparse(sc.host)
     jira_host = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
     sc = SecurityContext.objects.filter(host=jira_host, key=request.atlassian_sc.key, product_type='jira').get()
-    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
-
-    issues = get_child_issues(j, key)
+    wm = WorkmodelService(sc)
+    issues = wm.hierarchy.child_issues(key)
     versions = {}
     for i in issues:
         for v in i.fields.fixVersions:
@@ -130,8 +116,8 @@ def issue_versions_progress(request):
     parsed_uri = urlparse(sc.host)
     jira_host = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
     sc = SecurityContext.objects.filter(host=jira_host, key=request.atlassian_sc.key, product_type='jira').get()
-    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
-    issues = get_child_issues(j, key, extra_jql="AND fixVersion IN ('{0}')".format(version))
+    wm = WorkmodelService(sc)
+    issues = wm.hierarchy.child_issues(key, extra_jql="AND fixVersion IN ('{0}')".format(version))
     summary = get_issues_progress(issues)
     return render(
         request,
