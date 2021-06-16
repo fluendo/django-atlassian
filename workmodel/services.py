@@ -151,7 +151,8 @@ class HierarchyService(JiraService):
                 has_children = False
                 for ch in children:
                     has_children = True
-                    yield ch
+                    if (extra_jql and h_prev.is_operative) or not extra_jql:
+                        yield ch
                     for sch in self.child_issues(ch, expand=expand, extra_jql=extra_jql):
                         yield sch
                 # no issues, try with the next level
