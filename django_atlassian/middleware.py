@@ -93,22 +93,6 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
             raise PermissionDenied
 
         sc = SecurityContext.objects.filter(client_key=client_key).get()
-        # Setup the request attributes, the security context and the model
-        try:
-            db = connections[client_key]
-        except ConnectionDoesNotExist:
-            connections.databases[client_key] = self._create_database(client_key, sc)
-            db = connections[client_key]
-
-        with lock: 
-            try:
-                model = apps.get_model('django_atlassian', client_key)
-            except LookupError:
-                logger.info("Model %s not found, creating it", str(client_key))
-                model = create_model(str(client_key))
-
-        request.atlassian_model = model
         request.atlassian_sc = sc
-        request.atlassian_db = db
         request.atlassian_account_id = claims.get('sub')
         return None
