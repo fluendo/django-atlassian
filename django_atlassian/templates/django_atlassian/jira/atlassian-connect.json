@@ -14,7 +14,7 @@
         "installed": "{% url 'django-atlassian-installed' %}"
     },
     "scopes": [
-        "read", "write"
+        "read", "write", "delete", "act_as_user"
     ],
     "apiVersion": 1,
     "modules": {{ modules|safe }}
