@@ -96,7 +96,9 @@ class ApplicationDescriptor(TemplateView):
 
         # Process the contents of the modules by the tenplate engine
         django_engine = engines['django']
-        template = django_engine.from_string(json.dumps(modules))
+        j = json.dumps(modules)
+        j = "{% load staticfiles %} " + j
+        template = django_engine.from_string(j)
         context['modules'] = template.render()
         # Get the needed settings or abort
         context['name'] = getattr(settings, 'DJANGO_ATLASSIAN_{}_NAME'.format(self.get_application_name().upper()))
