@@ -55,6 +55,19 @@ class JiraService(object):
             r = self.jira.search_issues(jql, startAt=start_at, expand=expand)
             total = len(r)
 
+    def search_filters(self, expand=None):
+        start_at = 0
+        result = []
+
+        r = self.jira.search_filters(startAt=start_at, expand=expand)
+        total = len(r)
+        while total != 0:
+            for i in r:
+                yield i
+            start_at += total
+            r = self.jira.search_filters(startAt=start_at, expand=expand)
+            total = len(r)
+
     def get_default_configuration(self):
         raise NotImplementedError
 
