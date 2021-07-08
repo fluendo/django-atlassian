@@ -79,7 +79,7 @@ class WorkmodelService(JiraService):
             'version': 1,
         }
         try:
-            props = self.jira.app_properties(self.sc.key)
+            props = self.addon_jira.app_properties(self.sc.key)
             for p in props:
                 if p.key == 'workmodel-configuration':
                     if hasattr(p.value, 'task_id'):
