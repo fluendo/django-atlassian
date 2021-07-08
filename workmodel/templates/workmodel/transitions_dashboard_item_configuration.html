@@ -1,0 +1,30 @@
+{% extends 'atlassian_addon/base.html' %}
+{% block body %}
+<body>
+  <script>
+    AJS.$(document).ready(function() {
+      AP.context.getToken(function(token) {
+        $('#jwt').attr('value', token);
+      });
+    });
+  </script>
+  <div class="ac-content">
+    <form class='aui' method="get" action="{% url 'workmodel-business-time-transitions-dashboard-item-configuration' %}">
+      <input id="jwt" type="hidden" name="jwt"/>
+      <input type="hidden" name="dashboardId" value="{{ dashboardId }}"/>
+      <input type="hidden" name="dashboardItemId" value="{{ dashboardItemId }}"/>
+      <div class="field-group">
+        <label for="filterId">Select the filter</label>
+        <select class="select" name="filterId">
+          {% for f in filters %}
+            <option value="{{ f.id }}">{{ f.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="buttons-container">
+        <button type='submit' class='aui-button aui-button-primary'>Save</button>
+      </div>
+    </form>
+  </div>
+</body>
+{% endblock %}

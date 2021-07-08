@@ -1,5 +1,19 @@
 modules = [
     {
+        "jiraDashboardItems": [
+            {
+              "description": {
+                "value": "Transitions of issues over time"
+              },
+              "url": "{% url 'workmodel-business-time-transitions-dashboard-item' %}?dashboardItemId={dashboardItem.id}&dashboardId={dashboard.id}&view={dashboardItem.viewType}",
+              "configurable": True,
+              "thumbnailUrl": "{% static 'workmodel/transitions_dashboard_item_icon.png' %}",
+              "name": {
+                  "value": "Transitions"
+              },
+              "key": "workmodel-transitions"
+            }
+        ],
         "jiraEntityProperties": [
             {
                 "key": "jira-issue-leads-indexing",

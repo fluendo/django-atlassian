@@ -14,6 +14,8 @@ urlpatterns = [
     url(r'^project-updated/$', views.project_updated, name='workmodel-project-updated'),
     url(r'^project-deleted/$', views.project_deleted, name='workmodel-project-deleted'),
     url(r'^business-time-configuration/$', views.business_time_configuration, name='workmodel-business-time-configuration'),
+    url(r'^business-time-transitions-dashboard-item/$', views.business_time_transitions_dashboard_item, name='workmodel-business-time-transitions-dashboard-item'),
+    url(r'^business-time-transitions-dashboard-item-configuration/$', views.business_time_transitions_dashboard_item_configuration, name='workmodel-business-time-transitions-dashboard-item-configuration'),
     url(r'^hierarchy-configuration/$', views.hierarchy_configuration, name='workmodel-hierarchy-configuration'),
     url(r'^update-issues-business-time/$', views.configuration_update_issues_business_time, name='workmodel-configuration-update-issues-business-time'),
 ]
