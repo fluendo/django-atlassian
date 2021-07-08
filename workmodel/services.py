@@ -7,13 +7,61 @@ import logging
 from jira import JIRA
 
 from django.utils import dateparse
+from workmodel.transitions import TransitionsCollection, Transitions, Transition 
 
 logger = logging.getLogger('workmodel_logger')
 
-class WorkmodelService(object):
-    def __init__(self, sc, conf=None):
+class JiraService(object):
+    def __init__(self, sc, jira=None, account_id=None, *args, **kwargs):
         self.sc = sc
-        self.jira = JIRA(self.sc.host, jwt={'secret': self.sc.shared_secret, 'payload': {'iss': self.sc.key}})
+        if jira:
+            self.jira = jira
+        else:
+            self.jira = self._connect_jira(account_id)
+        self.addon_jira = self._connect_jira(False)
+
+    def _connect_jira(self, account_id):
+        if not account_id:
+            jira = JIRA(self.sc.host, jwt={'secret': self.sc.shared_secret, 'payload': {'iss': self.sc.key}})
+        else:
+            token = self.sc.create_user_token(account_id)
+            options = {
+                'server': self.sc.host,
+                'headers': {         
+                    'Authorization': 'Bearer {}'.format(token),
+                }            
+            }
+            jira = JIRA(options=options)
+        return jira
+
+    def _get_issue(self, issue, expand=None):
+        if type(issue) == str or type(issue) == unicode:
+            return self.jira.issue(issue, expand=expand)
+        elif type(issue) == jira.resources.Issue:
+            return issue
+        else:
+            raise ValueError
+
+    def search_issues(self, jql, expand=None):
+        start_at = 0
+        result = []
+
+        r = self.jira.search_issues(jql, startAt=start_at, expand=expand)
+        total = len(r)
+        while total != 0:
+            for i in r:
+                yield i
+            start_at += total
+            r = self.jira.search_issues(jql, startAt=start_at, expand=expand)
+            total = len(r)
+
+    def get_default_configuration(self):
+        raise NotImplementedError
+
+ 
+class WorkmodelService(JiraService):
+    def __init__(self, sc, account_id=None, conf=None):
+        super(WorkmodelService, self).__init__(sc, jira=None, account_id=account_id)
         if not conf:
             conf = self.get_configuration()
         # instantiate the services
@@ -51,39 +99,10 @@ class WorkmodelService(object):
         return conf
 
 
-class JiraService(object):
-    def __init__(self, sc, jira, *args, **kwargs):
-        self.sc = sc
-        self.jira = jira
-
-    def _get_issue(self, issue, expand=None):
-        if type(issue) == str or type(issue) == unicode:
-            return self.jira.issue(issue, expand=expand)
-        elif type(issue) == jira.resources.Issue:
-            return issue
-        else:
-            raise ValueError
-
-    def search_issues(self, jql, expand=None):
-        start_at = 0
-        result = []
-
-        r = self.jira.search_issues(jql, startAt=start_at, expand=expand)
-        total = len(r)
-        while total != 0:
-            for i in r:
-                yield i
-            start_at += total
-            r = self.jira.search_issues(jql, startAt=start_at, expand=expand)
-            total = len(r)
-
-    def get_default_configuration(self):
-        raise NotImplementedError
-
-    
+   
 class HierarchyService(JiraService):
-    def __init__(self, sc, jira, conf, *args, **kwargs):
-        super(HierarchyService, self).__init__(sc, jira, args, kwargs)
+    def __init__(self, sc, jira, conf):
+        super(HierarchyService, self).__init__(sc, jira=jira)
         self.hierarchies = []
         if conf:
             for c in conf:
@@ -361,8 +380,8 @@ class CustomHierarchyLevel(HierarchyLevel):
 
 
 class BusinessTimeService(JiraService):
-    def __init__(self, sc, jira, conf, hierarchy, *args, **kwargs):
-        super(BusinessTimeService, self).__init__(sc, jira, args, kwargs)
+    def __init__(self, sc, jira, conf, hierarchy):
+        super(BusinessTimeService, self).__init__(sc, jira=jira)
         self.hierarchy = hierarchy
         self.statuses = self.jira.statuses()
 
