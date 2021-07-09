@@ -1,0 +1,84 @@
+{% extends 'atlassian_addon/base.html' %}
+{% load arithmetic %}
+
+{% block body %}
+<body>
+  <div class="ac-content">
+    <div id="fig01">
+      <svg width="100%" viewBox="-54 -4 424 {{ data|length|multiply:10|sum:24|sum:8 }}">
+        <style >
+          text {
+            font-size: 5px;
+          }
+          .area {
+            fill: none;
+            stroke-width: 0.1;
+            stroke: black;
+          }
+          .separator {
+            stroke-width: 0.1;
+            stroke: grey;
+          }
+          .q-separator {
+            stroke-width: 0.1;
+            stroke: black;
+          }
+          .m-separator {
+            stroke-width: 0.1;
+            stroke: black;
+          }
+        </style>
+        <!-- The issues header -->
+        <line class="separator" x1="-50" y1="24" x2="0" y2="24"/>
+        <text x="-25" y="22" text-anchor="middle">Issues</text>
+        <!-- The timeline header -->
+        <!-- The year -->
+        <line class="m-separator" x1="1" y1="8" x2="366" y2="8"/>
+        <text x="183" y="6" text-anchor="middle">{{ year }}</text>
+        <!-- The quarter -->
+        {% for q in quarters %}
+          <text x="{{ q.x2|subtract:q.x1|div:2.0|sum:q.x1 }}" y="14" text-anchor="middle">{{ q.name }}</text>
+          <line class="q-separator" x1="{{ q.x1 }}" y1="16" x2="{{ q.x2 }}" y2="16"/>
+          <line class="q-separator" x1="{{ q.x1|subtract:0.5 }}" y1="24" x2="{{ q.x1|subtract:0.5 }}" y2="{{ data|length|multiply:10|sum:24 }}"/>
+          {% if forloop.last %}
+            <line class="q-separator" x1="{{ q.x2|sum:1 }}" y1="24" x2="{{ q.x2|sum:1 }}" y2="{{ data|length|multiply:10|sum:24 }}"/>
+          {% endif %}
+        {% endfor %}
+        <!-- The month -->
+        {% for m in months %}
+          <text x="{{ m.x2|subtract:m.x1|div:2.0|sum:m.x1 }}" y="22" text-anchor="middle">{{ m.name }}</text>
+          <line class="m-separator" x1="{{ m.x1 }}" y1="24" x2="{{ m.x2 }}" y2="24"/>
+        {% endfor %}
+        <!-- The grid -->
+        {% for m in months %}
+          <line class="separator" x1="{{ m.x1|subtract:0.5 }}" y1="24" x2="{{ m.x1|subtract:0.5 }}" y2="{{ data|length|multiply:10|sum:24 }}"/>
+        {% endfor %}
+        <!-- The data -->
+        {% for d in data %}
+          <image href="{{ d.issue.fields.issuetype.iconUrl }}" x="-40" y="{{ forloop.counter0|multiply:10|sum:24|sum:1 }}" width="8" height="8">
+            <desc>{{ d.issue.fields.issuetype.name }}</desc>
+          </image>
+          <a href="{{ sc.host }}/browse/{{ d.issue.key }}" target="_blank">
+            <text x="-20" y="{{ forloop.counter|multiply:10|sum:24|subtract:2 }}" text-anchor="middle">{{ d.issue.key }}</text>
+          </a>
+          {% for t in d.transitions %}
+            <rect x="{{ t.x }}" y="{{ forloop.parentloop.counter0|multiply:10|sum:24|sum:2 }}" width="{{ t.width }}" height="6" fill="{{ t.color }}" />
+          {% endfor %}
+          <line class="separator" x1="-50" y1="{{ forloop.counter|multiply:10|sum:24 }}" x2="366" y2="{{ forloop.counter|multiply:10|sum:24 }}"/>
+        {% endfor %}
+      </svg>
+    </div>
+  </div>
+  <script>
+    AP.require(['jira'], function (jira) {
+      jira.DashboardItem.onDashboardItemEdit(function() {
+        AP.context.getToken(function(token) {
+          $.get("{% url 'workmodel-business-time-transitions-dashboard-item-configuration' %}?dashboardId={{ dashboardId }}&dashboardItemId={{ dashboardItemId }}&jwt="+token, function(responseText) {
+            $("html").html(responseText);
+          });
+        });
+      });
+   });
+  </script>
+</body>
+{% endblock %}

@@ -7,54 +7,32 @@ import logging
 from jira import JIRA
 
 from django.utils import dateparse
+from workmodel.transitions import TransitionsCollection, Transitions, Transition 
 
 logger = logging.getLogger('workmodel_logger')
 
-class WorkmodelService(object):
-    def __init__(self, sc, conf=None):
-        self.sc = sc
-        self.jira = JIRA(self.sc.host, jwt={'secret': self.sc.shared_secret, 'payload': {'iss': self.sc.key}})
-        if not conf:
-            conf = self.get_configuration()
-        # instantiate the services
-        self.hierarchy = HierarchyService(self.sc, self.jira, conf['hierarchy'])
-        self.business_time = BusinessTimeService(self.sc, self.jira, conf, self.hierarchy)
-
-        # Create the app configuration in case it is not there yet
-        self.jira.create_app_property(sc.key, 'workmodel-configuration', conf)
-
-    def get_configuration(self):
-        # already created configuration
-        conf = {
-            'hierarchy': [],
-            'task_id': None,
-            'version': 1,
-        }
-        try:
-            props = self.jira.app_properties(self.sc.key)
-            for p in props:
-                if p.key == 'workmodel-configuration':
-                    if hasattr(p.value, 'task_id'):
-                        conf['task_id'] = p.value.task_id
-                    else:
-                        conf['task_id'] = None
-                    if hasattr(p.value, 'hierarchy'):
-                        conf['hierarchy'] = p.raw['value']['hierarchy']
-                    else:
-                        conf['hierarchy'] = []
-                    if hasattr(p.value, 'version'):
-                        conf['version'] = p.value.version
-                    else:
-                        conf['version'] = 1
-        except:
-            pass
-        return conf
-
-
 class JiraService(object):
-    def __init__(self, sc, jira, *args, **kwargs):
+    def __init__(self, sc, jira=None, account_id=None, *args, **kwargs):
         self.sc = sc
-        self.jira = jira
+        if jira:
+            self.jira = jira
+        else:
+            self.jira = self._connect_jira(account_id)
+        self.addon_jira = self._connect_jira(False)
+
+    def _connect_jira(self, account_id):
+        if not account_id:
+            jira = JIRA(self.sc.host, jwt={'secret': self.sc.shared_secret, 'payload': {'iss': self.sc.key}})
+        else:
+            token = self.sc.create_user_token(account_id)
+            options = {
+                'server': self.sc.host,
+                'headers': {         
+                    'Authorization': 'Bearer {}'.format(token),
+                }            
+            }
+            jira = JIRA(options=options)
+        return jira
 
     def _get_issue(self, issue, expand=None):
         if type(issue) == str or type(issue) == unicode:
@@ -77,13 +55,67 @@ class JiraService(object):
             r = self.jira.search_issues(jql, startAt=start_at, expand=expand)
             total = len(r)
 
+    def search_filters(self, expand=None):
+        start_at = 0
+        result = []
+
+        r = self.jira.search_filters(startAt=start_at, expand=expand)
+        total = len(r)
+        while total != 0:
+            for i in r:
+                yield i
+            start_at += total
+            r = self.jira.search_filters(startAt=start_at, expand=expand)
+            total = len(r)
+
     def get_default_configuration(self):
         raise NotImplementedError
 
-    
+ 
+class WorkmodelService(JiraService):
+    def __init__(self, sc, account_id=None, conf=None):
+        super(WorkmodelService, self).__init__(sc, jira=None, account_id=account_id)
+        if not conf:
+            conf = self.get_configuration()
+        # instantiate the services
+        self.hierarchy = HierarchyService(self.sc, self.jira, conf['hierarchy'])
+        self.business_time = BusinessTimeService(self.sc, self.jira, conf, self.hierarchy)
+
+        # Create the app configuration in case it is not there yet
+        self.jira.create_app_property(sc.key, 'workmodel-configuration', conf)
+
+    def get_configuration(self):
+        # already created configuration
+        conf = {
+            'hierarchy': [],
+            'task_id': None,
+            'version': 1,
+        }
+        try:
+            props = self.addon_jira.app_properties(self.sc.key)
+            for p in props:
+                if p.key == 'workmodel-configuration':
+                    if hasattr(p.value, 'task_id'):
+                        conf['task_id'] = p.value.task_id
+                    else:
+                        conf['task_id'] = None
+                    if hasattr(p.value, 'hierarchy'):
+                        conf['hierarchy'] = p.raw['value']['hierarchy']
+                    else:
+                        conf['hierarchy'] = []
+                    if hasattr(p.value, 'version'):
+                        conf['version'] = p.value.version
+                    else:
+                        conf['version'] = 1
+        except:
+            pass
+        return conf
+
+
+   
 class HierarchyService(JiraService):
-    def __init__(self, sc, jira, conf, *args, **kwargs):
-        super(HierarchyService, self).__init__(sc, jira, args, kwargs)
+    def __init__(self, sc, jira, conf):
+        super(HierarchyService, self).__init__(sc, jira=jira)
         self.hierarchies = []
         if conf:
             for c in conf:
@@ -362,8 +394,8 @@ class CustomHierarchyLevel(HierarchyLevel):
 
 
 class BusinessTimeService(JiraService):
-    def __init__(self, sc, jira, conf, hierarchy, *args, **kwargs):
-        super(BusinessTimeService, self).__init__(sc, jira, args, kwargs)
+    def __init__(self, sc, jira, conf, hierarchy):
+        super(BusinessTimeService, self).__init__(sc, jira=jira)
         self.hierarchy = hierarchy
         self.statuses = self.jira.statuses()
 
@@ -376,42 +408,56 @@ class BusinessTimeService(JiraService):
         days = sum(1 for day in daygenerator if day.weekday() < 5)
         return days
 
-    def calculate_issue_business_time(self, issue):
-        transitions = []
+    def generate_transition_categories(self, issue):
+        transitions = Transitions()
+        # get the transitions
+        abs_start = datetime.date.max
+        next_status = None
+        next_start = None
         for h in issue.changelog.histories:
-            # Get all transitions
             created = dateparse.parse_datetime(h.created).date()
+            if created < abs_start:
+                abs_start = created
+    
             for item in h.items:
-                if item.field == 'status':
-                    # Get transitions where the from status is of "In Progress" category
-                    # Get transitions where the to status is of "In Progress" category
-                    # Warning: We have duplicate names for statuses
-                    fromCategory = toCategory = None
-                    for s in self.statuses:
-                        if fromCategory and toCategory:
-                            break
-                        if s.name == item.fromString:
-                            fromCategory = s.statusCategory.name
-                        if s.name == item.toString:
-                            toCategory = s.statusCategory.name
-                    if fromCategory != 'In Progress' and toCategory != 'In Progress':
-                        continue
-                    # Always keep it sorted from oldest to newer
-                    transitions.insert(0, {'created': created, 'fromCategory': fromCategory, 'toCategory': toCategory})
-        if not transitions:
-            days = 0
-        else:
-            days = 1
-            # In case the task is currently in progress, create a fake transition
-            if transitions[len(transitions) - 1]['toCategory'] == 'In Progress':
-                transitions.append({'created': datetime.date.today(), 'fromCategory': 'In Progress', 'toCategory': 'Done'})
-            for i in range(1, len(transitions)):
-                # Skip transitions that happened in the same day
-                if transitions[i-1]['created'] == transitions[i]['created']:
+                if item.field != 'status':
                     continue
-                # Sum every filtered timespan
-                days += self.transition_to_days(transitions[i-1], transitions[i])
-        return days
+    
+                fromStatus = [x for x in self.statuses if x.name == item.fromString][0]
+                toStatus = [x for x in self.statuses if x.name == item.toString][0]
+    
+                # We have a status category change
+                if fromStatus.statusCategory.name != toStatus.statusCategory.name:
+                    start = created
+                    if not next_status:
+                        end = datetime.date.today()
+                    else:
+                        end = next_start
+                    diff = end - start
+                    if diff.days != 0:
+                        t = Transition(start, end, toStatus.statusCategory.name)
+                        transitions.append(t)
+                    next_status = fromStatus
+                    next_start = created
+        # Create the very first transition
+        if transitions:
+            last = transitions[len(transitions) - 1]
+            diff = last.from_date - abs_start
+            if diff.days != 0:
+                if fromStatus.statusCategory.name != last.status:
+                    t = Transition(abs_start, last.from_date, fromStatus.statusCategory.name)
+                    transitions.append(t)
+                else:
+                    last.from_date = abs_start
+        else:
+            start = dateparse.parse_datetime(issue.fields.created).date()
+            end = datetime.date.today()
+            diff = end - start
+            if diff.days != 0:
+                t = Transition(start, end, issue.fields.status.statusCategory.name)
+                transitions.append(t)
+        # Join transitions less than one day
+        return transitions
 
     def business_time(self, issue):
         logger.info("Updating issue {} business time".format(issue))
@@ -420,20 +466,33 @@ class BusinessTimeService(JiraService):
         h = self.hierarchy.hierarchy_level(issue)
         # Check if it is a container or an operative issue
         has_children = False
-        days = 0
+        transitions = Transitions()
         if h.is_container:
             # Get the children issue
             children = self.hierarchy.child_issues(issue, expand='changelog')
+            children_transitions = TransitionsCollection()
             for ch in children:
                 has_children = True
-                days += self.business_time(ch)
+                children_transitions.append(self.business_time(ch))
+            if children_transitions:
+                # Fake transitions
+                normalized = children_transitions.normalize()
+                # Bool them all
+                transposed = normalized.transpose()
+                intersection = transposed.intersect()
+                # Merge common transitions
+                transitions = intersection.merge()
         if not has_children and h.is_operative:
             # No children, do our own stuff
-            days = self.calculate_issue_business_time(issue)
+            transitions = self.generate_transition_categories(issue)
         # Store the information as a property
-        logger.info("Days for {} is {}".format(issue, days))     
-        self.jira.add_issue_property(issue.key, "transitions", { 'progress_summation': days })
-        return days
+        statuses = [{'from_date': str(t.from_date), 'to_date': str(t.to_date), 'status': t.status} for t in transitions]
+        days = sum(t.to_days() for t in transitions if t.status == Transition.IN_PROGRESS)
+        logger.info("Days in progress for {} is {}".format(issue, days))     
+        self.jira.add_issue_property(issue.key, "transitions",
+            { 'progress_summation': days, 'statuses': statuses }
+        )
+        return transitions
 
     def update_in_progress_business_time(self):
         logger.info("Updating all In-Progress issues")

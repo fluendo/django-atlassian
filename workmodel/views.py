@@ -6,14 +6,16 @@ import atlassian_jwt
 from urlparse import urlparse
 from jira import JIRA
 import datetime
+from dateutil.relativedelta import relativedelta
 
 from django.urls import reverse
+from django.utils import dateparse
 from django.conf import settings
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.http import HttpResponse, HttpResponseBadRequest
-from django_atlassian.decorators import jwt_required
+from django_atlassian.decorators import jwt_required, jwt_qsh_exempt
 from django_atlassian.models.connect import SecurityContext
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
@@ -68,7 +70,6 @@ def initiative_status(request):
         'workmodel/initiative_status.html',
         summary
     )
-
 
 @xframe_options_exempt
 @jwt_required
@@ -264,6 +265,168 @@ def issue_updated(request):
         update_issue_business_time.delay(sc.id, u)
     return HttpResponse(204)
 
+
+@xframe_options_exempt
+@jwt_required
+@jwt_qsh_exempt
+def business_time_transitions_dashboard_item_configuration(request):
+    sc = request.atlassian_sc
+    # mandatory
+    dashboard_id = request.GET.get('dashboardId', None)
+    item_id = request.GET.get('dashboardItemId', None)
+    # non mandatory
+    filter_id = request.GET.get('filterId', None)
+
+    wm = WorkmodelService(sc, account_id=request.atlassian_account_id)
+    # Check if we are saving the configuration or rendering only
+    if filter_id:
+        # Save the property
+        wm.jira.create_dashboard_item_property(dashboard_id, item_id,
+                'business-time-transitions-configuration', filter_id)
+        # Redirect to render
+        url = "{}?dashboardId={}&dashboardItemId={}".format(
+                reverse('workmodel-business-time-transitions-dashboard-item'),
+                dashboard_id,
+                item_id
+        )
+        token = atlassian_jwt.encode_token('GET', url, sc.client_key, sc.shared_secret)
+        url = "{}&jwt={}".format(url, token)
+        return redirect(url)
+    else:
+        filters = wm.search_filters()
+        return render(
+            request,
+            'workmodel/transitions_dashboard_item_configuration.html',
+            {
+                'dashboardId': dashboard_id,
+                'dashboardItemId': item_id,
+                'filters': filters,
+            }
+        )
+
+
+@xframe_options_exempt
+@jwt_required
+def business_time_transitions_dashboard_item(request):
+    sc = request.atlassian_sc
+    # mandatory
+    dashboard_id = request.GET.get('dashboardId', None)
+    item_id = request.GET.get('dashboardItemId', None)
+
+    wm = WorkmodelService(sc, account_id=request.atlassian_account_id)
+    # Check if we have a configuration, otherwise render the configuration page
+    try:
+        conf = wm.jira.dashboard_item_property(dashboard_id, item_id,
+                "business-time-transitions-configuration")
+    except:
+        filters = wm.search_filters()
+        # Redirect to conf
+        url = "{}?dashboardId={}&dashboardItemId={}".format(
+                reverse('workmodel-business-time-transitions-dashboard-item-configuration'),
+                dashboard_id,
+                item_id
+        )
+        token = atlassian_jwt.encode_token('GET', url, sc.client_key, sc.shared_secret)
+        url = "{}&jwt={}".format(url, token)
+        return redirect(url)
+
+    # Get the issues associated with such filter id
+    f = wm.jira.filter(conf.value)
+    # Current year span
+    today = datetime.date.today()
+    year_start = datetime.date(today.year, 1, 1)
+    year_end = datetime.date(today.year, 12, 31)
+    delta = year_end - year_start
+    days = delta.days + 1
+
+    # Prepare the data for plotting
+    data = []
+    count = 0
+    for i in wm.jira.search_issues(f.jql):
+        # Get the transitions
+        transitions = [x for x in wm.jira.issue_properties(i) if x.key == 'transitions'][0]
+        row = {'issue': i}
+        ts = []
+        try:
+            for s in transitions.value.statuses:
+                # Clip to current year only
+                from_date = dateparse.parse_date(s.from_date)
+                if from_date < year_start:
+                    from_date = year_start
+                if from_date > year_end:
+                    from_date = year_end
+
+                to_date = dateparse.parse_date(s.to_date)
+                if to_date > year_end:
+                    to_date = year_end
+                if to_date < year_start:
+                    to_date = year_start
+
+                x1 = from_date.timetuple().tm_yday
+                x2 = to_date.timetuple().tm_yday
+                if s.status == 'None':
+                    color = 'red'
+                elif s.status == 'In Progress':
+                    color = 'blue'
+                elif s.status == 'To Do':
+                    color = 'grey'
+                elif s.status == 'Done':
+                    color = 'green'
+                t = {
+                    'x': x1,
+                    'width': x2 - x1,
+                    'from': from_date,
+                    'to': to_date,
+                    'dur': to_date - from_date,
+                    'color': color
+                }
+                ts.append(t)
+        except AttributeError:
+            continue
+        row['transitions'] = ts
+        count += 1
+        data.append(row)
+
+    months = []
+    for m in range(1, 13):
+        day_first = datetime.date(today.year, m, 1)
+        day_last = day_first + relativedelta(months=1) - relativedelta(days=1)
+        name = datetime.datetime.combine(day_first, datetime.datetime.min.time()).strftime("%b")
+        month = {
+            'name': name,
+            'x1': day_first.timetuple().tm_yday,
+            'x2': day_last.timetuple().tm_yday,
+            'from': day_first,
+            'to': day_last,
+        }
+        months.append(month)
+
+    quarters = []
+    for q in range(1, 5):
+        day_first = datetime.date(today.year, ((q-1)*3)+1, 1)
+        day_last = day_first + relativedelta(months=3) - relativedelta(days=1)
+        quarter = {
+            'name': 'Q{}'.format(q),
+            'x1': day_first.timetuple().tm_yday,
+            'x2': day_last.timetuple().tm_yday,
+            'from': day_first,
+            'to': day_last,
+        }
+        quarters.append(quarter)
+        
+    return render(
+        request,
+        'workmodel/transitions_dashboard_item.html',
+        {
+            'dashboardId': dashboard_id,
+            'dashboardItemId': item_id,
+            'data': data,
+            'months': months,
+            'quarters': quarters,
+            'year': today.year,
+            'sc': sc,
+        }
+    )
 
 
 @xframe_options_exempt
