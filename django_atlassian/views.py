@@ -29,6 +29,7 @@ def installed(request):
         client_key = post['clientKey']
         host = post['baseUrl']
         product_type = post['productType']
+        oauth_client_id = post.get('oauthClientId')
     except MultiValueDictKeyError:
         return HttpResponseBadRequest()
 
@@ -44,6 +45,9 @@ def installed(request):
         if sc.client_key != client_key:
             sc.client_key = client_key
             update = True
+        if sc.oauth_client_id != oauth_client_id:
+            sc.oauth_client_id = oauth_client_id
+            update = True
         if update:
             sc.save()
     else:
@@ -54,6 +58,7 @@ def installed(request):
         sc.shared_secret = shared_secret
         sc.client_key = client_key
         sc.product_type = product_type
+        sc.oauth_client_id = oauth_client_id
         sc.save()
 
     return HttpResponse(status=204)
@@ -91,7 +96,9 @@ class ApplicationDescriptor(TemplateView):
 
         # Process the contents of the modules by the tenplate engine
         django_engine = engines['django']
-        template = django_engine.from_string(json.dumps(modules))
+        j = json.dumps(modules)
+        j = "{% load staticfiles %} " + j
+        template = django_engine.from_string(j)
         context['modules'] = template.render()
         # Get the needed settings or abort
         context['name'] = getattr(settings, 'DJANGO_ATLASSIAN_{}_NAME'.format(self.get_application_name().upper()))

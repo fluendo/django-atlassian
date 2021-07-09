@@ -9,6 +9,7 @@ import urllib
 import hashlib
 import base64
 import atlassian_jwt
+import requests
 
 from django.db import models
 
@@ -23,12 +24,27 @@ class SecurityContext(models.base.Model):
     client_key = models.CharField(max_length=512, null=False, blank=False)
     host = models.CharField(max_length=512, null=False, blank=False)
     product_type = models.CharField(max_length=512, null=False, blank=False)
-
+    oauth_client_id = models.CharField(max_length=512, null=True, blank=True)
 
     def create_token(self, method, uri):
         token = atlassian_jwt.encode_token(method, uri, self.key, self.shared_secret)
         return token
 
+    def create_user_token(self, account_id):
+        now = int(time.time())
+        token = jwt.encode(key=self.shared_secret, algorithm='HS256', payload={
+            'iss': 'urn:atlassian:connect:clientid:{}'.format(self.oauth_client_id),
+            'sub': 'urn:atlassian:connect:useraccountid:{}'.format(account_id),
+            'tnt': self.host,
+            'aud': 'https://oauth-2-authorization-server.services.atlassian.com',
+            'iat': now,
+            'exp': now + 30,
+        })
+        if isinstance(token, bytes):
+            token = token.decode('utf8')
+        payload = {'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer', 'assertion': token}
+        r = requests.post("https://oauth-2-authorization-server.services.atlassian.com/oauth2/token", data=payload)
+        return r.json()['access_token']
 
     def __unicode__(self):
         return "%s: %s" % (self.key, self.host)
