@@ -84,6 +84,8 @@ class Transitions(object):
         if len(merged_transitions):
             new_transition = Transition(ts.from_date, last_ts.to_date, last_ts.status)
             merged_transitions.append(new_transition)
+        else:
+            merged_transitions.append(last_ts)
         return merged_transitions
 
     def append(self, transition):
