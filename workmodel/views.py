@@ -344,7 +344,10 @@ def business_time_transitions_dashboard_item(request):
     count = 0
     for i in wm.search_issues(f.jql):
         # Get the transitions
-        transitions = [x for x in wm.jira.issue_properties(i) if x.key == 'transitions'][0]
+        try:
+            transitions = wm.jira.issue_property(i, 'transitions')
+        except:
+            continue
         row = {'issue': i}
         ts = []
         try:
