@@ -289,7 +289,7 @@ def business_time_transitions_dashboard_item_configuration(request):
                 dashboard_id,
                 item_id
         )
-        token = atlassian_jwt.encode_token('GET', url, sc.client_key, sc.shared_secret)
+        token = sc.create_token('GET', url, account=request.atlassian_account_id)
         url = "{}&jwt={}".format(url, token)
         return redirect(url)
     else:
@@ -326,7 +326,7 @@ def business_time_transitions_dashboard_item(request):
                 dashboard_id,
                 item_id
         )
-        token = atlassian_jwt.encode_token('GET', url, sc.client_key, sc.shared_secret)
+        token = sc.create_token('GET', url, account=request.atlassian_account_id)
         url = "{}&jwt={}".format(url, token)
         return redirect(url)
 
