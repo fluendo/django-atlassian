@@ -485,7 +485,7 @@ class BusinessTimeService(JiraService):
             for ch in children:
                 has_children = True
                 children_transitions.append(self.business_time(ch))
-            if children_transitions:
+            if len(children_transitions):
                 # Fake transitions
                 normalized = children_transitions.normalize()
                 # Bool them all
