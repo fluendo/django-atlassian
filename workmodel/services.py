@@ -422,9 +422,20 @@ class BusinessTimeService(JiraService):
             for item in h.items:
                 if item.field != 'status':
                     continue
-    
-                fromStatus = [x for x in self.statuses if x.name == item.fromString][0]
-                toStatus = [x for x in self.statuses if x.name == item.toString][0]
+  
+                fromStatusList = [x for x in self.statuses if x.id == getattr(item, 'from')]
+                toStatusList = [x for x in self.statuses if x.id == getattr(item, 'to')]
+                # Try by name
+                if not fromStatusList:
+                    fromStatusList = [x for x in self.statuses if x.name == item.fromString]
+                if not toStatusList:
+                    toStatusList = [x for x in self.statuses if x.name == item.toString]
+                try:
+                    fromStatus = fromStatusList[0]
+                    toStatus = toStatusList[0]
+                except IndexError:
+                    logger.error("Status id: {} name: {} does not exist for issue {}".format(getattr(item, 'from'), item.fromString, issue))
+                    continue
     
                 # We have a status category change
                 if fromStatus.statusCategory.name != toStatus.statusCategory.name:
