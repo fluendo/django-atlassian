@@ -9,6 +9,7 @@ import urllib
 import hashlib
 import base64
 import atlassian_jwt
+from atlassian_jwt.url_utils import hash_url
 import requests
 
 from django.db import models
@@ -26,8 +27,21 @@ class SecurityContext(models.base.Model):
     product_type = models.CharField(max_length=512, null=False, blank=False)
     oauth_client_id = models.CharField(max_length=512, null=True, blank=True)
 
-    def create_token(self, method, uri):
-        token = atlassian_jwt.encode_token(method, uri, self.key, self.shared_secret)
+    def create_token(self, method, uri, account=None):
+        if not account:
+            token = atlassian_jwt.encode_token(method, uri, self.client_key, self.shared_secret)
+        else:
+            now = int(time.time())
+            token = jwt.encode(key=self.shared_secret, algorithm='HS256', payload={
+                'aud': self.client_key,
+                'sub': account,
+                'iss': self.client_key,
+                'qsh': hash_url(method, uri),
+                'iat': now,
+                'exp': now + 30,
+            })
+            if isinstance(token, bytes):
+                token = token.decode('utf8')
         return token
 
     def create_user_token(self, account_id):
