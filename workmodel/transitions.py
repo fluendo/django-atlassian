@@ -208,3 +208,9 @@ class TransitionsCollection(object):
             normalized_transition = ts.normalize(dates)
             normalized_transitions.append(normalized_transition)
         return normalized_transitions
+
+    def __str__(self):
+        return str(self.transitions)
+
+    def __repr__(self):
+        return str(self)
