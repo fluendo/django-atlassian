@@ -342,7 +342,7 @@ def business_time_transitions_dashboard_item(request):
     # Prepare the data for plotting
     data = []
     count = 0
-    for i in wm.jira.search_issues(f.jql):
+    for i in wm.search_issues(f.jql):
         # Get the transitions
         transitions = [x for x in wm.jira.issue_properties(i) if x.key == 'transitions'][0]
         row = {'issue': i}
