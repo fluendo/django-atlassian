@@ -71,7 +71,7 @@ class Transitions(object):
             status = Transition.DONE
         else:
             status = Transition.NONE
-        return Transition(t0.from_date, t0.to_date, t0.status)
+        return Transition(t0.from_date, t0.to_date, status)
 
     def merge(self):
         merged_transitions = Transitions()
