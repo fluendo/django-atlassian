@@ -147,7 +147,8 @@ class WorkmodelService(JiraService):
         return conf.value.version
 
     def default_configuration(self):
-        conf = self.addon_jira.create_app_property(self.sc.key, WorkmodelService.CONFIGURATION_APP_KEY, {'version': WorkmodelService.CONFIGURATION_VERSION})
+        self.addon_jira.create_app_property(self.sc.key, WorkmodelService.CONFIGURATION_APP_KEY, {'version': WorkmodelService.CONFIGURATION_VERSION})
+        conf = self.addon_jira.app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY)
         return conf
 
  
@@ -181,7 +182,8 @@ class HierarchyService(JiraService):
             'version': HierarchyService.CONFIGURATION_VERSION,
             'hierarchy': [],
         }
-        conf = self.addon_jira.create_app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY, hierarchy_conf)
+        self.addon_jira.create_app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY, hierarchy_conf)
+        conf = self.addon_jira.app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY)
         return conf
 
     def root_issue(self, issue):
@@ -477,7 +479,8 @@ class BusinessTimeService(JiraService):
             'start_field_id': None,
             'end_field_id': None,
         }
-        conf = self.addon_jira.create_app_property(self.sc.key, BusinessTimeService.CONFIGURATION_APP_KEY, business_time_conf)
+        self.addon_jira.create_app_property(self.sc.key, BusinessTimeService.CONFIGURATION_APP_KEY, business_time_conf)
+        conf = self.addon_jira.app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY)
         return conf
 
     def transition_to_days(self, from_transition, to_transition):
