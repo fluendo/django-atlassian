@@ -12,17 +12,47 @@
           </div>
         </div>
         <div id="configuration">
-          <button id="update-issues" class="aui-button aui-button-primary">Rescan issues progress</button>
+          <h2 class="component-heading">Start / End</h2>
+          <form class='aui' method="get" action="{% url 'workmodel-business-time-update-start-stop-fields' %}">
+            <input class="jwt" type="hidden" name="jwt"/>
+            <div class="field-group">
+              <label for="startId">Select the start field</label>
+              <select class="select" name="startId">
+                {% for f in fields %}
+                  <option value="{{ f.id }}" {% if f.id == conf.value.start_field_id %} selected {% endif %}>{{ f.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="endId">Select the end field</label>
+              <select class="select" name="endId">
+                {% for f in fields %}
+                  <option value="{{ f.id }}" {% if f.id == conf.value.end_field_id %} selected {% endif %}>{{ f.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="buttons-container">
+              <button type='submit' class='aui-button aui-button-primary'>Save</button>
+            </div>
+          </form>
+        </div>
+        <div id="rescan">
+          <h2 class="component-heading">Rescan of issues</h2>
+          <form class='aui' method="get" action="{% url 'workmodel-business-time-rescan-issues-progress' %}">
+            <input class="jwt" type="hidden" name="jwt"/>
+            <div class="buttons-container">
+              <button id="update-issues" class="aui-button aui-button-primary">Rescan issues progress</button>
+            </div>
+          </form>
         </div>
       </section>
     </div>
   </div>
   <script>
-  AJS.$(document).on('click', '#update-issues', function() {
-      $.ajax({
-        url: '{{ update_issues_url }}',
-        type: 'post',
-        headers: { "Authorization": 'JWT {{ update_issues_url_jwt }}' }});
-  });
+    AJS.$(document).ready(function() {
+      AP.context.getToken(function(token) {
+        $('.jwt').attr('value', token);
+      });
+    });
   </script>
 {% endblock %}

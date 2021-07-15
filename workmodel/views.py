@@ -341,6 +341,9 @@ def business_time_transitions_dashboard_item(request):
     delta = year_end - year_start
     days = delta.days + 1
 
+    # Get the configuration
+    conf = wm.business_time.conf
+
     # Prepare the data for plotting
     data = []
     count = 0
@@ -350,7 +353,25 @@ def business_time_transitions_dashboard_item(request):
             transitions = wm.jira.issue_property(i, 'transitions')
         except:
             continue
-        row = {'issue': i}
+        row = {'issue': i, 'start': None, 'end': None}
+        # Get the start/end fields
+        if conf.value.start_field_id and conf.value.end_field_id:
+            start = getattr(i.fields, conf.value.start_field_id, None)
+            end = getattr(i.fields, conf.value.end_field_id, None)
+            if start and end:
+                start = dateparse.parse_date(start)
+                if start < year_start:
+                    start = year_start
+                if start > year_end:
+                    start = year_end
+                row['start'] = start.timetuple().tm_yday
+
+                end = dateparse.parse_date(end)
+                if end > year_end:
+                    end = year_end
+                if end < year_start:
+                    end = year_start
+                row['end'] = end.timetuple().tm_yday
         ts = []
         try:
             for s in transitions.value.statuses:

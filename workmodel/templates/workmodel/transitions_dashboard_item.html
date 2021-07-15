@@ -64,6 +64,9 @@
           {% for t in d.transitions %}
             <rect x="{{ t.x }}" y="{{ forloop.parentloop.counter0|multiply:10|sum:24|sum:2 }}" width="{{ t.width }}" height="6" fill="{{ t.color }}" />
           {% endfor %}
+          {% if d.start and d.end %}
+            <rect x="{{ d.start }}" y="{{ forloop.counter0|multiply:10|sum:24|sum:2 }}" width="{{ d.end|subtract:d.start }}" height="6" fill="none" stroke="black" stroke-width="1"/>
+          {% endif %}
           <line class="separator" x1="-50" y1="{{ forloop.counter|multiply:10|sum:24 }}" x2="366" y2="{{ forloop.counter|multiply:10|sum:24 }}"/>
         {% endfor %}
       </svg>
