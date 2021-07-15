@@ -8,6 +8,7 @@ from jira import JIRA
 import datetime
 from dateutil.relativedelta import relativedelta
 
+from django.forms import formset_factory
 from django.urls import reverse
 from django.utils import dateparse
 from django.conf import settings
@@ -20,6 +21,7 @@ from django_atlassian.models.connect import SecurityContext
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from workmodel.services import WorkmodelService
+from workmodel.forms import HierarchyForm
 
 def get_issues_progress(issues):
     """
@@ -438,15 +440,44 @@ def business_time_configuration(request):
     # Get the addon configuration
     sc = request.atlassian_sc
     wm = WorkmodelService(sc)
-    # Encode the update URL to make a secure call to ourselves
-    url = reverse('workmodel-configuration-update-issues-business-time')
-    token = atlassian_jwt.encode_token('POST', url, sc.client_key, sc.shared_secret)
-    conf = wm.get_configuration()
+    conf = wm.business_time.conf
+    fields = [f for f in wm.jira.fields() if 'schema' in f and f['schema']['type'] in ['date', 'datetime']]
+    fields.sort(key=lambda field: field['name'])
     return render(request, 'workmodel/business_time_configuration.html', {
-        'update_issues_url': url,
-        'update_issues_url_jwt': token,
-        'conf': conf
+        'conf': conf,
+        'fields': fields,
     })
+
+
+@csrf_exempt
+@jwt_required
+@jwt_qsh_exempt
+def business_time_rescan_issues_progress(request):
+    from workmodel.tasks import update_issues_business_time
+    sc = request.atlassian_sc
+    update_issues_business_time.delay(sc.id)
+    url = reverse('workmodel-business-time-configuration')
+    token = sc.create_token('GET', url, account=request.atlassian_account_id)
+    url = "{}?jwt={}".format(url, token)
+    return redirect(url)
+
+
+@csrf_exempt
+@jwt_required
+@jwt_qsh_exempt
+def business_time_update_start_stop_fields(request):
+    # Update the configuration
+    sc = request.atlassian_sc
+    wm = WorkmodelService(sc)
+    val = wm.business_time.conf.raw['value']
+    val['start_field_id'] = request.GET.get('startId', None)
+    val['end_field_id'] = request.GET.get('endId', None)
+    wm.business_time.conf.update(val)
+    # Redirect
+    url = reverse('workmodel-business-time-configuration')
+    token = sc.create_token('GET', url, account=request.atlassian_account_id)
+    url = "{}?jwt={}".format(url, token)
+    return redirect(url)
 
 
 @xframe_options_exempt
@@ -454,33 +485,49 @@ def business_time_configuration(request):
 def hierarchy_configuration(request):
     sc = request.atlassian_sc
     wm = WorkmodelService(sc)
-    conf = wm.get_configuration()
-    # TODO refactor this, for later
-    j = JIRA(sc.host, jwt={'secret': sc.shared_secret, 'payload': {'iss': sc.key}})
-    # Replace the ids with actual values
-    issue_types = j.issue_types()
-    issue_link_types = j.issue_link_types()
-    resolved_hierarchies = []
-    for h in conf['hierarchy']:
-        hierarchy = h
-        if h['issues']:
-            h['issues'] = [i for i in issue_types if i.id in h['issues']]
-        if h['link']:
-            h['link'] = [i for i in issue_link_types if i.id == h['link']][0]
-        resolved_hierarchies.append(h)
-    conf['hierarchy'] = resolved_hierarchies
-    return render(request, 'workmodel/hierarchy_configuration.html', {
-        'issue_types': issue_types,
-        'fields': j.fields(),
-        'issue_link_types': issue_link_types,
-        'conf': conf
+    # Create the formset
+    HierarchyFormSet = formset_factory(HierarchyForm, can_order=True, can_delete=True, extra=0)
+    formset = HierarchyFormSet(
+        form_kwargs={'hierarchy_service': wm.hierarchy},
+        initial=wm.hierarchy.conf.raw['value']['hierarchy']
+    )
+    return render(request, 'workmodel/hierarchy_configuration2.html', {
+        'formset': formset,
     })
 
 
-@csrf_exempt
+@xframe_options_exempt
 @jwt_required
-def configuration_update_issues_business_time(request):
-    from workmodel.tasks import update_issues_business_time
+@jwt_qsh_exempt
+def hierarchy_update_configuration(request):
     sc = request.atlassian_sc
-    update_issues_business_time.delay(sc.id)
-    return HttpResponse(204)
+    wm = WorkmodelService(sc)
+
+    HierarchyFormSet = formset_factory(HierarchyForm, can_order=True, can_delete=True, extra=0)
+    formset = HierarchyFormSet(request.GET,
+        form_kwargs={'hierarchy_service': wm.hierarchy}
+    )
+
+    if formset.is_valid():
+        hierarchy = []
+        for form in formset.ordered_forms:
+            if form.cleaned_data['DELETE']:
+                continue
+            hierarchy_level = {
+                'is_container': form.cleaned_data['is_container'],
+                'field': form.cleaned_data['field'],
+                'link': form.cleaned_data['link'],
+                'is_operative': form.cleaned_data['is_operative'],
+                'type': form.cleaned_data['type'],
+                'issues': form.cleaned_data['issues'],
+            }
+            hierarchy.append(hierarchy_level)
+        # Update the configuration
+        val = wm.hierarchy.conf.raw['value']
+        val['hierarchy'] = hierarchy
+        wm.hierarchy.conf.update(val)
+
+    url = reverse('workmodel-hierarchy-configuration')
+    token = sc.create_token('GET', url, account=request.atlassian_account_id)
+    url = "{}?jwt={}".format(url, token)
+    return redirect(url)
