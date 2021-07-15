@@ -12,7 +12,7 @@ from workmodel.transitions import TransitionsCollection, Transitions, Transition
 logger = logging.getLogger('workmodel_logger')
 
 class JiraService(object):
-    def __init__(self, sc, jira=None, account_id=None, *args, **kwargs):
+    def __init__(self, sc, jira=None, addon_jira=None, account_id=None, *args, **kwargs):
         self.sc = sc
         if jira:
             self.jira = jira
@@ -73,13 +73,12 @@ class JiraService(object):
 
  
 class WorkmodelService(JiraService):
-    def __init__(self, sc, account_id=None, conf=None):
-        super(WorkmodelService, self).__init__(sc, jira=None, account_id=account_id)
-        if not conf:
-            conf = self.get_configuration()
+
+    def __init__(self, sc, *args, **kwargs):
+        super(WorkmodelService, self).__init__(sc, *args, **kwargs)
         # instantiate the services
-        self.hierarchy = HierarchyService(self.sc, self.jira, conf['hierarchy'])
-        self.business_time = BusinessTimeService(self.sc, self.jira, conf, self.hierarchy)
+        self.hierarchy = HierarchyService(self.sc, *args, **kwargs)
+        self.business_time = BusinessTimeService(self.sc, self.hierarchy, *args, **kwargs)
 
         # Create the app configuration in case it is not there yet
         self.jira.create_app_property(sc.key, 'workmodel-configuration', conf)
@@ -114,8 +113,8 @@ class WorkmodelService(JiraService):
 
    
 class HierarchyService(JiraService):
-    def __init__(self, sc, jira, conf):
-        super(HierarchyService, self).__init__(sc, jira=jira)
+    def __init__(self, sc, *args, **kwargs):
+        super(HierarchyService, self).__init__(sc, *args, **kwargs)
         self.hierarchies = []
         if conf:
             for c in conf:
