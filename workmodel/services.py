@@ -18,7 +18,32 @@ class JiraService(object):
             self.jira = jira
         else:
             self.jira = self._connect_jira(account_id)
-        self.addon_jira = self._connect_jira(False)
+        if addon_jira:
+            self.addon_jira = addon_jira
+        else:
+            self.addon_jira = self._connect_jira(False)
+        # get current version
+        version = self.current_version()
+        # get configuration
+        conf = None
+        for i in range(version, 0, -1):
+            conf_call = getattr(self, 'configuration_{}'.format(i), None)
+            if conf_call:
+                try:
+                    conf = conf_call()
+                except:
+                    continue
+        # get version from configuration
+        if conf:
+            old_version = self.version_from_configuration(conf)
+            # apply migrations from configuration version to current version
+            for i in range(old_version, version):
+                migration_call = getattr(self, 'migrate_from_{}'.format(i), None)
+                if migration_call:
+                    conf = migration_call(conf)
+            self.conf = conf
+        else:
+            self.conf = self.default_configuration()
 
     def _connect_jira(self, account_id):
         if not account_id:
@@ -68,11 +93,19 @@ class JiraService(object):
             r = self.jira.search_filters(startAt=start_at, expand=expand)
             total = len(r)
 
-    def get_default_configuration(self):
+    def current_version(self):
         raise NotImplementedError
 
- 
+    def version_from_configuration(self, conf):
+        raise NotImplementedError
+
+    def default_configuration(self):
+        raise NotImplementedError
+
+
 class WorkmodelService(JiraService):
+    CONFIGURATION_APP_KEY = 'workmodel'
+    CONFIGURATION_VERSION = 2
 
     def __init__(self, sc, *args, **kwargs):
         super(WorkmodelService, self).__init__(sc, *args, **kwargs)
@@ -80,50 +113,76 @@ class WorkmodelService(JiraService):
         self.hierarchy = HierarchyService(self.sc, *args, **kwargs)
         self.business_time = BusinessTimeService(self.sc, self.hierarchy, *args, **kwargs)
 
-        # Create the app configuration in case it is not there yet
-        self.jira.create_app_property(sc.key, 'workmodel-configuration', conf)
+    def current_version(self):
+        return WorkmodelService.CONFIGURATION_VERSION
 
-    def get_configuration(self):
-        # already created configuration
-        conf = {
-            'hierarchy': [],
-            'task_id': None,
-            'version': 1,
-        }
-        try:
-            props = self.addon_jira.app_properties(self.sc.key)
-            for p in props:
-                if p.key == 'workmodel-configuration':
-                    if hasattr(p.value, 'task_id'):
-                        conf['task_id'] = p.value.task_id
-                    else:
-                        conf['task_id'] = None
-                    if hasattr(p.value, 'hierarchy'):
-                        conf['hierarchy'] = p.raw['value']['hierarchy']
-                    else:
-                        conf['hierarchy'] = []
-                    if hasattr(p.value, 'version'):
-                        conf['version'] = p.value.version
-                    else:
-                        conf['version'] = 1
-        except:
-            pass
+    def configuration_1(self):
+        conf = self.addon_jira.app_property(self.sc.key, "workmodel-configuration")
         return conf
 
+    def configuration_2(self):
+        conf = self.addon_jira.app_property(self.sc.key, WorkmodelService.CONFIGURATION_APP_KEY)
+        return conf
 
-   
+    def migrate_from_1(self, conf):
+        # Save the current configuration into their corresponding services configuration
+        hierarchy_conf = {
+            'version': HierarchyService.CONFIGURATION_VERSION,
+            'hierarchy': conf.raw['value']['hierarchy']
+        }
+        self.addon_jira.create_app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY, hierarchy_conf)
+        business_time_conf = {
+            'version': BusinessTimeService.CONFIGURATION_VERSION,
+            'task_id': conf.raw['value']['task_id'],
+            'start_field_id': None,
+            'end_field_id': None,
+        }
+        self.addon_jira.create_app_property(self.sc.key, BusinessTimeService.CONFIGURATION_APP_KEY, business_time_conf)
+        # Finally remove the old configuration and keep just the version for compatibility reasons
+        conf.delete()
+        conf = self.addon_jira.create_app_property(self.sc.key, WorkmodelService.CONFIGURATION_APP_KEY, {'version': WorkmodelService.CONFIGURATION_VERSION})
+        return conf
+
+    def version_from_configuration(self, conf):
+        return conf.value.version
+
+    def default_configuration(self):
+        conf = self.addon_jira.create_app_property(self.sc.key, WorkmodelService.CONFIGURATION_APP_KEY, {'version': WorkmodelService.CONFIGURATION_VERSION})
+        return conf
+
+ 
 class HierarchyService(JiraService):
+    CONFIGURATION_APP_KEY = 'workmodel.hierarchy'
+    CONFIGURATION_VERSION = 1
+
     def __init__(self, sc, *args, **kwargs):
         super(HierarchyService, self).__init__(sc, *args, **kwargs)
         self.hierarchies = []
-        if conf:
-            for c in conf:
-                if c['type'] == 'sub-task':
-                    self.hierarchies.append(SubTaskHierarchyLevel(self.jira))
-                if c['type'] == 'epic':
-                    self.hierarchies.append(EpicHierarchyLevel(self.jira, c['is_operative']))
-                elif c['type'] == 'custom':
-                    self.hierarchies.append(CustomHierarchyLevel(self.jira, c['is_operative'], c['is_container'], c['issues'], c['field'], c['link']))
+        for c in self.conf.raw['value']['hierarchy']:
+            if c['type'] == 'sub-task':
+                self.hierarchies.append(SubTaskHierarchyLevel(self.jira))
+            if c['type'] == 'epic':
+                self.hierarchies.append(EpicHierarchyLevel(self.jira, c['is_operative']))
+            elif c['type'] == 'custom':
+                self.hierarchies.append(CustomHierarchyLevel(self.jira, c['is_operative'], c['is_container'], c['issues'], c['field'], c['link']))
+
+    def current_version(self):
+        return HierarchyService.CONFIGURATION_VERSION
+
+    def configuration_1(self):
+        conf = self.addon_jira.app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY)
+        return conf
+
+    def version_from_configuration(self, conf):
+        return conf.value.version
+
+    def default_configuration(self):
+        hierarchy_conf = {
+            'version': HierarchyService.CONFIGURATION_VERSION,
+            'hierarchy': [],
+        }
+        conf = self.addon_jira.create_app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY, hierarchy_conf)
+        return conf
 
     def root_issue(self, issue):
         # No configuration, do nothing
@@ -393,10 +452,33 @@ class CustomHierarchyLevel(HierarchyLevel):
 
 
 class BusinessTimeService(JiraService):
-    def __init__(self, sc, jira, conf, hierarchy):
-        super(BusinessTimeService, self).__init__(sc, jira=jira)
+    CONFIGURATION_APP_KEY = 'workmodel.business_time'
+    CONFIGURATION_VERSION = 1
+
+    def __init__(self, sc, hierarchy, *args, **kwargs):
+        super(BusinessTimeService, self).__init__(sc, *args, **kwargs)
         self.hierarchy = hierarchy
         self.statuses = self.jira.statuses()
+
+    def current_version(self):
+        return BusinessTimeService.CONFIGURATION_VERSION
+
+    def configuration_1(self):
+        conf = self.addon_jira.app_property(self.sc.key, BusinessTimeService.CONFIGURATION_APP_KEY)
+        return conf
+
+    def version_from_configuration(self, conf):
+        return conf.value.version
+
+    def default_configuration(self):
+        business_time_conf = {
+            'version': BusinessTimeService.CONFIGURATION_VERSION,
+            'task_id': None,
+            'start_field_id': None,
+            'end_field_id': None,
+        }
+        conf = self.addon_jira.create_app_property(self.sc.key, BusinessTimeService.CONFIGURATION_APP_KEY, business_time_conf)
+        return conf
 
     def transition_to_days(self, from_transition, to_transition):
         fromDate = from_transition['created']
@@ -537,23 +619,14 @@ class BusinessTimeService(JiraService):
         logger.info("Updating all issues")
 
         # We assume there is already a configuration stored
-        prop = None
-        props = self.jira.app_properties(self.sc.key)
-        for p in props:
-            if p.key == 'workmodel-configuration':
-                prop = p
-                break
-        prop.raw['value']['task_id'] = task_id
-        prop.update(prop.raw['value'])
+        conf = self.conf.raw['value']
+        conf['task_id'] = task_id
+        self.conf.update(conf)
+
         issues = self.search_issues("", expand='changelog')
         for issue in issues:
             self.business_time(issue)
         # Remove the addon task id
-        prop = None
-        props = self.jira.app_properties(self.sc.key)
-        for p in props:
-            if p.key == 'workmodel-configuration':
-                prop = p
-                break
-        prop.raw['value']['task_id'] = None
-        prop.update(prop.raw['value'])
+        conf = self.conf.raw['value']
+        conf['task_id'] = None
+        self.conf.update(conf)
