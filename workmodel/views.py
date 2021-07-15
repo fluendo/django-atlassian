@@ -512,7 +512,7 @@ def hierarchy_configuration(request):
         form_kwargs={'hierarchy_service': wm.hierarchy},
         initial=wm.hierarchy.conf.raw['value']['hierarchy']
     )
-    return render(request, 'workmodel/hierarchy_configuration2.html', {
+    return render(request, 'workmodel/hierarchy_configuration.html', {
         'formset': formset,
     })
 
