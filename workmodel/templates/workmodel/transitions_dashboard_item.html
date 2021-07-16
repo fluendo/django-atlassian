@@ -10,6 +10,9 @@
           text {
             font-size: 5px;
           }
+	  .summary {
+            font-size: 3px;
+          }
           .area {
             fill: none;
             stroke-width: 0.1;
@@ -55,12 +58,12 @@
         {% endfor %}
         <!-- The data -->
         {% for d in data %}
-          <image href="{{ d.issue.fields.issuetype.iconUrl }}" x="-40" y="{{ forloop.counter0|multiply:10|sum:24|sum:1 }}" width="8" height="8">
-            <desc>{{ d.issue.fields.issuetype.name }}</desc>
-          </image>
           <a href="{{ sc.host }}/browse/{{ d.issue.key }}" target="_blank">
-            <text x="-20" y="{{ forloop.counter|multiply:10|sum:24|subtract:2 }}" text-anchor="middle">{{ d.issue.key }}</text>
+            <image href="{{ d.issue.fields.issuetype.iconUrl }}" x="-50" y="{{ forloop.counter0|multiply:10|sum:24|sum:1 }}" width="8" height="8">
+              <desc>{{ d.issue.fields.issuetype.name }}</desc>
+            </image>
           </a>
+          <text x="-42" y="{{ forloop.counter|multiply:10|sum:24|subtract:2 }}" class="summary">{{ d.issue.fields.summary }}</text>
           {% for t in d.transitions %}
             <rect x="{{ t.x }}" y="{{ forloop.parentloop.counter0|multiply:10|sum:24|sum:2 }}" width="{{ t.width }}" height="6" fill="{{ t.color }}" />
           {% endfor %}
@@ -73,6 +76,22 @@
     </div>
   </div>
   <script>
+
+    function textEllipsis(el, width) {
+      var text = el.textContent;
+      while (el.getBBox().width > width) {
+        text = text.slice(0,-1);
+        // we need to update the textContent to update the boundary width
+        el.textContent = text + "...";
+      }
+    }
+
+    AJS.$(document).ready(function() {
+      AJS.$(".summary").each(function(){ 
+        textEllipsis(this, 40);
+      });
+    });
+
     AP.require(['jira'], function (jira) {
       jira.DashboardItem.onDashboardItemEdit(function() {
         AP.context.getToken(function(token) {
