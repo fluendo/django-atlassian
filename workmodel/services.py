@@ -2,12 +2,12 @@
 from __future__ import unicode_literals
 
 import datetime
-import jira
 import logging
-from jira import JIRA
 
 from django.utils import dateparse
 from workmodel.transitions import TransitionsCollection, Transitions, Transition 
+from workmodel.hierarchy import Hierarchy, HierarchyLevel, CustomHierarchyLevel, EpicHierarchyLevel, SubTaskHierarchyLevel
+from workmodel.utils import WorkmodelJira
 
 logger = logging.getLogger('workmodel_logger')
 
@@ -47,7 +47,7 @@ class JiraService(object):
 
     def _connect_jira(self, account_id):
         if not account_id:
-            jira = JIRA(self.sc.host, jwt={'secret': self.sc.shared_secret, 'payload': {'iss': self.sc.key}})
+            jira = WorkmodelJira(self.sc.host, jwt={'secret': self.sc.shared_secret, 'payload': {'iss': self.sc.key}})
         else:
             token = self.sc.create_user_token(account_id)
             options = {
@@ -56,42 +56,8 @@ class JiraService(object):
                     'Authorization': 'Bearer {}'.format(token),
                 }            
             }
-            jira = JIRA(options=options)
+            jira = WorkmodelJira(options=options)
         return jira
-
-    def _get_issue(self, issue, expand=None):
-        if type(issue) == str or type(issue) == unicode:
-            return self.jira.issue(issue, expand=expand)
-        elif type(issue) == jira.resources.Issue:
-            return issue
-        else:
-            raise ValueError
-
-    def search_issues(self, jql, expand=None):
-        start_at = 0
-        result = []
-
-        r = self.jira.search_issues(jql, startAt=start_at, expand=expand)
-        total = len(r)
-        while total != 0:
-            for i in r:
-                yield i
-            start_at += total
-            r = self.jira.search_issues(jql, startAt=start_at, expand=expand)
-            total = len(r)
-
-    def search_filters(self, expand=None):
-        start_at = 0
-        result = []
-
-        r = self.jira.search_filters(startAt=start_at, expand=expand)
-        total = len(r)
-        while total != 0:
-            for i in r:
-                yield i
-            start_at += total
-            r = self.jira.search_filters(startAt=start_at, expand=expand)
-            total = len(r)
 
     def current_version(self):
         raise NotImplementedError
@@ -127,12 +93,12 @@ class WorkmodelService(JiraService):
     def migrate_from_1(self, conf):
         # Save the current configuration into their corresponding services configuration
         hierarchy_conf = {
-            'version': HierarchyService.CONFIGURATION_VERSION,
+            'version': 1,
             'hierarchy': conf.raw['value']['hierarchy']
         }
         self.addon_jira.create_app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY, hierarchy_conf)
         business_time_conf = {
-            'version': BusinessTimeService.CONFIGURATION_VERSION,
+            'version': 1,
             'task_id': conf.raw['value']['task_id'],
             'start_field_id': None,
             'end_field_id': None,
@@ -140,7 +106,8 @@ class WorkmodelService(JiraService):
         self.addon_jira.create_app_property(self.sc.key, BusinessTimeService.CONFIGURATION_APP_KEY, business_time_conf)
         # Finally remove the old configuration and keep just the version for compatibility reasons
         conf.delete()
-        conf = self.addon_jira.create_app_property(self.sc.key, WorkmodelService.CONFIGURATION_APP_KEY, {'version': WorkmodelService.CONFIGURATION_VERSION})
+        self.addon_jira.create_app_property(self.sc.key, WorkmodelService.CONFIGURATION_APP_KEY, {'version': 2})
+        conf = self.addon_jira.app_property(self.sc.key, WorkmodelService.CONFIGURATION_APP_KEY)
         return conf
 
     def version_from_configuration(self, conf):
@@ -154,23 +121,28 @@ class WorkmodelService(JiraService):
  
 class HierarchyService(JiraService):
     CONFIGURATION_APP_KEY = 'workmodel.hierarchy'
-    CONFIGURATION_VERSION = 1
+    CONFIGURATION_VERSION = 2
 
     def __init__(self, sc, *args, **kwargs):
         super(HierarchyService, self).__init__(sc, *args, **kwargs)
         self.hierarchies = []
-        for c in self.conf.raw['value']['hierarchy']:
-            if c['type'] == 'sub-task':
-                self.hierarchies.append(SubTaskHierarchyLevel(self.jira))
-            if c['type'] == 'epic':
-                self.hierarchies.append(EpicHierarchyLevel(self.jira, c['is_operative']))
-            elif c['type'] == 'custom':
-                self.hierarchies.append(CustomHierarchyLevel(self.jira, c['is_operative'], c['is_container'], c['issues'], c['field'], c['link']))
+        for h in self.conf.raw['value']['hierarchies']:
+            self.hierarchies.append(Hierarchy(self.jira, h['name'], h['levels']))
 
     def current_version(self):
         return HierarchyService.CONFIGURATION_VERSION
 
     def configuration_1(self):
+        conf = self.addon_jira.app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY)
+        return conf
+
+    def migrate_from_1(self, conf):
+        raw = conf.raw['value']
+        # Make the current hierarchy be a hierarchies[] with a default one
+        new_conf = {'version': 2, 'last_id': 1}
+        default_hierarchy = {'name': 'Default', 'id': 1, 'levels': raw['hierarchy']}
+        new_conf['hierarchies'] = [default_hierarchy]
+        self.addon_jira.create_app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY, new_conf)
         conf = self.addon_jira.app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY)
         return conf
 
@@ -180,278 +152,63 @@ class HierarchyService(JiraService):
     def default_configuration(self):
         hierarchy_conf = {
             'version': HierarchyService.CONFIGURATION_VERSION,
-            'hierarchy': [],
+            'hierarchies': [],
+            'last_id': 0,
         }
         self.addon_jira.create_app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY, hierarchy_conf)
         conf = self.addon_jira.app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY)
         return conf
 
-    def root_issue(self, issue):
+    def child_issues(self, issue, expand=None, extra_jql=None, skip_levels=None, recurse=True):
         # No configuration, do nothing
         if not self.hierarchies:
             raise ValueError
 
-        # A single hierarchy, compare the issuetype only
-        issue = self._get_issue(issue)
-        if len(self.hierarchies) == 1:
-            if self.hierarchies[0].check_issue_type(issue):
-                return issue
-            else:
-                raise ValueError
-        # Now the complex part, take into account the field and the upper hierarchy
-        # Iterate over the list of hierarchies
-        # TODO reverse on the configuration
-        l = len(self.hierarchies)
-        found = False
-        for idx in range(1, len(self.hierarchies)):
-            idx = l - idx
-            h = self.hierarchies[idx]
-            h_next = self.hierarchies[idx-1]
-            parent = h.parent(issue, h_next)
-            if parent:
-                issue = parent
-                found = True
-            else:
-                if found:
-                    break
+        if not skip_levels:
+            already_calculated = []
+        else:
+            already_calculated = skip_levels
+        
+        for h in self.hierarchies:
+            logger.info("Processing hierarchy {} for {}".format(h.name, issue))
+            # No configuration, do nothing
+            if not h.hierarchies:
+                continue
+    
+            # A single hierarchy, compare the issuetype only
+            issue = self.jira._get_issue(issue)
+            if len(h.hierarchies) == 1:
+                if h.hierarchies[0].check_issue_type(issue):
+                    if h.hierarchies[0] not in already_calculated:
+                        yield issue
                 else:
                     continue
-        return issue
-
-
-    def child_issues(self, issue, expand=None, extra_jql=None):
-        # No configuration, do nothing
-        if not self.hierarchies:
-            raise ValueError
-
-        # A single hierarchy, compare the issuetype only
-        issue = self._get_issue(issue)
-        if len(self.hierarchies) == 1:
-            if self.hierarchies[0].check_issue_type(issue):
-                yield issue
-            else:
-                raise ValueError
-        # TODO reverse on the configuration
-        for idx in range(0, len(self.hierarchies) - 1):
-            h = self.hierarchies[idx]
-            h_prev = self.hierarchies[idx+1]
-            if h.check_issue_type(issue):
-                jql = h.children_jql(issue, h_prev)
-                if h_prev.is_operative and extra_jql:
-                    jql = "({0}) {1}".format(jql, extra_jql)
-                children = self.search_issues(jql, expand)
-                has_children = False
-                for ch in children:
-                    has_children = True
-                    if (extra_jql and h_prev.is_operative) or not extra_jql:
-                        yield ch
-                    for sch in self.child_issues(ch, expand=expand, extra_jql=extra_jql):
-                        yield sch
-                # no issues, try with the next level
-                if not has_children:
-                    continue
-                break
-
-    def hierarchy_level(self, issue):
-        # No configuration, do nothing
-        if not self.hierarchies:
-            raise ValueError
-
-        # A single hierarchy, compare the issuetype only
-        issue = self._get_issue(issue)
-        if len(self.hierarchies) == 1:
-            if self.hierarchies[0].check_issue_type(i):
-                return i
-            else:
-                raise ValueError
-        # TODO reverse on the configuration
-        ret = None
-        for idx in range(0, len(self.hierarchies) - 1):
-            h = self.hierarchies[idx]
-            h_prev = self.hierarchies[idx+1]
-            if h.check_issue_type(issue):
-                jql = h.children_jql(issue, h_prev)
-                if not jql:
-                    continue
-
-                ret = h
-                children = self.search_issues(jql)
-                # no issues, try with the next level
-                if next(children, None) == None:
-                    continue
-                else:
+            # TODO reverse on the configuration
+            for idx in range(0, len(h.hierarchies) - 1):
+                l = h.hierarchies[idx]
+                l_prev = h.hierarchies[idx+1]
+                if l.check_issue_type(issue):
+                    logger.debug("Found hierarchy level {}".format(l))
+                    if l in already_calculated:
+                        logger.debug("Hierarchy {} already processed, skipping it".format(l))
+                        break
+                    already_calculated.append(l)
+                    jql = l.children_jql(issue, l_prev)
+                    if l_prev.is_operative and extra_jql:
+                        jql = "({0}) {1}".format(jql, extra_jql)
+                    children = self.jira.search_issues_gen(jql, expand)
+                    has_children = False
+                    for ch in children:
+                        has_children = True
+                        if (extra_jql and l_prev.is_operative) or not extra_jql:
+                            yield ch
+                        if recurse:
+                            for sch in self.child_issues(ch, expand=expand, extra_jql=extra_jql, skip_levels=already_calculated, recurse=recurse):
+                                yield sch
+                    # no issues, try with the next level
+                    if not has_children:
+                        continue
                     break
-        return h
-
-class HierarchyLevel(object):
-    def __init__(self, jira, t, is_operative, is_container, *args, **kwargs):
-        self.jira = jira
-        self.type = t
-        self.is_operative = is_operative
-        self.is_container = is_container
-
-    def get_issue_types(self):
-        raise NotImplementedError
-
-    def parent_upwards_for_issue(self, issue):
-        raise NotImplementedError
-
-    def parent_downwards_for_issue(self, issue):
-        raise NotImplementedError
-
-    def children_jql_upward(self):
-        raise NotImplementedError
-
-    def children_jql_downward(self):
-        raise NotImplementedError
-
-    def check_issue_type(self, issue):
-        if issue.fields.issuetype.name in self.get_issue_types():
-            return True
-        else:
-            return False
-
-    def parent(self, issue, h_next):
-        try:
-            parent = self.parent_upwards(issue, h_next)
-        except NotImplementedError:
-            parent = None
-        if not parent:
-            try:
-                parent = h_next.parent_downwards(issue, self)
-            except NotImplementedError:
-                parent = None
-        return parent
-
-    def children_jql(self, issue, h_prev):
-        jql = None
-        try:
-            jql = self.children_jql_downward().format(issue_key=issue.key)
-        except NotImplementedError:
-            # go with the next hierarchy level
-            try:
-                jql = h_prev.children_jql_upward().format(issue_key=issue.key)
-            except NotImplementedError:
-                pass
-        return jql
-
-    def parent_upwards(self, issue, h_next):
-        if not self.check_issue_type(issue):
-            return None
-
-        issue = self.parent_upwards_for_issue(issue)
-        # Check that the parent matches the other hierarchy issue type
-        if issue and h_next.check_issue_type(issue):
-            return issue
-        return None
-
-    def parent_downwards(self, issue, h_prev):
-        if not h_prev.check_issue_type(issue):
-            return False
-
-        issue = self.parent_downwards_for_issue(issue)
-        # Check that the current hierarchy matches the issue type
-        if issue and self.check_issue_type(issue):
-            return issue
-        return None
-
-
-class SubTaskHierarchyLevel(HierarchyLevel):
-    def __init__(self, jira, *args, **kwargs):
-        super(SubTaskHierarchyLevel, self).__init__(jira, 'sub-task', True, False, *args, **kwargs)
-        self.sub_tasks = list(set([x.name for x in self.jira.issue_types() if x.subtask == True]))
-        self.parent_field = [x for x in self.jira.fields() if 'Parent' == x['name']][0]['key']
-
-    def get_issue_types(self):
-        return self.sub_tasks
-
-    def parent_upwards_for_issue(self, issue):
-        # Get the parent issue
-        if not hasattr(issue.fields, self.parent_field):
-            return None
-
-        parent_issue = getattr(issue.fields, self.parent_field)
-        # The parent issue does not have every field, we need to fetch again
-        return self.jira.issue(parent_issue.key)
-
-    def children_jql_upward(self):
-        return "parent = {issue_key}"
-
-
-class EpicHierarchyLevel(HierarchyLevel):
-    def __init__(self, jira, is_operative, *args, **kwargs):
-        super(EpicHierarchyLevel, self).__init__(jira, 'epic', is_operative, True, *args, **kwargs)
-        self.epic = [x.name for x in self.jira.issue_types() if x.name == 'Epic']
-        self.epic_field = [x for x in self.jira.fields() if 'Epic Link' == x['name']][0]['key']
-
-    def get_issue_types(self):
-        return self.epic
-
-    def parent_downwards_for_issue(self, issue):
-        epic_key = getattr(issue.fields, self.epic_field)
-        if epic_key:
-            return self.jira.issue(epic_key)
-        else:
-            return None
-
-    def children_jql_downward(self):
-        return "'Epic Link' = {issue_key}"
-
-
-class CustomHierarchyLevel(HierarchyLevel):
-    def __init__(self, jira, is_operative, is_container, issues = None, field = None, link = None, *args, **kwargs):
-        super(CustomHierarchyLevel, self).__init__(jira, 'custom', is_operative, is_container, *args, **kwargs)
-        if issues:
-            self.issues = [x.name for x in self.jira.issue_types() if x.id in issues]
-        else:
-            self.issues = [x.name for x in self.jira.issue_types()]
-        self.field = None
-        if field:
-            self.field = [x for x in self.jira.fields() if x['id'] == field][0]['key']
-        self.link = None
-        if link:
-            self.link = [x for x in self.jira.issue_link_types() if x.id == link][0]
-
-    def get_issue_types(self):
-        return self.issues
-
-    def parent_downwards_for_issue(self, issue):
-        # We use the upward link to go down
-        if self.link:
-            for il in issue.fields.issuelinks:
-                if il.type.id == self.link.id:
-                    if hasattr(il, "inwardIssue"):
-                        return self.jira.issue(il.inwardIssue.key)
-            return None
-        else:
-            raise NotImplementedError
-
-    def parent_upwards_for_issue(self, issue):
-        # We use the field on the children to go up in the hierarchy
-        if self.field:
-            if hasattr(issue.fields, self.field):
-                field_key = getattr(issue.fields, self.field)
-                if field_key:
-                    return self.jira.issue(field_key)
-            return None
-        # We use the inward link to go up
-        elif self.link:
-            for il in issue.fields.issuelinks:
-                if il.type.id == self.link.id:
-                    if hasattr(il, "outwardIssue"):
-                        return self.jira.issue(il.outwardIssue.key)
-            return None
-        else:
-            raise NotImplementedError
-
-    def children_jql_downward(self):
-        if self.field:
-            return "{} = {{issue_key}}".format(self.field)
-        elif self.link:
-            return "issue in linkedIssues({{issue_key}}, {})".format(self.link.outward)
-        else:
-            raise NotImplementedError
-
 
 class BusinessTimeService(JiraService):
     CONFIGURATION_APP_KEY = 'workmodel.business_time'
@@ -480,7 +237,7 @@ class BusinessTimeService(JiraService):
             'end_field_id': None,
         }
         self.addon_jira.create_app_property(self.sc.key, BusinessTimeService.CONFIGURATION_APP_KEY, business_time_conf)
-        conf = self.addon_jira.app_property(self.sc.key, HierarchyService.CONFIGURATION_APP_KEY)
+        conf = self.addon_jira.app_property(self.sc.key, BusinessTimeService.CONFIGURATION_APP_KEY)
         return conf
 
     def transition_to_days(self, from_transition, to_transition):
@@ -556,46 +313,76 @@ class BusinessTimeService(JiraService):
 
     def business_time(self, issue):
         logger.info("Updating issue {} business time".format(issue))
-        issue = self._get_issue(issue, expand='changelog')
-        # Get the hierarchy level this issue belongs to
-        h = self.hierarchy.hierarchy_level(issue)
-        # Check if it is a container or an operative issue
-        has_children = False
+        issue = self.jira._get_issue(issue, expand='changelog')
+
+        # Only calculate once for each hierarchy level
+        already_calculated = []
+
+        # The result
         transitions = Transitions()
-        if h.is_container:
-            # Get the children issue
-            children = self.hierarchy.child_issues(issue, expand='changelog')
-            children_transitions = TransitionsCollection()
-            for ch in children:
-                has_children = True
-                children_transitions.append(self.business_time(ch))
-            if len(children_transitions):
-                # Fake transitions
-                normalized = children_transitions.normalize()
-                # Bool them all
-                transposed = normalized.transpose()
-                intersection = transposed.intersect()
-                # Merge common transitions
-                transitions = intersection.merge()
-        if not has_children and h.is_operative:
-            # No children, do our own stuff
-            transitions = self.generate_transition_categories(issue)
+
+        has_children = False
+        all_transitions = TransitionsCollection()
+        # Get the hierarchy level this issue belongs to
+        for h in self.hierarchy.hierarchies:
+            logger.info("Processing hierarchy {}".format(h.name))
+            # In case the hierarchy level was already calculated, there's nothing
+            # to do
+            l = h.hierarchy_level(issue)
+            if not l:
+                logger.info("No level found, nothing to do")
+                continue
+            if l in already_calculated:
+                logger.info("Level {} already calculated, nothing to do".format(l))
+                continue
+            else:
+                already_calculated.append(l)
+            
+            logger.info("Level wasn't calculated, doing so")
+            # Check if it is a container or an operative issue
+            # Given that the child_issues() method is already recursive
+            # avoid calling it again in case another matching hierarchy
+            # level is a container
+            if l.is_container and not has_children:
+                # Get the children issue
+                children = self.hierarchy.child_issues(issue, expand='changelog', recurse=False)
+                for ch in children:
+                    has_children = True
+                    all_transitions.append(self.business_time(ch))
+            if not has_children and l.is_operative:
+                # No children, do our own stuff
+                operative_transition = self.generate_transition_categories(issue)
+                all_transitions.append(operative_transition)
+
+        if len(all_transitions):
+            logger.info("Normalizing {} transitions for issue {}: {}".format(len(all_transitions), issue, all_transitions))
+            # Fake transitions
+            normalized = all_transitions.normalize()
+            # Bool them all
+            transposed = normalized.transpose()
+            intersection = transposed.intersect()
+            # Merge common transitions
+            transitions = intersection.merge()
+
         # Store the information as a property
         statuses = [{'from_date': str(t.from_date), 'to_date': str(t.to_date), 'status': t.status} for t in transitions]
         days = sum(t.to_days() for t in transitions if t.status == Transition.IN_PROGRESS)
         logger.info("Days in progress for {} is {}".format(issue, days))     
+
         self.jira.add_issue_property(issue.key, "transitions",
             { 'progress_summation': days, 'statuses': statuses }
         )
         return transitions
+
 
     def update_in_progress_business_time(self):
         logger.info("Updating all In-Progress issues")
         # Get all the operative hierarchies
         issue_types = []
         for h in self.hierarchy.hierarchies:
-            if h.is_operative:
-                issue_types += h.get_issue_types()
+            for l in h.hierarchies:
+                if h.is_operative:
+                    issue_types += h.get_issue_types()
         # Uniquify the list
         issue_types = list(set(issue_types))
         if not issue_types:
@@ -603,15 +390,16 @@ class BusinessTimeService(JiraService):
             return
 
         # Search issues whoes current statusCategory is In Progress
-        issues = self.jira.search_issues("statusCategory = 'In Progress' AND type IN ({})".format(",".join("'{0}'".format(it) for it in issue_types)))
+        issues = self.jira.search_issues_gen("statusCategory = 'In Progress' AND type IN ({})".format(",".join("'{0}'".format(it) for it in issue_types)))
         to_update = []
         for i in issues:
-            try:
-                root = self.hierarchy.root_issue(i.key)
-            except:
-                # nothing to do
-                continue
-            to_update.append(root.key)
+            for h in self.hierarchy.hierarchies:
+                try:
+                    root = h.root_issue(i.key)
+                except:
+                    # nothing to do
+                    continue
+                to_update.append(root.key)
         # Uniquify the list
         to_update = list(set(to_update))
         for u in to_update:
@@ -626,7 +414,7 @@ class BusinessTimeService(JiraService):
         conf['task_id'] = task_id
         self.conf.update(conf)
 
-        issues = self.search_issues("", expand='changelog')
+        issues = self.jira.search_issues_gen("", expand='changelog')
         for issue in issues:
             self.business_time(issue)
         # Remove the addon task id

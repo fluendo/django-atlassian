@@ -21,7 +21,7 @@ from django_atlassian.models.connect import SecurityContext
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from workmodel.services import WorkmodelService
-from workmodel.forms import HierarchyForm
+from workmodel.forms import HierarchyForm, HierarchyListForm
 
 def get_issues_progress(issues):
     """
@@ -295,7 +295,7 @@ def business_time_transitions_dashboard_item_configuration(request):
         url = "{}&jwt={}".format(url, token)
         return redirect(url)
     else:
-        filters = wm.search_filters()
+        filters = wm.jira.search_filters_gen()
         return render(
             request,
             'workmodel/transitions_dashboard_item_configuration.html',
@@ -321,7 +321,7 @@ def business_time_transitions_dashboard_item(request):
         conf = wm.jira.dashboard_item_property(dashboard_id, item_id,
                 "business-time-transitions-configuration")
     except:
-        filters = wm.search_filters()
+        filters = wm.jira.search_filters_gen()
         # Redirect to conf
         url = "{}?dashboardId={}&dashboardItemId={}".format(
                 reverse('workmodel-business-time-transitions-dashboard-item-configuration'),
@@ -503,24 +503,79 @@ def business_time_update_start_stop_fields(request):
 
 @xframe_options_exempt
 @jwt_required
-def hierarchy_configuration(request):
+def hierarchy_list(request):
     sc = request.atlassian_sc
     wm = WorkmodelService(sc)
+    # Create the formset
+    HierarchyListFormSet = formset_factory(HierarchyListForm, can_delete=True, extra=0)
+    formset = HierarchyListFormSet(
+        initial=wm.hierarchy.conf.raw['value']['hierarchies']
+    )
+    return render(request, 'workmodel/hierarchy_list.html', {
+        'formset': formset,
+    })
+
+@xframe_options_exempt
+@jwt_required
+@jwt_qsh_exempt
+def hierarchy_update_list(request):
+    sc = request.atlassian_sc
+    wm = WorkmodelService(sc)
+
+    HierarchyListFormSet = formset_factory(HierarchyListForm, can_delete=True, extra=0)
+    formset = HierarchyListFormSet(request.GET)
+
+    if formset.is_valid():
+        val = wm.hierarchy.conf.raw['value']
+        last_id = val['last_id']
+        hierarchies = val['hierarchies']
+        for form in formset.forms:
+            try:
+                item = [x for x in hierarchies if x['id'] == form.cleaned_data['id']][0]
+            except:
+                # Is a new item
+                last_id = last_id + 1
+                item = {'id': last_id, 'levels': []}
+                hierarchies.append(item)
+
+            if form.cleaned_data['DELETE']:
+                hierarchies.remove(item)
+            else:
+                item['name'] = form.cleaned_data['name']
+        # Update the configuration
+        val['last_id'] = last_id
+        wm.hierarchy.conf.update(val)
+
+    url = reverse('workmodel-hierarchy-list')
+    token = sc.create_token('GET', url, account=request.atlassian_account_id)
+    url = "{}?jwt={}".format(url, token)
+    return redirect(url)
+
+
+@xframe_options_exempt
+@jwt_required
+@jwt_qsh_exempt
+def hierarchy_configuration(request, id):
+    sc = request.atlassian_sc
+    wm = WorkmodelService(sc)
+    val = wm.hierarchy.conf.raw['value']
+    h = [x for x in val['hierarchies'] if x['id'] == int(id)][0]
     # Create the formset
     HierarchyFormSet = formset_factory(HierarchyForm, can_order=True, can_delete=True, extra=0)
     formset = HierarchyFormSet(
         form_kwargs={'hierarchy_service': wm.hierarchy},
-        initial=wm.hierarchy.conf.raw['value']['hierarchy']
+        initial=h['levels']
     )
     return render(request, 'workmodel/hierarchy_configuration.html', {
         'formset': formset,
+        'id': id,
     })
 
 
 @xframe_options_exempt
 @jwt_required
 @jwt_qsh_exempt
-def hierarchy_update_configuration(request):
+def hierarchy_update_configuration(request, id):
     sc = request.atlassian_sc
     wm = WorkmodelService(sc)
 
@@ -530,11 +585,11 @@ def hierarchy_update_configuration(request):
     )
 
     if formset.is_valid():
-        hierarchy = []
+        levels = []
         for form in formset.ordered_forms:
             if form.cleaned_data['DELETE']:
                 continue
-            hierarchy_level = {
+            level = {
                 'is_container': form.cleaned_data['is_container'],
                 'field': form.cleaned_data['field'],
                 'link': form.cleaned_data['link'],
@@ -542,13 +597,14 @@ def hierarchy_update_configuration(request):
                 'type': form.cleaned_data['type'],
                 'issues': form.cleaned_data['issues'],
             }
-            hierarchy.append(hierarchy_level)
+            levels.append(level)
         # Update the configuration
         val = wm.hierarchy.conf.raw['value']
-        val['hierarchy'] = hierarchy
+        h = [x for x in val['hierarchies'] if x['id'] == int(id)][0]
+        h['levels'] = levels
         wm.hierarchy.conf.update(val)
 
-    url = reverse('workmodel-hierarchy-configuration')
+    url = reverse('workmodel-hierarchy-configuration', kwargs={'id': id})
     token = sc.create_token('GET', url, account=request.atlassian_account_id)
     url = "{}?jwt={}".format(url, token)
     return redirect(url)

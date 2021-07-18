@@ -1,5 +1,9 @@
 from django import forms
 
+class HierarchyListForm(forms.Form):
+    id = forms.IntegerField(required=False, widget=forms.HiddenInput)
+    name = forms.CharField(widget=forms.TextInput(attrs={'class': 'text'}))
+
 class HierarchyForm(forms.Form):
     is_operative = forms.BooleanField(required=False)
     is_container = forms.BooleanField(required=False)

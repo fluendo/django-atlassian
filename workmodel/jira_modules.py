@@ -128,12 +128,12 @@ modules = [
               "key": "workmodel-business-time-configuration"
             },
             {
-                "url": "{% url 'workmodel-hierarchy-configuration' %}",
+                "url": "{% url 'workmodel-hierarchy-list' %}",
                 "location": "admin_plugins_menu/workmodel-admin",
                 "name": {
                     "value": "Hierarchies"
               },
-              "key": "workmodel-hierarchy-configuration"
+              "key": "workmodel-hierarchy-list"
             }
         ],
     }
