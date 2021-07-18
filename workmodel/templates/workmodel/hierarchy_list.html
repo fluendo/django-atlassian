@@ -1,0 +1,81 @@
+{% extends 'atlassian_addon/page.html' %}
+{% load static %}
+{% block extra-scripts %}
+  <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+{% endblock %}
+{% block main %}
+  <script type="text/underscore-template" id="hierarchyTemplate">
+    <tr>
+      <td>{{ formset.empty_form.name }}</td>
+      <td></td>
+      <td>{{ formset.empty_form.DELETE }}</td>
+    </tr>
+  </script>
+  <script>
+    AJS.$(document).ready(function() {
+      AP.context.getToken(function(token) {
+        $('.jwt').attr('value', token);
+        $('.edit').each(function() {
+          $(this).attr('href', $(this).attr('href') + "?jwt=" + token);
+        });
+      });
+    });
+    AJS.$(document).on('click', '#add-row', function(event) {
+      event.preventDefault();
+      var form_idx = $('#id_form-TOTAL_FORMS').val();
+      var cloned_row = _.template($('#hierarchyTemplate').html().replace(/__prefix__/g, form_idx))();
+      // Update the total number
+      $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+      var last_row = $("tbody tr").last()[0];
+      if (last_row)
+          $(cloned_row).insertAfter(last_row);
+      else
+          $("tbody").append(cloned_row);
+    });
+  </script>
+  <div class="aui-page-panel" style="min-height: 500px">
+    <div class="aui-page-panel-inner">
+      <section class="aui-page-panel-content">
+        <div class="aui-page-header">
+          <div class="aui-page-header-inner">
+            <div class="aui-page-header-main">
+              <h1 class="component-heading">Hierarchies</h1>
+            </div>
+          </div>
+        </div>
+        <div id="configuration">
+          <form id="configuration-form" class="aui" method="get" action="{% url 'workmodel-hierarchy-update-list' %}">
+            <input class="jwt" type="hidden" name="jwt"/>
+            {{ formset.management_form }}
+            <table class="aui">
+              <thead>
+                <tr>
+                  <th id="name">Name</th>
+                  <th id="edit">Edit</th>
+                  <th id="delete">Delete</th>
+                </tr>
+              <tbody>
+              {% for form in formset %}
+                <tr>
+                  <td>{{ form.id }} {{ form.name }}</td>
+                  <td><a class="edit" href="{% url 'workmodel-hierarchy-configuration' id=form.id.value %}">Edit</a></td>
+                  <td>{{ form.DELETE }}</td>
+                </td>
+              {% endfor %}
+              </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="2"></td>
+                    <td>
+                      <button id="add-row" class="aui-button aui-button-primary">Add</button>
+                      <button id="save" class="aui-button aui-button-primary">Save</button>
+                    </td>
+                  </tr>
+              </tfoot>
+            </table>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

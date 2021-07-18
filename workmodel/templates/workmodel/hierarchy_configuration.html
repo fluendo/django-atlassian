@@ -76,7 +76,6 @@
       event.preventDefault();
       var form_idx = $('#id_form-TOTAL_FORMS').val();
       var cloned_row = _.template($('#hierarchyTemplate').html().replace(/__prefix__/g, form_idx))();
-      // Update the order
       var last_row = $("tbody tr").last()[0];
       // Update the total number
       $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
@@ -85,8 +84,10 @@
       else
           $("tbody").append(cloned_row);
       cloned_row = AJS.$("tbody tr").last()
+      // Update the field types
       $(cloned_row).find(".selector-ui").auiSelect2();
       $(cloned_row).find("input[name*='ORDER']").attr('type', 'hidden');
+      // Update the order
       $(cloned_row).find("input[name*='ORDER']").val(parseInt(form_idx));
       // Change the order arrows behaviour
       update_arrows(last_row);
@@ -147,12 +148,12 @@
         <div class="aui-page-header">
           <div class="aui-page-header-inner">
             <div class="aui-page-header-main">
-              <h1 class="component-heading">Hierarchies</h1>
+              <h1 class="component-heading">Hierarchy levels</h1>
             </div>
           </div>
         </div>
         <div id="configuration">
-          <form id="configuration-form" class="aui" method="get" action="{% url 'workmodel-hierarchy-update-configuration' %}">
+          <form id="configuration-form" class="aui" method="get" action="{% url 'workmodel-hierarchy-update-configuration' id=id%}">
             <input class="jwt" type="hidden" name="jwt"/>
             {{ formset.management_form }}
             <table class="aui">

@@ -32,6 +32,7 @@ class Transition(object):
 
     def __str__(self):
         return "{} -> {} [{}]".format(self.from_date, self.to_date, self.status)
+
     def __repr__(self):
         return str(self)
 
