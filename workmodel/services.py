@@ -381,8 +381,8 @@ class BusinessTimeService(JiraService):
         issue_types = []
         for h in self.hierarchy.hierarchies:
             for l in h.hierarchies:
-                if h.is_operative:
-                    issue_types += h.get_issue_types()
+                if l.is_operative:
+                    issue_types += l.get_issue_types()
         # Uniquify the list
         issue_types = list(set(issue_types))
         if not issue_types:
