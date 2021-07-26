@@ -154,11 +154,11 @@ def addon_enabled(request):
     # Confirm that there's already a schedule every day
     schedule, created = IntervalSchedule.objects.get_or_create(every=1, period=IntervalSchedule.DAYS)
     # Confirm that there's already a job that rescans every issue
-    if not PeriodicTask.objects.filter(args=json.dumps(['security_context.id', sc.id])).count():
+    if not PeriodicTask.objects.filter(args=json.dumps([sc.id])).count():
         PeriodicTask.objects.create(
             interval=schedule, name="Update In-Progress business time",
             task='workmodel.tasks.update_in_progress_business_time',
-            args=json.dumps(['security_context.id', sc.id]),
+            args=json.dumps([sc.id]),
         )
     return HttpResponse(204)
 
