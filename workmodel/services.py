@@ -348,11 +348,14 @@ class BusinessTimeService(JiraService):
                 children = self.hierarchy.child_issues(issue, expand='changelog', recurse=False)
                 for ch in children:
                     has_children = True
-                    all_transitions.append(self.business_time(ch))
+                    ch_transition = self.business_time(ch)
+                    if ch_transition:
+                        all_transitions.append(ch_transition)
             if not has_children and l.is_operative:
                 # No children, do our own stuff
                 operative_transition = self.generate_transition_categories(issue)
-                all_transitions.append(operative_transition)
+                if operative_transition:
+                    all_transitions.append(operative_transition)
 
         if len(all_transitions):
             logger.info("Normalizing {} transitions for issue {}: {}".format(len(all_transitions), issue, all_transitions))
@@ -399,12 +402,8 @@ class BusinessTimeService(JiraService):
                 except:
                     # nothing to do
                     continue
-                to_update.append(root.key)
-        # Uniquify the list
-        to_update = list(set(to_update))
-        for u in to_update:
-            logger.info("Updating business time for In-Progress issue {}".format(u))
-            self.business_time(u)
+                logger.info("Updating business time for In-Progress issue {}".format(root.key))
+                self.business_time(root.key)
 
     def update_all_business_time(self, task_id):
         logger.info("Updating all issues")
