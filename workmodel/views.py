@@ -7,6 +7,7 @@ from urlparse import urlparse
 from jira import JIRA
 import datetime
 from dateutil.relativedelta import relativedelta
+import logging
 
 from django.forms import formset_factory
 from django.urls import reverse
@@ -22,6 +23,8 @@ from django_celery_beat.models import PeriodicTask, IntervalSchedule
 
 from workmodel.services import WorkmodelService
 from workmodel.forms import HierarchyForm, HierarchyListForm
+
+logger = logging.getLogger('workmodel_logger')
 
 def get_issues_progress(issues):
     """
@@ -260,6 +263,7 @@ def issue_updated(request):
                 # Update ourselves
                 to_update.append(issue['key'])
     # Uniquify the list
+    logger.info("Triggering tasks to update {}".format(to_update))
     to_update = list(set(to_update))
     # Create a task to update each progress
     from workmodel.tasks import update_issue_business_time
