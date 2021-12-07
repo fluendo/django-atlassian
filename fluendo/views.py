@@ -66,14 +66,15 @@ def customers_proxy_view(request):
 def company_view(request):
     sc = request.atlassian_sc
     key = request.GET.get('key')
-    property_key = 'fluendo'
+    property_key = 'companies'
 
     jira = get_jira(sc)
     company = company_proxy_cache(request)
+
     try:
         p = jira.issue_property(key, property_key)
         company_name = p.value.company
-        company_id = p.value.company_id
+        company_id = int(p.value.company_id)
     except:
         company_name = None
         company_id = None

@@ -30,7 +30,7 @@ modules = [
                 },
                 "entityType": "issue",
                 "keyConfigurations": [{
-                    "propertyKey": "fluendo",
+                    "propertyKey": "companies",
                     "extractions": [{
                             "objectName": "company",
                             "type": "text"
@@ -79,8 +79,8 @@ modules = [
                 },
                 "type": "read_only",
                 "property": {
-                    "path": "customer",
                     "key": "customers",
+                    "path": "customer",
                     "type": "string"
                 }
             },
@@ -94,7 +94,7 @@ modules = [
                 },
                 "type": "read_only",
                 "property": {
-                    "key": "fluendo",
+                    "key": "companies",
                     "path": "company",
                     "type": "string"
                 }

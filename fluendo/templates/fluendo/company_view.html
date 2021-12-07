@@ -40,7 +40,7 @@
       save: function(data, errorCallback) {
         AP.require(['request'], function(request) {
           request({
-            url: '/rest/api/3/issue/{{ key }}/properties/fluendo',
+            url: '/rest/api/3/issue/{{ key }}/properties/companies',
             type: 'PUT',
             contentType: 'application/json',
             data: JSON.stringify(data),
@@ -51,7 +51,7 @@
       clear: function(errorCallback) {
         AP.require(['request'], function(request) {
           request({
-            url: '/rest/api/3/issue/{{ key }}/properties/fluendo',
+            url: '/rest/api/3/issue/{{ key }}/properties/companies',
             type: 'DELETE',
             error: errorCallback
           });
