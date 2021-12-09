@@ -23,6 +23,24 @@ modules = [
                     "condition": "user_is_logged_in"
                 }]
             },
+            {
+                "key": "jira-issue-company-indexing",
+                "name": {
+                    "value": "Company Index",
+                },
+                "entityType": "issue",
+                "keyConfigurations": [{
+                    "propertyKey": "companies",
+                    "extractions": [{
+                            "objectName": "company",
+                            "type": "text"
+                        },
+                    ]
+                }],
+                "conditions": [{
+                    "condition": "user_is_logged_in"
+                }]
+            },
         ],
         "jiraIssueGlances": [
             {
@@ -34,20 +52,20 @@ modules = [
                 "content": {
                     "type": "label",
                     "label": {
-                        "value": "Open Fluendo"
+                        "value": "Company"
                     }
                 },
                 "target": {
                   "type": "web_panel",
-                  "url": "{% url 'fluendo-customers-view' %}?key={issue.key}",
+                  "url": "{% url 'fluendo-company-view' %}?key={issue.key}",
                 },
                 "name": {
-                    "value": "Fluendo"
+                    "value": "Company"
                 },
                 "conditions": [{
                     "condition": "user_is_logged_in"
                 }],
-                "key": "fluendo-customer-issue-glance"
+                "key": "fluendo-company-issue-glance"
             }
         ],
         "jiraIssueFields": [
@@ -61,11 +79,26 @@ modules = [
                 },
                 "type": "read_only",
                 "property": {
-                    "path": "customer",
                     "key": "customers",
+                    "path": "customer",
                     "type": "string"
                 }
-            }
+            },
+            {
+                "key" : "fluendo-company-name-field",
+                "name" : {
+                    "value" : "Fluendo Company",
+                },
+                "description" : {
+                    "value" : "Fluendo Company"
+                },
+                "type": "read_only",
+                "property": {
+                    "key": "companies",
+                    "path": "company",
+                    "type": "string"
+                }
+            },
         ],
     }
 ]

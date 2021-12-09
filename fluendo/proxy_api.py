@@ -27,11 +27,33 @@ def customers_proxy(request):
         data = None
     return JsonResponse(data, safe=False)
 
+def company_proxy(request):
+    web_auth = {'Authorization': 'Token ' + settings.WEB_FLUENDO_TOKEN}
+    api_url = settings.WEB_FLUENDO_API_SERVER + '/company/'
+    r = requests.get(api_url, headers=web_auth)
+    if r.status_code == 200:
+        if type(r.json()) == dict:
+            request_data = r.json()['results']
+        elif type(r.json()) == list:
+            request_data = r.json()
+        data = sorted(
+            request_data,
+            key=operator.itemgetter('name')
+        )
+    else:
+        data = None
+    return JsonResponse(data, safe=False)
+
 # Cache time to live is 5 minutes.
 CACHE_TTL = 60 * 5
 @cache_page(CACHE_TTL)
 def customers_proxy_cache(request):
     return customers_proxy(request)
+
+CACHE_TTL = 60 * 5
+@cache_page(CACHE_TTL)
+def company_proxy_cache(request):
+    return company_proxy(request)
 
 @xframe_options_exempt
 def customer_by_id_proxy(request, pk):
@@ -59,7 +81,7 @@ def account_contacts_by_pk(request, contact_pk):
         api_url += "{pk}/".format(pk=contact_pk)
     r = requests.get(api_url, headers=web_auth)
     data = r.json()
-    return JsonResponse(data, safe=False) 
+    return JsonResponse(data, safe=False)
 
 @xframe_options_exempt
 def patch_account(account_pk, json_data):
