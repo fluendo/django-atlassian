@@ -72,21 +72,6 @@ modules = [
             {
                 "key" : "fluendo-customer-name-field",
                 "name" : {
-                    "value" : "Fluendo Customer",
-                },
-                "description" : {
-                    "value" : "Fluendo Customer"
-                },
-                "type": "read_only",
-                "property": {
-                    "key": "customers",
-                    "path": "customer",
-                    "type": "string"
-                }
-            },
-            {
-                "key" : "fluendo-company-name-field",
-                "name" : {
                     "value" : "Fluendo Company",
                 },
                 "description" : {
