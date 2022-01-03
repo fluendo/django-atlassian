@@ -2,6 +2,7 @@
 import jira
 from jira import JIRA
 
+
 class WorkmodelJira(JIRA):
     def _get_issue(self, issue, expand=None):
         if type(issue) == str or type(issue) == unicode:
@@ -36,5 +37,3 @@ class WorkmodelJira(JIRA):
             start_at += total
             r = self.search_filters(startAt=start_at, expand=expand)
             total = len(r)
-
-

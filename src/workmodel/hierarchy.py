@@ -1,18 +1,28 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+
 class Hierarchy(object):
     def __init__(self, jira, name, levels):
         self.hierarchies = []
         self.name = name
         self.jira = jira
         for l in levels:
-            if l['type'] == 'sub-task':
+            if l["type"] == "sub-task":
                 self.hierarchies.append(SubTaskHierarchyLevel(jira))
-            if l['type'] == 'epic':
-                self.hierarchies.append(EpicHierarchyLevel(jira, l['is_operative']))
-            elif l['type'] == 'custom':
-                self.hierarchies.append(CustomHierarchyLevel(jira, l['is_operative'], l['is_container'], l['issues'], l['field'], l['link']))
+            if l["type"] == "epic":
+                self.hierarchies.append(EpicHierarchyLevel(jira, l["is_operative"]))
+            elif l["type"] == "custom":
+                self.hierarchies.append(
+                    CustomHierarchyLevel(
+                        jira,
+                        l["is_operative"],
+                        l["is_container"],
+                        l["issues"],
+                        l["field"],
+                        l["link"],
+                    )
+                )
 
     def root_issue(self, issue):
         # No configuration, do nothing
@@ -34,7 +44,7 @@ class Hierarchy(object):
         for idx in range(1, len(self.hierarchies)):
             idx = l - idx
             h = self.hierarchies[idx]
-            h_next = self.hierarchies[idx-1]
+            h_next = self.hierarchies[idx - 1]
             parent = h.parent(issue, h_next)
             if parent:
                 issue = parent
@@ -61,7 +71,7 @@ class Hierarchy(object):
         # TODO reverse on the configuration
         for idx in range(0, len(self.hierarchies) - 1):
             h = self.hierarchies[idx]
-            h_prev = self.hierarchies[idx+1]
+            h_prev = self.hierarchies[idx + 1]
             if h.check_issue_type(issue):
                 jql = h.children_jql(issue, h_prev)
                 if h_prev.is_operative and extra_jql:
@@ -73,13 +83,14 @@ class Hierarchy(object):
                     if (extra_jql and h_prev.is_operative) or not extra_jql:
                         yield ch
                     if recurse:
-                        for sch in self.child_issues(ch, expand=expand, extra_jql=extra_jql):
+                        for sch in self.child_issues(
+                            ch, expand=expand, extra_jql=extra_jql
+                        ):
                             yield sch
                 # no issues, try with the next level
                 if not has_children:
                     continue
                 break
-
 
     def hierarchy_level(self, issue):
         # No configuration, do nothing
@@ -95,7 +106,9 @@ class Hierarchy(object):
         ret = None
         for idx in range(0, len(self.hierarchies)):
             h = self.hierarchies[idx]
-            h_prev = None if idx == len(self.hierarchies) - 1 else self.hierarchies[idx+1]
+            h_prev = (
+                None if idx == len(self.hierarchies) - 1 else self.hierarchies[idx + 1]
+            )
             if h.check_issue_type(issue):
                 ret = h
 
@@ -115,6 +128,7 @@ class Hierarchy(object):
                     break
         return ret
 
+
 class HierarchyLevel(object):
     def __init__(self, jira, t, is_operative, is_container, *args, **kwargs):
         self.jira = jira
@@ -123,7 +137,11 @@ class HierarchyLevel(object):
         self.is_container = is_container
 
     def __eq__(self, other):
-        if self.type == other.type and self.is_operative == other.is_operative and self.is_container == other.is_container:
+        if (
+            self.type == other.type
+            and self.is_operative == other.is_operative
+            and self.is_container == other.is_container
+        ):
             return True
         else:
             return False
@@ -198,7 +216,9 @@ class HierarchyLevel(object):
         return None
 
     def __str__(self):
-        return "type: {}, is_container: {}, is_operative: {}".format(self.type, self.is_container, self.is_operative)
+        return "type: {}, is_container: {}, is_operative: {}".format(
+            self.type, self.is_container, self.is_operative
+        )
 
     def __repr__(self):
         return str(self)
@@ -206,9 +226,15 @@ class HierarchyLevel(object):
 
 class SubTaskHierarchyLevel(HierarchyLevel):
     def __init__(self, jira, *args, **kwargs):
-        super(SubTaskHierarchyLevel, self).__init__(jira, 'sub-task', True, False, *args, **kwargs)
-        self.sub_tasks = list(set([x.name for x in self.jira.issue_types() if x.subtask == True]))
-        self.parent_field = [x for x in self.jira.fields() if 'Parent' == x['name']][0]['key']
+        super(SubTaskHierarchyLevel, self).__init__(
+            jira, "sub-task", True, False, *args, **kwargs
+        )
+        self.sub_tasks = list(
+            set([x.name for x in self.jira.issue_types() if x.subtask == True])
+        )
+        self.parent_field = [x for x in self.jira.fields() if "Parent" == x["name"]][0][
+            "key"
+        ]
 
     def get_issue_types(self):
         return self.sub_tasks
@@ -228,9 +254,13 @@ class SubTaskHierarchyLevel(HierarchyLevel):
 
 class EpicHierarchyLevel(HierarchyLevel):
     def __init__(self, jira, is_operative, *args, **kwargs):
-        super(EpicHierarchyLevel, self).__init__(jira, 'epic', is_operative, True, *args, **kwargs)
-        self.epic = [x.name for x in self.jira.issue_types() if x.name == 'Epic']
-        self.epic_field = [x for x in self.jira.fields() if 'Epic Link' == x['name']][0]['key']
+        super(EpicHierarchyLevel, self).__init__(
+            jira, "epic", is_operative, True, *args, **kwargs
+        )
+        self.epic = [x.name for x in self.jira.issue_types() if x.name == "Epic"]
+        self.epic_field = [x for x in self.jira.fields() if "Epic Link" == x["name"]][
+            0
+        ]["key"]
 
     def get_issue_types(self):
         return self.epic
@@ -247,15 +277,27 @@ class EpicHierarchyLevel(HierarchyLevel):
 
 
 class CustomHierarchyLevel(HierarchyLevel):
-    def __init__(self, jira, is_operative, is_container, issues = None, field = None, link = None, *args, **kwargs):
-        super(CustomHierarchyLevel, self).__init__(jira, 'custom', is_operative, is_container, *args, **kwargs)
+    def __init__(
+        self,
+        jira,
+        is_operative,
+        is_container,
+        issues=None,
+        field=None,
+        link=None,
+        *args,
+        **kwargs
+    ):
+        super(CustomHierarchyLevel, self).__init__(
+            jira, "custom", is_operative, is_container, *args, **kwargs
+        )
         if issues:
             self.issues = [x.name for x in self.jira.issue_types() if x.id in issues]
         else:
             self.issues = [x.name for x in self.jira.issue_types()]
         self.field = None
         if field:
-            self.field = [x for x in self.jira.fields() if x['id'] == field][0]['key']
+            self.field = [x for x in self.jira.fields() if x["id"] == field][0]["key"]
         self.link = None
         if link:
             self.link = [x for x in self.jira.issue_link_types() if x.id == link][0]
@@ -264,7 +306,11 @@ class CustomHierarchyLevel(HierarchyLevel):
         if super(CustomHierarchyLevel, self).__eq__(other) == False:
             return False
         # Same type, compare in depth
-        if self.issues == other.issues and self.field == other.field and self.link == other.link:
+        if (
+            self.issues == other.issues
+            and self.field == other.field
+            and self.link == other.link
+        ):
             return True
         else:
             return False
@@ -312,5 +358,3 @@ class CustomHierarchyLevel(HierarchyLevel):
             return "issue in linkedIssues({{issue_key}}, {})".format(self.link.outward)
         else:
             raise NotImplementedError
-
-

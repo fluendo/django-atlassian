@@ -5,4 +5,4 @@ from django.apps import AppConfig
 
 
 class WorkModelConfig(AppConfig):
-    name = 'workmodel'
+    name = "workmodel"

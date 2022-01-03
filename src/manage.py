@@ -5,8 +5,8 @@ import sys
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "atlassian_addon.settings.dev")
     try:
-        from django.core.management import execute_from_command_line
         from django.conf import settings
+        from django.core.management import execute_from_command_line
     except ImportError:
         # The above import may fail for some other reason. Ensure that the
         # issue is really that Django is missing to avoid masking other
@@ -21,11 +21,12 @@ if __name__ == "__main__":
             )
         raise
     if settings.DEBUG:
-        if os.environ.get('RUN_MAIN') or os.environ.get('WERKZEUG_RUN_MAIN'):
+        if os.environ.get("RUN_MAIN") or os.environ.get("WERKZEUG_RUN_MAIN"):
             try:
-                import ptvsd 
-                ptvsd.enable_attach(address=('0.0.0.0', 3002))
-                print "Attached remote debugger"
+                import ptvsd
+
+                ptvsd.enable_attach(address=("0.0.0.0", 3002))
+                print("Attached remote debugger")
             except:
                 pass
 

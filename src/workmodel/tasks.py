@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+
 import datetime
 import logging
 
-from jira import JIRA
 from celery import shared_task
-from django_atlassian.models.connect import SecurityContext
 from django.utils import dateparse
+from django_atlassian.models.connect import SecurityContext
 
+from jira import JIRA
 from workmodel.services import WorkmodelService
+
 
 @shared_task
 def update_issue_business_time(sc_id, issue_key):

@@ -5,4 +5,4 @@ from django.apps import AppConfig
 
 
 class FluendoConfig(AppConfig):
-    name = 'fluendo'
+    name = "fluendo"

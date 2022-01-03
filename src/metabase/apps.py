@@ -5,4 +5,4 @@ from django.apps import AppConfig
 
 
 class MetabaseModelConfig(AppConfig):
-    name = 'metabase'
+    name = "metabase"

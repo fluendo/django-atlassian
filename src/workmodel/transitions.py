@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import bisect 
+import bisect
 import datetime
+
 
 def all_equal(iterator):
     iterator = iter(iterator)
@@ -13,10 +14,10 @@ def all_equal(iterator):
 
 
 class Transition(object):
-    IN_PROGRESS = 'In Progress'
-    DONE = 'Done'
-    TO_DO = 'To Do'
-    NONE = 'None'
+    IN_PROGRESS = "In Progress"
+    DONE = "Done"
+    TO_DO = "To Do"
+    NONE = "None"
 
     def __init__(self, from_date, to_date, status):
         self.from_date = from_date
@@ -25,7 +26,10 @@ class Transition(object):
 
     def to_days(self):
         # Get the timespan
-        daygenerator = (self.from_date + datetime.timedelta(x + 1) for x in range((self.to_date - self.from_date).days))
+        daygenerator = (
+            self.from_date + datetime.timedelta(x + 1)
+            for x in range((self.to_date - self.from_date).days)
+        )
         # Remove non working days
         days = sum(1 for day in daygenerator if day.weekday() < 5)
         return days
@@ -111,14 +115,14 @@ class Transitions(object):
                 status = self.transitions[i].status
 
             if t >= dates[j]:
-              from_date = t
-              next_status = status
-              i += 1
-              if t == dates[j]:
-                 j += 1
+                from_date = t
+                next_status = status
+                i += 1
+                if t == dates[j]:
+                    j += 1
             else:
-              from_date = dates[j]
-              j += 1
+                from_date = dates[j]
+                j += 1
 
             if to_date:
                 new_transition = Transition(from_date, to_date, last_status)
@@ -143,6 +147,7 @@ class Transitions(object):
 
     def __repr__(self):
         return str(self)
+
 
 class TransitionsCollection(object):
     def __init__(self, transitions=None):
@@ -176,7 +181,9 @@ class TransitionsCollection(object):
         self.transitions.append(transition)
 
     def transpose(self):
-        transposed = TransitionsCollection(map(Transitions, map(list, zip(*self.transitions))))
+        transposed = TransitionsCollection(
+            map(Transitions, map(list, zip(*self.transitions)))
+        )
         return transposed
 
     def dates(self):
@@ -191,7 +198,7 @@ class TransitionsCollection(object):
                 if t.to_date not in dates:
                     bisect.insort(dates, t.to_date)
             if len(ts):
-                start = ts[len(ts) - 1].from_date 
+                start = ts[len(ts) - 1].from_date
                 if not start in dates:
                     bisect.insort(dates, start)
         # FIXME yeah, python does not have a way to insert reverse sorted items on a list
