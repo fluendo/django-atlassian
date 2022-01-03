@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "atlassian_addon"
+version = "0.1.0"
+description = "Fluendo Atlassian Add-on"
+authors = ["Fluendo S.A. <support@fluendo.com>"]
+
+[tool.poetry.dependencies]
+python = "~2.7"
+atlassian-jwt = "1.8.1"
+Django = "1.11.15"
+django-celery-beat = "1.1.1"
+psycopg2 = "2.7.5"
+django-db-logger = "^0.1.11"
+django-countries = "5.5"
+django-widget-tweaks = "1.4.5"
+django-atlassian = {git = "https://github.com/fluendo/django-atlassian.git"}
+django-celery-results = "1.0.1"
+django-debug-toolbar = "1.11"
+python-dateutil = "2.7.3"
+redis = "3.2.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

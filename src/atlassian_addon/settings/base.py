@@ -22,9 +22,11 @@ URL_BASE = os.environ.get('URL_BASE')
 DJANGO_ATLASSIAN_JIRA_NAME = "Fluendo Atlassian Extensions"
 DJANGO_ATLASSIAN_JIRA_DESCRIPTION = "Fluendo Atlassian Extensions"
 DJANGO_ATLASSIAN_JIRA_KEY = "com.fluendo.atlassian-addon"
+DJANGO_ATLASSIAN_JIRA_SCOPES = ["read", "write", "delete", "act_as_user"]
 DJANGO_ATLASSIAN_CONFLUENCE_NAME = "Fluendo Atlassian Extensions"
 DJANGO_ATLASSIAN_CONFLUENCE_DESCRIPTION = "Fluendo Atlassian Extensions"
 DJANGO_ATLASSIAN_CONFLUENCE_KEY = "com.fluendo.atlassian-addon"
+DJANGO_ATLASSIAN_CONFLUENCE_SCOPES = ["read", "write", "delete"]
 DJANGO_ATLASSIAN_VENDOR_NAME = "Fluendo S.A."
 DJANGO_ATLASSIAN_VENDOR_URL = "https://fluendo.com/"
 
@@ -122,6 +124,11 @@ LOGGING = {
             'filename': '/tmp/django-DEBUG.log',
             'formatter': 'simple'
         },
+        'workmodel_db': {
+            'level': 'DEBUG',
+            'class': 'workmodel.logger.LogHandler',
+            'formatter': 'simple'
+        }
     },
     'loggers': {
         'django_atlassian': {
@@ -139,6 +146,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'workmodel_logger': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        }
     },
 }
 
@@ -156,6 +167,7 @@ INSTALLED_APPS = [
     'django_atlassian.apps.DjangoAtlassianConfig',
     'django_celery_results',
     'django_celery_beat',
+    'django_db_logger',
     'sales.apps.SalesConfig',
     'workmodel.apps.WorkModelConfig',
     'metabase.apps.MetabaseModelConfig',

@@ -1,23 +1,64 @@
 version: "3"
+
 services:
-  addon:
+  app:
     restart: always
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
-    env_file: .env
     ports:
         - "9000:8000"
-    external_links:
-        - web-fluendo_fluendo_1:fluendo
-        - web-fluendo_db_1:db
-        - web-fluendo_redis_1:redis
+    links:
+      - db:db
+      - redis:redis
     volumes:
-        - .:/app
-        - ../django-atlassian/django_atlassian:/app/django_atlassian
+      - .:/app
+    command: sh -c "poetry install && poetry run python src/manage.py runserver 0.0.0.0:8000"
+    container_name: atlassian-addon-app
+    env_file: .env
     tty: true
     stdin_open: true
 
-networks:
-  default:
-    external:
-      name: web-fluendo_default
+  db:
+    restart: always
+    image: postgres:latest
+    volumes:
+      - db:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWD}
+    container_name: ${DB_HOST}
+    env_file: .env
+    tty: true
+    stdin_open: true
+  
+  redis:
+    restart: always
+    image: redis:latest
+    volumes:
+      - redis:/data
+    container_name: ${REDIS_HOST}
+    env_file: .env
+    tty: true
+    stdin_open: true
+  
+  celery_worker:
+    restart: always
+    build: .
+    links:
+      - db:db
+      - redis:redis
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG="true"
+    command: sh -c "poetry install && cd src && poetry run celery -A atlassian_addon.celery worker -l INFO"
+    container_name: atlassian-addon-celery
+    env_file: .env
+    tty: true
+    stdin_open: true
+
+volumes:
+    redis:
+      name: atlassian-addon-redis
+    db:
+      name: atlassian-addon-db
