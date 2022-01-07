@@ -1,68 +1,22 @@
 import os
 
+import environ
+
+env = environ.Env(DEBUG=(bool, False))
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-DB_NAME = os.environ.get("DB_NAME")
-DB_USER = os.environ.get("DB_USER")
-DB_PASSWD = os.environ.get("DB_PASSWD")
-DB_HOST = os.environ.get("DB_HOST")
-DB_PORT = os.environ.get("DB_PORT")
-
-REDIS_HOST = os.environ.get("REDIS_HOST")
-REDIS_PORT = os.environ.get("REDIS_PORT", 6379)
-
-JIRA_SERVER = os.environ.get("JIRA_SERVER")
-JIRA_USER = os.environ.get("JIRA_USER")
-JIRA_TOKEN = os.environ.get("JIRA_TOKEN")
-
-URL_BASE = os.environ.get("URL_BASE")
-
-# Django Atlassian required configuration
-DJANGO_ATLASSIAN_JIRA_NAME = "Fluendo Atlassian Extensions"
-DJANGO_ATLASSIAN_JIRA_DESCRIPTION = "Fluendo Atlassian Extensions"
-DJANGO_ATLASSIAN_JIRA_KEY = "com.fluendo.atlassian-addon"
-DJANGO_ATLASSIAN_JIRA_SCOPES = ["read", "write", "delete", "act_as_user"]
-DJANGO_ATLASSIAN_CONFLUENCE_NAME = "Fluendo Atlassian Extensions"
-DJANGO_ATLASSIAN_CONFLUENCE_DESCRIPTION = "Fluendo Atlassian Extensions"
-DJANGO_ATLASSIAN_CONFLUENCE_KEY = "com.fluendo.atlassian-addon"
-DJANGO_ATLASSIAN_CONFLUENCE_SCOPES = ["read", "write", "delete"]
-DJANGO_ATLASSIAN_VENDOR_NAME = "Fluendo S.A."
-DJANGO_ATLASSIAN_VENDOR_URL = "https://fluendo.com/"
-
-# Customers Server Token Auth
-WEB_FLUENDO_API_SERVER = os.environ.get("WEB_FLUENDO_API_SERVER")
-WEB_FLUENDO_TOKEN = os.environ.get("WEB_FLUENDO_TOKEN")
-
-DEBUG = os.environ.get("DJANGO_DEBUG", True)
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "-eqb$&qsdzfdt1tm0=rvhht=)rye(g^_q_$+t*4x$ob16g8t#1"
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = []
-
-FLUENDO = {
-    "BASE_ADMIN_URL": "//localhost:8000/en/admin/",
-    "FRESHSALES": {
-        "ACCOUNTS_URL": "freshsales/salesaccounts/",
-        "CONTACTS_URL": "freshsales/salescontacts/",
-    },
-    "CUSTOMERS": {
-        "CUSTOMERS_URL": "customers/customer/",
-        "CONTACTS_URL": "users/contact/",
-        "AGREEMENTS_URL": "sales/agreement/",
-    },
-    "USERS": {
-        "USERS_URL": "auth/user/",
-    },
-}
+ALLOWED_HOSTS = ["*"]
 
 HOST_MIDDLEWARE_URLCONF_MAP = {
     # The atlassian connect based app
@@ -71,34 +25,20 @@ HOST_MIDDLEWARE_URLCONF_MAP = {
     # "localhost": "fluendo.atlassian_urls",
 }
 
+INTERNAL_IPS = ["127.0.0.1", "localhost"]
+
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": DB_NAME,
-        "USER": DB_USER,
-        "PASSWORD": DB_PASSWD,
-        "HOST": DB_HOST,
-        "PORT": DB_PORT,
-    },
-    "jira": {
-        "ENGINE": "django_atlassian.backends.jira",
-        "NAME": JIRA_SERVER,
-        "USER": JIRA_USER,
-        "PASSWORD": JIRA_TOKEN,
-        "SECURITY": "",
-    },
-    "confluence": {
-        "ENGINE": "django_atlassian.backends.confluence",
-        "NAME": JIRA_SERVER,
-        "USER": JIRA_USER,
-        "PASSWORD": JIRA_TOKEN,
-        "SECURITY": "",
+        "ENGINE": env("DB_ENGINE"),
+        "NAME": env("DB_NAME"),
+        "USER": env("DB_USER"),
+        "PASSWORD": env("DB_PASSWD"),
+        "HOST": env("DB_HOST"),
+        "PORT": env.str("DB_PORT"),
     },
 }
-
-DATABASE_ROUTERS = ["django_atlassian.router.Router"]
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
@@ -128,26 +68,9 @@ LOGGING = {
             "formatter": "simple",
         },
     },
-    "loggers": {
-        "django_atlassian": {
-            "handlers": ["console", "log_file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-        "django_atlassian.backends.jira": {
-            "handlers": ["console", "log_file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-        "django_atlassian.backends.common": {
-            "handlers": ["console", "log_file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-        "workmodel_logger": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-        },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
     },
 }
 
@@ -235,20 +158,72 @@ USE_L10N = True
 
 USE_TZ = True
 
-
-# Celery related configuration
-CELERY_BROKER_URL = "redis://{}:{}".format(REDIS_HOST, REDIS_PORT)
-CELERY_RESULT_BACKEND = "django-db"
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static_media")
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static")
 STATICFILES_DIRS = [
     (
         "atlassian_addon",
         os.path.join(os.path.dirname(BASE_DIR), "atlassian_addon", "static"),
     ),
 ]
+
+# Cache
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://{}:{}/1".format(env("REDIS_HOST"), env.str("REDIS_PORT")),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
+# Celery related configuration
+CELERY_BROKER_URL = "redis://{}:{}".format(env("REDIS_HOST"), env.str("REDIS_PORT"))
+CELERY_RESULT_BACKEND = "django-db"
+
+# Fluendo related configuration
+FLUENDO = {
+    "BASE_ADMIN_URL": env("FLUENDO_BASE_ADMIN_URL"),
+    "FRESHSALES": {
+        "ACCOUNTS_URL": "freshsales/salesaccounts/",
+        "CONTACTS_URL": "freshsales/salescontacts/",
+    },
+    "CUSTOMERS": {
+        "CUSTOMERS_URL": "customers/customer/",
+        "CONTACTS_URL": "users/contact/",
+        "AGREEMENTS_URL": "sales/agreement/",
+    },
+    "USERS": {
+        "USERS_URL": "auth/user/",
+    },
+}
+WEB_FLUENDO_API_SERVER = env("WEB_FLUENDO_API_SERVER")
+WEB_FLUENDO_TOKEN = env("WEB_FLUENDO_TOKEN")
+
+# Django Atlassian
+URL_BASE = env("URL_BASE")
+DJANGO_ATLASSIAN_JIRA_NAME = "Fluendo Atlassian Extensions"
+DJANGO_ATLASSIAN_JIRA_DESCRIPTION = "Fluendo Atlassian Extensions"
+DJANGO_ATLASSIAN_JIRA_KEY = "com.fluendo.atlassian-addon"
+DJANGO_ATLASSIAN_JIRA_SCOPES = ["read", "write", "delete", "act_as_user"]
+DJANGO_ATLASSIAN_CONFLUENCE_NAME = "Fluendo Atlassian Extensions"
+DJANGO_ATLASSIAN_CONFLUENCE_DESCRIPTION = "Fluendo Atlassian Extensions"
+DJANGO_ATLASSIAN_CONFLUENCE_KEY = "com.fluendo.atlassian-addon"
+DJANGO_ATLASSIAN_CONFLUENCE_SCOPES = ["read", "write", "delete"]
+DJANGO_ATLASSIAN_VENDOR_NAME = "Fluendo S.A."
+DJANGO_ATLASSIAN_VENDOR_URL = "https://fluendo.com/"
+
+# Development
+if DEBUG:
+    INTERNAL_IPS = ["127.0.0.1", "localhost"]
+    INSTALLED_APPS += [
+        "debug_toolbar",
+    ]
+
+    MIDDLEWARE += [
+        "debug_toolbar.middleware.DebugToolbarMiddleware",
+    ]

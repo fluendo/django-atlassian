@@ -253,6 +253,26 @@ Django = ">=1.11"
 sqlparse = ">=0.2.0"
 
 [[package]]
+name = "django-environ"
+version = "0.4.5"
+description = "Django-environ allows you to utilize 12factor inspired environment variables to configure your Django application."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "django-redis"
+version = "4.10.0"
+description = "Full featured redis cache backend for Django."
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[package.dependencies]
+Django = ">=1.11"
+redis = ">=2.10.0"
+
+[[package]]
 name = "django-widget-tweaks"
 version = "1.4.5"
 description = "Tweak the form field rendering in templates, not in python-level form definitions."
@@ -567,7 +587,7 @@ testing = ["pathlib2", "unittest2", "jaraco.itertools", "func-timeout"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~2.7"
-content-hash = "6817a53c8a8879c7bb228507e09c304d5143d58287f5e8513bd40b9d729c6f1f"
+content-hash = "69b9e69eba1654092f55be0245e951b2b3be2dd412e455ccaecb6903a3497ba8"
 
 [metadata.files]
 amqp = [
@@ -697,6 +717,14 @@ django-db-logger = [
 django-debug-toolbar = [
     {file = "django-debug-toolbar-1.11.tar.gz", hash = "sha256:89d75b60c65db363fb24688d977e5fbf0e73386c67acf562d278402a10fc3736"},
     {file = "django_debug_toolbar-1.11-py2.py3-none-any.whl", hash = "sha256:c2b0134119a624f4ac9398b44f8e28a01c7686ac350a12a74793f3dd57a9eea0"},
+]
+django-environ = [
+    {file = "django-environ-0.4.5.tar.gz", hash = "sha256:6c9d87660142608f63ec7d5ce5564c49b603ea8ff25da595fd6098f6dc82afde"},
+    {file = "django_environ-0.4.5-py2.py3-none-any.whl", hash = "sha256:c57b3c11ec1f319d9474e3e5a79134f40174b17c7cc024bbb2fad84646b120c4"},
+]
+django-redis = [
+    {file = "django-redis-4.10.0.tar.gz", hash = "sha256:af0b393864e91228dd30d8c85b5c44d670b5524cb161b7f9e41acc98b6e5ace7"},
+    {file = "django_redis-4.10.0-py2.py3-none-any.whl", hash = "sha256:f46115577063d00a890867c6964ba096057f07cb756e78e0503b89cd18e4e083"},
 ]
 django-widget-tweaks = [
     {file = "django-widget-tweaks-1.4.5.tar.gz", hash = "sha256:f2e2c9c9be1ccc59061e248dcc2144f4906d594abe1a563902f4bdf6aa14e432"},
