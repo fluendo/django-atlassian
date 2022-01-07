@@ -12,8 +12,11 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poet
 
 Install pre-commit hooks
 ```
-poetry run pre-commit install
+sudo pip install --upgrade pre-commit
 ```
+
+Note that we don't use pre-commit under Poetry itself given the old version of Python. That's the
+same reason why the actual pre-commit hooks are references through their own repository.
 
 Run docker compose to launch the local development instances
 In order to access the Fluendo Web project you need to launch such services too
