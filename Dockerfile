@@ -1,13 +1,14 @@
 FROM python:2.7-slim
 
+# To avoid any interactive question
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBCONF_NONINTERACTIVE_SEEN=true
+
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTCODE=1
-RUN apt-get update && apt-get install -y build-essential \
-    libsasl2-dev \
-    libldap2-dev \
-    libssl-dev \
-    git
+RUN apt-get update
+RUN apt-get install -y git
+RUN rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
-COPY . .
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install poetry
