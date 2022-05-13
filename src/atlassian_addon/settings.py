@@ -62,11 +62,11 @@ LOGGING = {
             "filename": "/tmp/django-DEBUG.log",
             "formatter": "simple",
         },
-        "workmodel_db": {
-            "level": "DEBUG",
-            "class": "workmodel.logger.LogHandler",
-            "formatter": "simple",
-        },
+        # "workmodel_db": {
+        #     "level": "DEBUG",
+        #     "class": "workmodel.logger.LogHandler",
+        #     "formatter": "simple",
+        # },
     },
     "root": {
         "handlers": ["console"],
@@ -111,7 +111,7 @@ ROOT_URLCONF = "atlassian_addon.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": ["atlassian_addon/templates"],
+        "DIRS": [os.path.join(BASE_DIR, "atlassian_addon/templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

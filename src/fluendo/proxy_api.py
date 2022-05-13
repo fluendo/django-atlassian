@@ -48,9 +48,6 @@ def customers_proxy_cache(request):
     return customers_proxy(request)
 
 
-CACHE_TTL = 60 * 5
-
-
 @cache_page(CACHE_TTL)
 def company_proxy_cache(request):
     return company_proxy(request)
