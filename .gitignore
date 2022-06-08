@@ -5,3 +5,4 @@ static_media/
 jira-addon-venv
 .env
 web.env
+src/static
