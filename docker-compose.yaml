@@ -14,7 +14,7 @@ services:
     env_file: .env.local
     tty: true
     stdin_open: true
-    command: sh -c "/usr/bin/supervisord -n"
+    command: sh -c "poetry install && poetry run python src/manage.py runserver 0.0.0.0:8000"
     container_name: atlassian-addon-app
     networks:
       - default
@@ -39,6 +39,22 @@ services:
       - redis:/data
     env_file: .env.local
     container_name: ${REDIS_HOST}
+  
+  celery_worker:
+    restart: always
+    build: .
+    depends_on:
+      - redis
+      - app
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: fargate_atlassianaddon
+        awslogs-region: us-east-1
+        awslogs-stream-prefix: f_atlassianaddon
+    env_file: .env.prod
+    command: sh -c "poetry install && cd src && poetry run celery -A atlassian_addon.celery worker -l INFO"
+    container_name: atlassian-addon-celery
 
 volumes:
     redis:
