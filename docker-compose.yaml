@@ -46,13 +46,7 @@ services:
     depends_on:
       - redis
       - app
-    logging:
-      driver: awslogs
-      options:
-        awslogs-group: fargate_atlassianaddon
-        awslogs-region: us-east-1
-        awslogs-stream-prefix: f_atlassianaddon
-    env_file: .env.prod
+    env_file: .env.local
     command: sh -c "poetry install && cd src && poetry run celery -A atlassian_addon.celery worker -l INFO"
     container_name: atlassian-addon-celery
 
