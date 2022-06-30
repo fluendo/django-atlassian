@@ -1,0 +1,459 @@
+{
+  "ipcMode": null,
+  "executionRoleArn": "arn:aws:iam::589180693493:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "dnsSearchDomains": [],
+      "environmentFiles": null,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": null,
+        "options": {
+          "awslogs-group": "fargate_atlassianaddon",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "f_atlassianaddon"
+        }
+      },
+      "entryPoint": [],
+      "portMappings": [
+        {
+          "hostPort": 8000,
+          "protocol": "tcp",
+          "containerPort": 8000
+        },
+        {
+          "hostPort": 80,
+          "protocol": "tcp",
+          "containerPort": 80
+        },
+        {
+          "hostPort": 443,
+          "protocol": "tcp",
+          "containerPort": 443
+        }
+      ],
+      "command": [
+        "sh",
+        "-c",
+        "poetry install && poetry run python src/manage.py runserver 0.0.0.0:8000"
+      ],
+      "linuxParameters": {
+        "capabilities": {
+          "add": null,
+          "drop": null
+        },
+        "sharedMemorySize": null,
+        "tmpfs": null,
+        "devices": [],
+        "maxSwap": null,
+        "swappiness": null,
+        "initProcessEnabled": null
+      },
+      "cpu": 0,
+      "environment": [
+        {
+          "name": "DB_ENGINE",
+          "value": "django.db.backends.postgresql_psycopg2"
+        },
+        {
+          "name": "DB_HOST",
+          "value": "fluendo-stage-01.cpb7g9t0u127.us-east-1.rds.amazonaws.com"
+        },
+        {
+          "name": "DB_NAME",
+          "value": "atlassian_addon"
+        },
+        {
+          "name": "DB_PASSWD",
+          "value": "flu3nd0flu"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "DB_USER",
+          "value": "fluendo"
+        },
+        {
+          "name": "DEBUG",
+          "value": "True"
+        },
+        {
+          "name": "FLUENDO_BASE_ADMIN_URL",
+          "value": "https://stage.fluendo.com/en/admin/"
+        },
+        {
+          "name": "REDIS_HOST",
+          "value": "localhost"
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "6379"
+        },
+        {
+          "name": "SECRET_KEY",
+          "value": "\"-eqb$&qsdzfdt1tm0=rvhht=)rye(g^_q_$+t*4x$ob16g8t#1\""
+        },
+        {
+          "name": "URL_BASE",
+          "value": "https://atlassian-addon-dev.fluendo.com/"
+        },
+        {
+          "name": "WEB_FLUENDO_API_SERVER",
+          "value": "https://stage.fluendo.com/en/api"
+        },
+        {
+          "name": "WEB_FLUENDO_TOKEN",
+          "value": "9fb26753efa9659b595ae65fdfcae563c71811c9"
+        }
+      ],
+      "resourceRequirements": null,
+      "ulimits": null,
+      "dnsServers": [],
+      "mountPoints": [],
+      "workingDirectory": null,
+      "secrets": null,
+      "dockerSecurityOptions": [],
+      "memory": null,
+      "memoryReservation": null,
+      "volumesFrom": [],
+      "stopTimeout": null,
+      "image": "589180693493.dkr.ecr.us-east-1.amazonaws.com/atlassian_addon:latest",
+      "startTimeout": null,
+      "firelensConfiguration": null,
+      "dependsOn": null,
+      "disableNetworking": null,
+      "interactive": null,
+      "healthCheck": null,
+      "essential": true,
+      "links": [],
+      "hostname": null,
+      "extraHosts": [],
+      "pseudoTerminal": false,
+      "user": null,
+      "readonlyRootFilesystem": false,
+      "dockerLabels": null,
+      "systemControls": null,
+      "privileged": false,
+      "name": "app"
+    },
+    {
+      "dnsSearchDomains": [],
+      "environmentFiles": null,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": null,
+        "options": {
+          "awslogs-group": "fargate_atlassianaddon",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "f_atlassianaddon"
+        }
+      },
+      "entryPoint": [],
+      "portMappings": [],
+      "command": [
+        "sh",
+        "-c",
+        "poetry install && cd src && poetry run celery -A atlassian_addon.celery worker -l INFO"
+      ],
+      "linuxParameters": {
+        "capabilities": {
+          "add": null,
+          "drop": null
+        },
+        "sharedMemorySize": null,
+        "tmpfs": null,
+        "devices": [],
+        "maxSwap": null,
+        "swappiness": null,
+        "initProcessEnabled": null
+      },
+      "cpu": 0,
+      "environment": [
+        {
+          "name": "DB_ENGINE",
+          "value": "django.db.backends.postgresql_psycopg2"
+        },
+        {
+          "name": "DB_HOST",
+          "value": "fluendo-stage-01.cpb7g9t0u127.us-east-1.rds.amazonaws.com"
+        },
+        {
+          "name": "DB_NAME",
+          "value": "atlassian_addon"
+        },
+        {
+          "name": "DB_PASSWD",
+          "value": "flu3nd0flu"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "DB_USER",
+          "value": "fluendo"
+        },
+        {
+          "name": "DEBUG",
+          "value": "True"
+        },
+        {
+          "name": "FLUENDO_BASE_ADMIN_URL",
+          "value": "https://stage.fluendo.com/en/admin/"
+        },
+        {
+          "name": "REDIS_HOST",
+          "value": "localhost"
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "6379"
+        },
+        {
+          "name": "SECRET_KEY",
+          "value": "\"-eqb$&qsdzfdt1tm0=rvhht=)rye(g^_q_$+t*4x$ob16g8t#1\""
+        },
+        {
+          "name": "URL_BASE",
+          "value": "https://atlassian-addon-dev.fluendo.com/"
+        },
+        {
+          "name": "WEB_FLUENDO_API_SERVER",
+          "value": "https://stage.fluendo.com/en/api"
+        },
+        {
+          "name": "WEB_FLUENDO_TOKEN",
+          "value": "9fb26753efa9659b595ae65fdfcae563c71811c9"
+        }
+      ],
+      "resourceRequirements": null,
+      "ulimits": null,
+      "dnsServers": [],
+      "mountPoints": [],
+      "workingDirectory": null,
+      "secrets": null,
+      "dockerSecurityOptions": [],
+      "memory": null,
+      "memoryReservation": null,
+      "volumesFrom": [],
+      "stopTimeout": null,
+      "image": "589180693493.dkr.ecr.us-east-1.amazonaws.com/atlassian_addon:latest",
+      "startTimeout": null,
+      "firelensConfiguration": null,
+      "dependsOn": null,
+      "disableNetworking": null,
+      "interactive": null,
+      "healthCheck": null,
+      "essential": true,
+      "links": [],
+      "hostname": null,
+      "extraHosts": [],
+      "pseudoTerminal": false,
+      "user": null,
+      "readonlyRootFilesystem": false,
+      "dockerLabels": null,
+      "systemControls": null,
+      "privileged": false,
+      "name": "celery_worker"
+    },
+    {
+      "dnsSearchDomains": [],
+      "environmentFiles": null,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": null,
+        "options": {
+          "awslogs-group": "fargate_atlassianaddon",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "f_atlassianaddon"
+        }
+      },
+      "entryPoint": [],
+      "portMappings": [
+        {
+          "hostPort": 6379,
+          "protocol": "tcp",
+          "containerPort": 6379
+        }
+      ],
+      "command": [
+        "sh",
+        "-c",
+        "hostname && /usr/local/bin/redis-server --bind localhost  --port 6379"
+      ],
+      "linuxParameters": {
+        "capabilities": {
+          "add": null,
+          "drop": null
+        },
+        "sharedMemorySize": null,
+        "tmpfs": null,
+        "devices": [],
+        "maxSwap": null,
+        "swappiness": null,
+        "initProcessEnabled": null
+      },
+      "cpu": 0,
+      "environment": [
+        {
+          "name": "DB_ENGINE",
+          "value": "django.db.backends.postgresql_psycopg2"
+        },
+        {
+          "name": "DB_HOST",
+          "value": "fluendo-stage-01.cpb7g9t0u127.us-east-1.rds.amazonaws.com"
+        },
+        {
+          "name": "DB_NAME",
+          "value": "atlassian_addon"
+        },
+        {
+          "name": "DB_PASSWD",
+          "value": "flu3nd0flu"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "DB_USER",
+          "value": "fluendo"
+        },
+        {
+          "name": "DEBUG",
+          "value": "True"
+        },
+        {
+          "name": "FLUENDO_BASE_ADMIN_URL",
+          "value": "https://stage.fluendo.com/en/admin/"
+        },
+        {
+          "name": "REDIS_HOST",
+          "value": "localhost"
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "6379"
+        },
+        {
+          "name": "SECRET_KEY",
+          "value": "\"-eqb$&qsdzfdt1tm0=rvhht=)rye(g^_q_$+t*4x$ob16g8t#1\""
+        },
+        {
+          "name": "URL_BASE",
+          "value": "https://atlassian-addon-dev.fluendo.com/"
+        },
+        {
+          "name": "WEB_FLUENDO_API_SERVER",
+          "value": "https://stage.fluendo.com/en/api"
+        },
+        {
+          "name": "WEB_FLUENDO_TOKEN",
+          "value": "9fb26753efa9659b595ae65fdfcae563c71811c9"
+        }
+      ],
+      "resourceRequirements": null,
+      "ulimits": null,
+      "dnsServers": [],
+      "mountPoints": [],
+      "workingDirectory": null,
+      "secrets": null,
+      "dockerSecurityOptions": [],
+      "memory": null,
+      "memoryReservation": null,
+      "volumesFrom": [],
+      "stopTimeout": null,
+      "image": "redis:alpine",
+      "startTimeout": null,
+      "firelensConfiguration": null,
+      "dependsOn": null,
+      "disableNetworking": null,
+      "interactive": null,
+      "healthCheck": null,
+      "essential": true,
+      "links": [],
+      "hostname": null,
+      "extraHosts": [],
+      "pseudoTerminal": false,
+      "user": null,
+      "readonlyRootFilesystem": false,
+      "dockerLabels": null,
+      "systemControls": null,
+      "privileged": false,
+      "name": "redis"
+    }
+  ],
+  "placementConstraints": [],
+  "memory": "4096",
+  "taskRoleArn": null,
+  "compatibilities": [
+    "EC2",
+    "FARGATE"
+  ],
+  "taskDefinitionArn": "arn:aws:ecs:us-east-1:589180693493:task-definition/atlassian-addon:16",
+  "family": "atlassian-addon",
+  "requiresAttributes": [
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "ecs.capability.execution-role-awslogs"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "com.amazonaws.ecs.capability.ecr-auth"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "ecs.capability.execution-role-ecr-pull"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "ecs.capability.task-eni"
+    }
+  ],
+  "pidMode": null,
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "networkMode": "awsvpc",
+  "runtimePlatform": null,
+  "cpu": "2048",
+  "revision": 16,
+  "status": "ACTIVE",
+  "inferenceAccelerators": null,
+  "proxyConfiguration": null,
+  "volumes": []
+}
