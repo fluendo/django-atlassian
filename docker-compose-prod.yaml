@@ -16,7 +16,7 @@ services:
         awslogs-region: us-east-1
         awslogs-stream-prefix: f_atlassianaddon
     env_file: .env.prod
-    command: sh -c "poetry install && poetry run python src/manage.py runserver 0.0.0.0:8000"
+    command: sh -c "/usr/bin/supervisord -n"
     container_name: atlassian-addon-app
   redis:
     restart: always
@@ -32,18 +32,3 @@ services:
         awslogs-stream-prefix: f_atlassianaddon
     env_file: .env.prod
     container_name: atlassian-addon-redis
-  celery_worker:
-    restart: always
-    image: 589180693493.dkr.ecr.us-east-1.amazonaws.com/atlassian_addon:latest
-    depends_on:
-      - redis
-      - app
-    logging:
-      driver: awslogs
-      options:
-        awslogs-group: fargate_atlassianaddon
-        awslogs-region: us-east-1
-        awslogs-stream-prefix: f_atlassianaddon
-    env_file: .env.prod
-    command: sh -c "poetry install && cd src && poetry run celery -A atlassian_addon.celery worker -l INFO"
-    container_name: atlassian-addon-celery

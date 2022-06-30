@@ -39,15 +39,13 @@ services:
       - redis:/data
     env_file: .env.local
     container_name: ${REDIS_HOST}
-
+  
   celery_worker:
     restart: always
     build: .
-    links:
-      - db:db
-      - redis:redis
-    volumes:
-      - .:/app
+    depends_on:
+      - redis
+      - app
     env_file: .env.local
     command: sh -c "poetry install && cd src && poetry run celery -A atlassian_addon.celery worker -l INFO"
     container_name: atlassian-addon-celery
