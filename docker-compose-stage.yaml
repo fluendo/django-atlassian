@@ -17,7 +17,7 @@ services:
         awslogs-stream-prefix: f_atlassianaddon
     env_file: .env.stage
     command: sh -c "/usr/bin/supervisord -n"
-    container_name: atlassian-addon-app
+    container_name: app
   redis:
     restart: always
     image: redis:alpine
@@ -31,4 +31,4 @@ services:
         awslogs-region: us-east-1
         awslogs-stream-prefix: f_atlassianaddon
     env_file: .env.stage
-    container_name: atlassian-addon-redis
+    container_name: redis
