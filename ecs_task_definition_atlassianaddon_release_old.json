@@ -35,7 +35,7 @@
       "command": [
         "sh",
         "-c",
-        "/usr/bin/supervisord -n"
+        "poetry install && poetry run python src/manage.py runserver 0.0.0.0:8000"
       ],
       "linuxParameters": {
         "capabilities": {
@@ -57,7 +57,7 @@
         },
         {
           "name": "DB_HOST",
-          "value": "fluendo-prod.cpb7g9t0u127.us-east-1.rds.amazonaws.com"
+          "value": "fluendo-stage-01.cpb7g9t0u127.us-east-1.rds.amazonaws.com"
         },
         {
           "name": "DB_NAME",
@@ -81,7 +81,7 @@
         },
         {
           "name": "FLUENDO_BASE_ADMIN_URL",
-          "value": "https://fluendo.com/en/admin/"
+          "value": "https://stage.fluendo.com/en/admin/"
         },
         {
           "name": "REDIS_HOST",
@@ -97,11 +97,11 @@
         },
         {
           "name": "URL_BASE",
-          "value": "https://atlassian.fluendo.com/"
+          "value": "https://atlassian-addon-dev.fluendo.com/"
         },
         {
           "name": "WEB_FLUENDO_API_SERVER",
-          "value": "https://fluendo.com/en/api"
+          "value": "https://stage.fluendo.com/en/api"
         },
         {
           "name": "WEB_FLUENDO_TOKEN",
@@ -161,7 +161,7 @@
       "command": [
         "sh",
         "-c",
-        "hostname && /usr/local/bin/redis-server --bind localhost --port 6379"
+        "hostname && /usr/local/bin/redis-server --bind localhost  --port 6379"
       ],
       "linuxParameters": {
         "capabilities": {
@@ -183,7 +183,7 @@
         },
         {
           "name": "DB_HOST",
-          "value": "fluendo-prod.cpb7g9t0u127.us-east-1.rds.amazonaws.com"
+          "value": "fluendo-stage-01.cpb7g9t0u127.us-east-1.rds.amazonaws.com"
         },
         {
           "name": "DB_NAME",
@@ -207,7 +207,7 @@
         },
         {
           "name": "FLUENDO_BASE_ADMIN_URL",
-          "value": "https://fluendo.com/en/admin/"
+          "value": "https://stage.fluendo.com/en/admin/"
         },
         {
           "name": "REDIS_HOST",
@@ -223,11 +223,11 @@
         },
         {
           "name": "URL_BASE",
-          "value": "https://atlassian.fluendo.com/"
+          "value": "https://atlassian-addon-dev.fluendo.com/"
         },
         {
           "name": "WEB_FLUENDO_API_SERVER",
-          "value": "https://fluendo.com/en/api"
+          "value": "https://stage.fluendo.com/en/api"
         },
         {
           "name": "WEB_FLUENDO_TOKEN",
@@ -272,7 +272,7 @@
     "EC2",
     "FARGATE"
   ],
-  "taskDefinitionArn": "arn:aws:ecs:us-east-1:589180693493:task-definition/atlassian-addon:30",
+  "taskDefinitionArn": "arn:aws:ecs:us-east-1:589180693493:task-definition/atlassian-addon:16",
   "family": "atlassian-addon",
   "requiresAttributes": [
     {
@@ -331,7 +331,7 @@
   "networkMode": "awsvpc",
   "runtimePlatform": null,
   "cpu": "2048",
-  "revision": 30,
+  "revision": 16,
   "status": "ACTIVE",
   "inferenceAccelerators": null,
   "proxyConfiguration": null,
