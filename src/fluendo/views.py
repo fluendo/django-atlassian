@@ -20,38 +20,6 @@ def get_jira(sc):
 @csrf_exempt
 @jwt_required
 @xframe_options_exempt
-def customers_view(request):
-    sc = request.atlassian_sc
-    key = request.GET.get("key")
-    property_key = "customers"
-
-    j = get_jira(sc)
-    customers = customers_proxy_cache(request)
-    try:
-        p = j.issue_property(key, property_key)
-        customer_id = int(p.value.customer_id)
-    except:
-        customer_id = None
-
-    return render(
-        request,
-        "fluendo/customers_view.html",
-        {
-            "key": key,
-            "customers": json.loads(customers.content),
-            "customer": customer_id,
-        },
-    )
-
-
-@xframe_options_exempt
-def customers_proxy_view(request):
-    return customers_proxy_cache(request)
-
-
-@csrf_exempt
-@jwt_required
-@xframe_options_exempt
 def company_view(request):
     sc = request.atlassian_sc
     key = request.GET.get("key")
