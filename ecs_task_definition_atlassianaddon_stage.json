@@ -44,7 +44,7 @@
         },
         "sharedMemorySize": null,
         "tmpfs": null,
-        "devices": [],
+        "devices": null,
         "maxSwap": null,
         "swappiness": null,
         "initProcessEnabled": null
@@ -129,7 +129,7 @@
       "essential": true,
       "links": [],
       "hostname": null,
-      "extraHosts": [],
+      "extraHosts": null,
       "pseudoTerminal": false,
       "user": null,
       "readonlyRootFilesystem": false,
@@ -170,7 +170,7 @@
         },
         "sharedMemorySize": null,
         "tmpfs": null,
-        "devices": [],
+        "devices": null,
         "maxSwap": null,
         "swappiness": null,
         "initProcessEnabled": null
@@ -255,7 +255,7 @@
       "essential": true,
       "links": [],
       "hostname": null,
-      "extraHosts": [],
+      "extraHosts": null,
       "pseudoTerminal": false,
       "user": null,
       "readonlyRootFilesystem": false,
@@ -267,12 +267,12 @@
   ],
   "placementConstraints": [],
   "memory": "4096",
-  "taskRoleArn": null,
+  "taskRoleArn": "arn:aws:iam::589180693493:role/ecsTaskExecutionRole",
   "compatibilities": [
     "EC2",
     "FARGATE"
   ],
-  "taskDefinitionArn": "arn:aws:ecs:us-east-1:589180693493:task-definition/atlassian-addon-stage:59",
+  "taskDefinitionArn": "arn:aws:ecs:us-east-1:589180693493:task-definition/atlassian-addon-stage:66",
   "family": "atlassian-addon-stage",
   "requiresAttributes": [
     {
@@ -309,6 +309,12 @@
       "targetId": null,
       "targetType": null,
       "value": null,
+      "name": "com.amazonaws.ecs.capability.task-iam-role"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
       "name": "ecs.capability.execution-role-ecr-pull"
     },
     {
@@ -329,9 +335,12 @@
     "FARGATE"
   ],
   "networkMode": "awsvpc",
-  "runtimePlatform": null,
+  "runtimePlatform": {
+    "operatingSystemFamily": "LINUX",
+    "cpuArchitecture": null
+  },
   "cpu": "2048",
-  "revision": 59,
+  "revision": 66,
   "status": "ACTIVE",
   "inferenceAccelerators": null,
   "proxyConfiguration": null,
