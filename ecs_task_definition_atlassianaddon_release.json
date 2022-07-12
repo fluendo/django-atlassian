@@ -44,7 +44,7 @@
         },
         "sharedMemorySize": null,
         "tmpfs": null,
-        "devices": [],
+        "devices": null,
         "maxSwap": null,
         "swappiness": null,
         "initProcessEnabled": null
@@ -129,7 +129,7 @@
       "essential": true,
       "links": [],
       "hostname": null,
-      "extraHosts": [],
+      "extraHosts": null,
       "pseudoTerminal": false,
       "user": null,
       "readonlyRootFilesystem": false,
@@ -170,7 +170,7 @@
         },
         "sharedMemorySize": null,
         "tmpfs": null,
-        "devices": [],
+        "devices": null,
         "maxSwap": null,
         "swappiness": null,
         "initProcessEnabled": null
@@ -255,7 +255,7 @@
       "essential": true,
       "links": [],
       "hostname": null,
-      "extraHosts": [],
+      "extraHosts": null,
       "pseudoTerminal": false,
       "user": null,
       "readonlyRootFilesystem": false,
@@ -267,12 +267,12 @@
   ],
   "placementConstraints": [],
   "memory": "4096",
-  "taskRoleArn": null,
+  "taskRoleArn": "arn:aws:iam::589180693493:role/ecsTaskExecutionRole",
   "compatibilities": [
     "EC2",
     "FARGATE"
   ],
-  "taskDefinitionArn": "arn:aws:ecs:us-east-1:589180693493:task-definition/atlassian-addon:30",
+  "taskDefinitionArn": "arn:aws:ecs:us-east-1:589180693493:task-definition/atlassian-addon:32",
   "family": "atlassian-addon",
   "requiresAttributes": [
     {
@@ -309,6 +309,12 @@
       "targetId": null,
       "targetType": null,
       "value": null,
+      "name": "com.amazonaws.ecs.capability.task-iam-role"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
       "name": "ecs.capability.execution-role-ecr-pull"
     },
     {
@@ -331,7 +337,7 @@
   "networkMode": "awsvpc",
   "runtimePlatform": null,
   "cpu": "2048",
-  "revision": 30,
+  "revision": 32,
   "status": "ACTIVE",
   "inferenceAccelerators": null,
   "proxyConfiguration": null,
