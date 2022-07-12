@@ -337,7 +337,7 @@
   "networkMode": "awsvpc",
   "runtimePlatform": {
     "operatingSystemFamily": "LINUX",
-    "cpuArchitecture": null
+    "cpuArchitecture": "X86_64"
   },
   "cpu": "2048",
   "revision": 66,
