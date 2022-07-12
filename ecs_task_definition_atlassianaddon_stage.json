@@ -335,10 +335,7 @@
     "FARGATE"
   ],
   "networkMode": "awsvpc",
-  "runtimePlatform": {
-    "operatingSystemFamily": "LINUX",
-    "cpuArchitecture": "X86_64"
-  },
+  "runtimePlatform": null,
   "cpu": "2048",
   "revision": 66,
   "status": "ACTIVE",
