@@ -272,7 +272,7 @@
     "EC2",
     "FARGATE"
   ],
-  "taskDefinitionArn": "arn:aws:ecs:us-east-1:589180693493:task-definition/atlassian-addon-stage:66",
+  "taskDefinitionArn": "arn:aws:ecs:us-east-1:589180693493:task-definition/atlassian-addon-stage:72",
   "family": "atlassian-addon-stage",
   "requiresAttributes": [
     {
@@ -337,7 +337,7 @@
   "networkMode": "awsvpc",
   "runtimePlatform": null,
   "cpu": "2048",
-  "revision": 66,
+  "revision": 72,
   "status": "ACTIVE",
   "inferenceAccelerators": null,
   "proxyConfiguration": null,
