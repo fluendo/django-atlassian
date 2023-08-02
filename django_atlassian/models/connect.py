@@ -35,7 +35,7 @@ class SecurityContext(models.base.Model):
             token = jwt.encode(key=self.shared_secret, algorithm='HS256', payload={
                 'aud': self.client_key,
                 'sub': account,
-                'iss': self.client_key,
+                'iss': self.key,
                 'qsh': hash_url(method, uri),
                 'iat': now,
                 'exp': now + 30,
